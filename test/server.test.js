@@ -17,6 +17,8 @@ after(async()=>{server?.kill(); if(server) await new Promise(resolve=>server.onc
 const post=(path,data,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(data)});
 test('static app and full account flow',async()=>{
   assert.equal((await fetch(base+'/')).status,200);
+  assert.equal((await fetch(base+'/hero-art.jpg')).headers.get('content-type'),'image/jpeg');
+  assert.equal((await fetch(base+'/logo.svg')).headers.get('content-type'),'image/svg+xml');
   assert.equal((await fetch(base+'/api/session')).status,200);
   assert.equal((await post('/api/register',{name:'Alex',email:'alex@example.com',password:'short'})).status,400);
   let r=await post('/api/register',{name:'Alex',email:'alex@example.com',password:'a-long-password'});assert.equal(r.status,200); const cookie=r.headers.get('set-cookie').split(';')[0];assert.equal((await r.json()).user.name,'Alex');

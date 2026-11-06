@@ -17,7 +17,7 @@ const send = (res, status, data, headers = {}) => { res.writeHead(status, { 'Con
 const body = async (req) => { let raw = ''; for await (const chunk of req) { raw += chunk; if (raw.length > 100_000) throw Error('Request too large'); } return JSON.parse(raw || '{}'); };
 const setSession = (res, user, secure) => { const token = randomBytes(32).toString('hex'); db.prepare('INSERT INTO sessions VALUES (?, ?, ?)').run(hash(token), user.id, Date.now() + 1000 * 60 * 60 * 24 * 30); return { 'Set-Cookie': `session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${secure ? '; Secure' : ''}` }; };
 const safeUser = u => ({ name: u.name, email: u.email });
-const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.png':'image/png', '.ico':'image/x-icon' };
+const mime = { '.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.ico':'image/x-icon' };
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');
