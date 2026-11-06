@@ -1,29 +1,28 @@
 # RevisePro
 
-A lightweight revision workspace with starter GCSE-level notes, knowledge checks, flashcards, a study planner, and a curated resource directory. Guest progress is stored in the browser. Starter topics are not a complete curriculum and are not exam-board-specific.
+A revision workspace with starter GCSE-level notes, quizzes, flashcards, a planner and curated resources. Guest progress is stored in the browser. Account login and sync use Supabase when configured; GitHub Pages serves the site for free. Starter topics are not a complete or exam-board-specific curriculum.
 
-## Run locally
+## Set up free accounts on GitHub Pages
 
-Requires Node.js 22.5 or newer (Node 22 may show an experimental SQLite warning).
+The Supabase project must be created and configured by its owner. The code is ready, but the site remains in guest mode until all these steps are complete.
 
-```sh
-npm start
-```
+1. Create an account at [Supabase](https://supabase.com/) and create a **Free** project. Choose a region and set a strong database password; keep that password private. Wait for provisioning.
+2. In Supabase open **SQL Editor**, create a new query, and paste and run the entire [`supabase/setup.sql`](supabase/setup.sql) file. This creates the progress table and row-level policies so authenticated users can only access their own row. Do not skip the policies.
+3. In **Authentication → URL Configuration**, set the Site URL to `https://reviselikeapro.github.io/public/`. Add the same URL to the Redirect URLs allowlist. Save.
+4. Open the project's **Connect** dialog or project settings/API keys and find the **Project URL** and **publishable key** (or the legacy `anon` public key). These are intended for browser use, with RLS enabled. Never use the `service_role` or `sb_secret_` key, database password or any personal access token in the website or chat.
+5. On GitHub, open [`public/config.js`](public/config.js), click the pencil to edit it, and fill in the Project URL and publishable key between the quotation marks. Leave the rest unchanged. Commit the change to the publishing branch (`main`). Wait for GitHub Pages to finish deploying, then open `https://reviselikeapro.github.io/public/` and refresh.
+6. Create an account and test sign-in, adding a planner entry, signing out, and signing back in on another browser/device. Guest and account progress are separate. Existing guest progress is not automatically uploaded or deleted.
 
-Visit http://localhost:3000. Create an account to sync progress to the server. Passwords are salted and hashed with scrypt; sessions use random, HTTP-only cookies. Data is stored in `data/revision.sqlite` by default. Set `PORT` and `DATA_DIR` to change the port and data location.
+**Email limitation:** Supabase's built-in email sender is for testing: it sends only to addresses on your Supabase organisation's team and is limited to 2 messages per hour. Public email signups with confirmations require a custom SMTP provider; its availability and pricing are separate. Do not disable email confirmation without understanding that anyone could claim another person's email address. See [Supabase's email testing guide](https://supabase.com/docs/guides/auth/testing-auth-flows).
 
-## Hosting and limitations
+The free tier has limits, can pause after inactivity, and does not include automatic backups. Review [Supabase pricing](https://supabase.com/pricing), privacy and safeguarding requirements, email delivery, backup strategy, account recovery and security before allowing real users, particularly children. Simultaneous edits on different devices are last-write-wins. Failed syncs remain on the device and the account menu lets the learner explicitly choose local or cloud progress.
 
-GitHub Pages only hosts static files: the root page redirects to `public/`, where guest mode works, but account creation and cross-device sync do not work there. The Node server provides both the website and its account API on the same origin.
+## Development
 
-`render.yaml` is a deployment blueprint for a single Render web service and a persistent disk. It configures automatic deploys from `main`, Node 22, a health check, and the durable SQLite data directory. **This file does not create or activate a service by itself.** A Render account with access to this repository is required to create the Blueprint, and the Starter service and disk incur charges. Once deployed, use the Render service URL for both the site and login; GitHub Pages will remain guest-only unless its traffic is separately directed to the hosted service.
+Requires Node.js 22.5 or newer. Run `npm install`, then `npm start` and open http://localhost:3000. The bundled Node server serves the static site; the frontend account flow uses Supabase when configured. The earlier experimental Node/SQLite API remains available for development but is not used by the website's Supabase account flow and is not hosted by GitHub Pages.
 
-The backend is a starter implementation, not a production-ready replacement for an established revision platform. Back up the SQLite database and address operational security, monitoring, abuse prevention, privacy and safeguarding policies, password reset, email verification, accessibility review, and legal requirements before inviting real users, especially children. Do not deploy the SQLite database on an ephemeral filesystem: account and progress data would disappear on restart or redeploy.
-
-## Tests
-
-Run `npm test` for the account and progress API smoke tests.
+`npm test` runs unit, browser-DOM and local API tests. `npm run build:client` rebuilds the checked-in browser Supabase bundle from pinned package dependencies. Its third-party licenses are in `public/licenses/`. Without a real configured Supabase project, the hosted account flow can only be tested with mocks.
 
 ## Research
 
-The product brings together ideas found across ten well-known revision resources: BBC Bitesize (accessible explainers), Physics & Maths Tutor (topic practice and papers), Seneca (short interactive recall), Cognito (subject learning), Save My Exams (exam-focused resources), Quizlet (flashcards), Anki (retrieval practice), Get Revising (planning), Maths Genie and Corbettmaths (topic-based maths practice). The Resources page links to each; this project does not reproduce their proprietary content or claim their coverage.
+The product brings together ideas found across BBC Bitesize, Physics & Maths Tutor, Seneca, Cognito, Save My Exams, Quizlet, Anki, Get Revising, Maths Genie and Corbettmaths. The Resources page links to each; this project does not reproduce their proprietary content or claim their coverage.

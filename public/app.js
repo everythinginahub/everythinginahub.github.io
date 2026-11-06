@@ -1,4 +1,7 @@
-import { localDate, currentStreak, sortedTasks, taskDateLabel } from './study-utils.js?v=20261106-3';
+import { localDate, currentStreak, sortedTasks, taskDateLabel } from './study-utils.js?v=20261106-4';
+import { supabaseConfig } from './config.js?v=20261106-4';
+import { createAccountBackend, validateConfig } from './account-backend.js?v=20261106-4';
+import { createClient } from './supabase-client.js?v=20261106-4';
 const subjects = [
   {id:'biology',name:'Biology',icon:'✿',color:'mint',description:'Cells, living systems & more',topic:'Cell biology',note:'Cells are the basic units of living organisms. The nucleus contains genetic material, the cell membrane controls what enters and leaves, and mitochondria are where aerobic respiration releases energy.',question:'Which part of a cell controls what enters and leaves it?',options:['Nucleus','Cell membrane','Mitochondrion','Cytoplasm'],answer:1,explanation:'The cell membrane controls the movement of substances into and out of the cell.',cards:[['What does the nucleus contain?','Genetic material (DNA), which controls the activities of the cell.'],['Where does aerobic respiration occur?','In the mitochondria.'],['What does the cell membrane do?','It controls what enters and leaves the cell.']]},
   {id:'maths',name:'Mathematics',icon:'∑',color:'peach',description:'Numbers, equations & more',topic:'Algebra essentials',note:'To solve an equation, perform the same operation on both sides. Simplify first, then isolate the unknown. Always substitute your answer back into the original equation to check it.',question:'What is x if 3x + 4 = 19?',options:['3','4','5','6'],answer:2,explanation:'Subtract 4 from both sides to get 3x = 15, then divide by 3: x = 5.',cards:[['How do you solve 2x + 6 = 14?','Subtract 6, then divide by 2. x = 4.'],['What is the gradient of a straight line?','The change in y divided by the change in x.'],['How do you expand 3(x + 2)?','Multiply both terms by 3: 3x + 6.']]},
@@ -10,12 +13,42 @@ const subjects = [
 const $ = s => document.querySelector(s);
 const escapeHTML = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const defaultState = () => ({ completed: {}, reviews: {}, tasks: [], activity: [] });
-let state; try { state = { ...defaultState(), ...JSON.parse(localStorage.getItem('revisepro-state') || '{}') }; } catch { state = defaultState(); }
-let user = null, backend = false, cardIndex = 0, cardFlipped = false, selectedDeck = 'biology';
+const guestKey = 'revisepro-state';
+const readState = key => { try { return { ...defaultState(), ...JSON.parse(localStorage.getItem(key) || '{}') }; } catch { return defaultState(); } };
+let state = readState(guestKey);
+let user = null, cardIndex = 0, cardFlipped = false, selectedDeck = 'biology';
+const config = validateConfig(supabaseConfig);
+const backend = config.configured ? createAccountBackend(createClient(config.url, config.key)) : null;
+let syncReady = false, cloudProgress = null, syncQueue = Promise.resolve();
+const userKey = id => `revisepro-state-user-${id}`;
+const pendingKey = id => `${userKey(id)}-pending`;
+const toast = text => { const el=$('#toast'); el.textContent=text; el.classList.add('show'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.remove('show'),5000); };
 $('#date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-let syncQueue = Promise.resolve();
-const save = () => { const snapshot=JSON.stringify(state); localStorage.setItem('revisepro-state',snapshot); if(user && backend) { syncQueue = syncQueue.then(async()=>{ const response=await fetch('api/progress',{method:'PUT',headers:{'Content-Type':'application/json'},body:snapshot}); if(!response.ok) throw new Error('Sync failed'); }).catch(()=>toast('Could not sync. Your progress is saved on this device.')); } };
-const toast = text => { const el=$('#toast'); el.textContent=text; el.classList.add('show'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.remove('show'),3000); };
+const save = () => {
+  const snapshot = JSON.stringify(state);
+  const id = user?.id;
+  localStorage.setItem(id ? userKey(id) : guestKey, snapshot);
+  if (!id) return;
+  localStorage.setItem(pendingKey(id), '1');
+  if (!syncReady) { toast('Changes are saved on this device. Open your account to resolve syncing.'); return; }
+  syncQueue = syncQueue.then(async () => {
+    await backend.save(id, JSON.parse(snapshot));
+    if (localStorage.getItem(userKey(id)) === snapshot) localStorage.removeItem(pendingKey(id));
+  }).catch(() => { toast('Could not sync. Changes are saved on this device; open your account to resolve syncing.'); });
+};
+async function enterAccount(accountUser) {
+  // Load first. Never overwrite a cloud row when the network or schema is unavailable.
+  const id = accountUser.id;
+  const remote = await backend.load(id);
+  user = { id, name: String(accountUser.user_metadata?.name || accountUser.email?.split('@')[0] || 'Learner'), email: accountUser.email || '' };
+  cloudProgress = remote;
+  const hasPending = localStorage.getItem(pendingKey(id)) === '1';
+  syncReady = !hasPending;
+  state = hasPending ? readState(userKey(id)) : { ...defaultState(), ...(remote || {}) };
+  localStorage.setItem(userKey(id), JSON.stringify(state));
+  updateAccount(); render();
+  if (hasPending) toast('You have unsynced changes. Open your account to choose which progress to keep.');
+}
 const record = () => { const today=localDate(); if (!state.activity.includes(today)) state.activity.push(today); };
 const streak = () => currentStreak(state.activity);
 const progress = s => state.completed[s.id] ? 100 : 0;
@@ -43,14 +76,49 @@ const resources=[['BBC Bitesize','Clear explanations, revision guides and quizze
 function render(){const focusedId=document.activeElement?.id; const [page,id]=(location.hash.slice(1)||'home').split('/'); const active=['subject','quiz'].includes(page)?'subjects':page; document.querySelectorAll('[data-nav]').forEach(a=>{const selected=a.dataset.nav===active;a.classList.toggle('active',selected);if(selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}); $('#crumb').textContent=({home:'Dashboard',subjects:'My subjects',subject:'My subjects',quiz:'Knowledge check',flashcards:'Flashcards',planner:'Study planner',resources:'Resources'})[page]||'Dashboard'; let html; if(page==='home')html=dashboard(); else if(page==='subjects')html=head('My subjects','Choose a subject and build your confidence, one topic at a time.')+`<div class="subjects all-subjects">${subjects.map(subjectCard).join('')}</div><p class="footer-note">Starter topics are general GCSE-level refreshers; check your exam board for full coverage.</p>`; else if(page==='subject')html=subjectView(id); else if(page==='quiz')html=quizView(id); else if(page==='flashcards')html=flashcards(); else if(page==='planner')html=planner(); else if(page==='resources')html=head('Revision resources','A hand-picked collection of places to take your revision further.')+`<div class="resource-grid">${resources.map(r=>`<a class="resource-card" href="${r[2]}" target="_blank" rel="noopener noreferrer"><h3>${r[0]} ↗</h3><p>${r[1]}</p><span>Visit resource →</span></a>`).join('')}</div>`; else html=dashboard(); $('#app').innerHTML=html; if(focusedId && focusedId!=='app') document.getElementById(focusedId)?.focus(); }
 function updateAccount(){const name=user?user.name:'Guest learner';document.querySelectorAll('.avatar,.top-avatar').forEach(e=>e.textContent=name[0].toUpperCase());$('#accountButton strong').textContent=name;$('#accountButton small').textContent=user?'Account & sync':'Save your progress';}
 function modal(content){$('#modalContent').innerHTML=`<div class="modal-inner"><div class="modal-top"><h2>${content.title}</h2><button class="close" aria-label="Close">×</button></div>${content.body}</div>`;$('#modal').showModal();}
-function account(mode='login'){if(user){modal({title:'Your account',body:`<p>Signed in as ${escapeHTML(user.name)} (${escapeHTML(user.email)}). Your progress is synced to this server.</p><button class="btn dark" id="logout">Sign out</button>`});return;} modal({title:mode==='login'?'Welcome back':'Create your account',body:`<p>${backend?'Sign in to sync your revision progress across devices.':'Accounts need the RevisePro backend. Guest progress is saved on this device.'}</p>${backend?`<form id="authForm" data-mode="${mode}">${mode==='register'?'<label class="field">Name<input name="name" required maxlength="60" autocomplete="name"></label>':''}<label class="field">Email<input name="email" type="email" required autocomplete="email"></label><label class="field">Password<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="${mode==='login'?'current-password':'new-password'}"></label><p class="error" id="authError"></p><button class="btn dark" type="submit">${mode==='login'?'Sign in':'Create account'}</button></form><p>${mode==='login'?'New here?':'Already have an account?'} <button class="switch" data-auth-mode="${mode==='login'?'register':'login'}">${mode==='login'?'Create an account':'Sign in'}</button></p>`:'<p>To enable accounts, deploy the included Node server with persistent storage. See the project README for setup.</p>'}`});}
+function account(mode='login') {
+  if(user) {
+    const pending = localStorage.getItem(pendingKey(user.id)) === '1';
+    modal({title:'Your account',body:`<p>Signed in as ${escapeHTML(user.name)} (${escapeHTML(user.email)}).</p>${pending ? `<p class="error">There are changes on this device that have not synced. Choose which copy to keep. Uploading replaces your cloud progress; using cloud progress discards local changes.</p><button class="btn dark" id="useLocal">Upload local progress</button><button class="btn outline" id="useCloud">Use cloud progress</button>` : '<p>Your account progress is saved to Supabase when you make changes. Guest progress stays on this device separately.</p>'}<p id="accountError" class="error" role="alert"></p><button class="btn outline" id="logout">Sign out</button>`});
+    return;
+  }
+  modal({title:mode==='login'?'Welcome back':'Create your account',body:`<p>${backend?'Sign in to sync your revision progress across devices. Guest progress stays on this device separately.':'Account setup is not complete yet. Guest progress is saved on this device.'}</p>${backend?`<form id="authForm" data-mode="${mode}">${mode==='register'?'<label class="field">Name<input name="name" required maxlength="60" autocomplete="name"></label>':''}<label class="field">Email<input name="email" type="email" required autocomplete="email"></label><label class="field">Password<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="${mode==='login'?'current-password':'new-password'}"></label><p class="error" id="authError" role="alert"></p><button class="btn dark" type="submit">${mode==='login'?'Sign in':'Create account'}</button></form><p>${mode==='login'?'New here?':'Already have an account?'} <button class="switch" data-auth-mode="${mode==='login'?'register':'login'}">${mode==='login'?'Create an account':'Sign in'}</button></p>`:'<p>The site owner can follow the Supabase setup guide in the project README.</p>'}`});
+}
 window.addEventListener('hashchange',()=>{render();$('#app').focus({preventScroll:true});window.scrollTo(0,0);});
 document.querySelector('.skip-link').addEventListener('click',e=>{e.preventDefault();$('#app').focus();});
-$('#accountButton').onclick=()=>account();$('#topAccount').onclick=()=>account();$('#helpButton').onclick=()=>modal({title:'A little help',body:'<p>Pick a subject to read a short refresher and answer a question. Use flashcards to practise recall, and add sessions to your planner.</p><p>Guest progress is stored in this browser. Sign in when the account server is available to sync it across devices.</p>'});
-$('#modal').addEventListener('click',async e=>{if(e.target.classList.contains('close'))$('#modal').close();if(e.target.dataset.authMode){$('#modal').close();account(e.target.dataset.authMode)}if(e.target.id==='logout'){await syncQueue;await fetch('api/logout',{method:'POST'});user=null;state=defaultState();save();updateAccount();$('#modal').close();render();toast('Signed out');}});
-$('#modal').addEventListener('submit',async e=>{if(e.target.id!=='authForm')return;e.preventDefault();const form=e.target;const input=Object.fromEntries(new FormData(form));try{const res=await fetch(`api/${form.dataset.mode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});const data=await res.json();if(!res.ok)throw Error(data.error);user=data.user;const remote=data.progress||{};if(Object.keys(remote).length)state={...defaultState(),...remote};save();updateAccount();$('#modal').close();render();toast('Welcome, '+user.name+'!');}catch(err){$('#authError').textContent=err.message||'Could not connect to the account server.';}});
+$('#accountButton').onclick=()=>account();$('#topAccount').onclick=()=>account();$('#helpButton').onclick=()=>modal({title:'A little help',body:'<p>Pick a subject to read a short refresher and answer a question. Use flashcards to practise recall, and add sessions to your planner.</p><p>Guest progress is stored in this browser, separately from any account progress.</p>'});
+$('#modal').addEventListener('click',async e=>{
+  if(e.target.classList.contains('close')) $('#modal').close();
+  if(e.target.dataset.authMode){$('#modal').close();account(e.target.dataset.authMode);}
+  if(e.target.id==='logout') {
+    e.target.disabled=true;
+    try { await syncQueue; await backend.signOut(); user=null;syncReady=false;cloudProgress=null;state=readState(guestKey);updateAccount();$('#modal').close();render();toast('Signed out'); }
+    catch(err){$('#accountError').textContent=err.message||'Could not sign out.';e.target.disabled=false;}
+  }
+  if(e.target.id==='useLocal' || e.target.id==='useCloud') {
+    e.target.disabled=true;
+    try {
+      await syncQueue;
+      if(e.target.id==='useLocal') { await backend.save(user.id, state); cloudProgress=state; }
+      else { const remote=await backend.load(user.id); state={...defaultState(),...(remote||{})}; localStorage.setItem(userKey(user.id),JSON.stringify(state)); cloudProgress=remote; }
+      localStorage.removeItem(pendingKey(user.id));syncReady=true;$('#modal').close();render();toast('Progress updated.');
+    } catch(err) { $('#accountError').textContent=err.message||'Could not resolve syncing. Please try again.';e.target.disabled=false; }
+  }
+});
+$('#modal').addEventListener('submit',async e=>{
+  if(e.target.id!=='authForm')return;
+  e.preventDefault();const form=e.target;const input=Object.fromEntries(new FormData(form));const button=form.querySelector('[type="submit"]');button.disabled=true;
+  try {
+    if(form.dataset.mode==='register') {
+      const result=await backend.signUp(input.name.trim(),input.email.trim(),input.password,new URL('./',location.href).href);
+      if(!result.session){$('#modal').close();modal({title:'Check your email',body:'<p>If signup is available for this email, you will receive a confirmation link. Follow it, then return here to sign in. If you don’t receive it, check spam or contact the site owner.</p>'});return;}
+      await enterAccount(result.user);
+    } else { await enterAccount(await backend.signIn(input.email.trim(),input.password)); }
+    $('#modal').close();toast('Welcome, '+user.name+'!');
+  } catch(err) { $('#authError').textContent=err.message||'Could not connect to the account service.';button.disabled=false; }
+});
 $('#app').addEventListener('click',e=>{const target=e.target.closest('button');if(!target)return;if(target.dataset.task!==undefined){const t=state.tasks[Number(target.dataset.task)];t.done=!t.done;if(t.done)record();save();render();document.querySelector(`[data-task="${target.dataset.task}"]`)?.focus();}if(target.dataset.delete!==undefined){state.tasks.splice(Number(target.dataset.delete),1);save();render();}if(target.dataset.deck){selectedDeck=target.dataset.deck;cardIndex=0;cardFlipped=false;location.hash='flashcards';}if(target.dataset.answer!==undefined){const s=subjects.find(x=>x.id===target.dataset.subject);const correct=Number(target.dataset.answer)===s.answer;state.completed[s.id]=correct||!!state.completed[s.id];record();save();$('#answers').querySelectorAll('button').forEach(b=>b.disabled=true);$('#feedback').innerHTML=`<div class="feedback"><strong>${correct?'That’s right!':'Not quite yet.'}</strong> ${s.explanation}</div><a class="btn dark" href="#subject/${s.id}">Back to topic →</a>`;}if(target.id==='flipCard'){cardFlipped=!cardFlipped;render();}if(target.id==='prevCard'){cardIndex=(cardIndex+2)%3;cardFlipped=false;render();}if(target.id==='nextCard'){cardIndex=(cardIndex+1)%3;cardFlipped=false;render();}if(target.id==='reviewCard'){state.reviews[`${selectedDeck}-${cardIndex}`]=localDate();record();save();toast('Card marked as reviewed');cardIndex=(cardIndex+1)%3;cardFlipped=false;render();}});
 $('#app').addEventListener('change',e=>{if(e.target.id==='deckSelect'){selectedDeck=e.target.value;cardIndex=0;cardFlipped=false;render();}});
 $('#app').addEventListener('submit',e=>{if(e.target.id!=='planForm')return;e.preventDefault();const data=new FormData(e.target);const title=String(data.get('title')).trim();if(!title){toast('Please enter a study session');return;}state.tasks.push({title,date:String(data.get('date')),done:false});save();render();toast('Study session added');});
 render();updateAccount();
-try{const response=await fetch('api/session',{headers:{Accept:'application/json'}});if(response.ok && response.headers.get('content-type')?.includes('application/json')){backend=true;const data=await response.json();if(data.user){user=data.user;state={...defaultState(),...(data.progress||{})};localStorage.setItem('revisepro-state',JSON.stringify(state));updateAccount();render();}}}catch{}
+if (backend) { try { const sessionUser=await backend.session(); if(sessionUser) await enterAccount(sessionUser); } catch { toast('Could not load account progress. Guest mode is available; please try signing in again.'); } }
