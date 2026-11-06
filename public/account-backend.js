@@ -20,10 +20,22 @@ export function createAccountBackend(client) {
   return {
     async session() { return check(await client.auth.getSession()).session?.user || null; },
     async signIn(email, password) { return check(await client.auth.signInWithPassword({ email, password })).user; },
-    async signUp(name, email, password, redirectTo) {
-      return check(await client.auth.signUp({ email, password, options: { data: { name }, emailRedirectTo: redirectTo } }));
+    async signUp(name, email, password, redirectTo, subjects = []) {
+      return check(await client.auth.signUp({ email, password, options: { data: { name, subjects }, emailRedirectTo: redirectTo } }));
     },
-    async signOut() { check(await client.auth.signOut()); },
+    async resendConfirmation(email,redirectTo) { check(await client.auth.resend({type:'signup',email,options:{emailRedirectTo:redirectTo}})); },
+    async signOut() { check(await client.auth.signOut({scope:'local'})); },
+    async listSets(userId) {
+      const columns='id,owner_id,title,subject,description,is_public,cards,created_at';
+      const [own,shared] = await Promise.all([
+        client.from('flashcard_sets').select(columns).eq('owner_id',userId).order('created_at',{ascending:false}).limit(100),
+        client.from('flashcard_sets').select(columns).eq('is_public',true).order('created_at',{ascending:false}).limit(100)
+      ]);
+      return [...new Map([...(check(own)||[]),...(check(shared)||[])].map(row=>[row.id,row])).values()];
+    },
+    async createSet(set) { return check(await client.from('flashcard_sets').insert(set).select('id,owner_id,title,subject,description,is_public,cards,created_at').single()); },
+    async deleteSet(id) { check(await client.from('flashcard_sets').delete().eq('id',id)); },
+    async setVisibility(id,isPublic) { check(await client.from('flashcard_sets').update({is_public:isPublic}).eq('id',id)); },
     async load(userId) {
       const data = check(await client.from('revision_progress').select('progress').eq('user_id', userId).maybeSingle());
       return data?.progress ?? null;
