@@ -5,13 +5,18 @@
   <meta name="theme-color" content="#f7f8f4"><meta name="description" content="A calmer way to make revision stick.">
   <title>RevisePro — Your study space</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261106-5"><link rel="stylesheet" href="style.css?v=20261106-5">
+  <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261106-6"><link rel="stylesheet" href="style.css?v=20261106-6">
 </head>
 <body>
 <a class="skip-link" href="#app">Skip to content</a>
-<div class="app-shell">
+<div id="landing">
+  <header class="landing-nav"><a class="brand" href="./" aria-label="RevisePro home"><img class="brand-mark" src="logo.svg?v=20261106-6" alt="" width="42" height="42"><span>revise<span>pro</span><small>YOUR STUDY SPACE</small></span></a><div class="landing-actions"><button class="landing-login" data-open-auth="login" disabled>Sign in</button><button class="btn dark" data-open-auth="register" disabled>Get started <span>↗</span></button></div></header>
+  <main class="landing-main"><section class="landing-hero"><div class="landing-copy"><span class="landing-tag"><span></span> A BETTER WAY TO STUDY</span><h1>A little more focus.<br><em>A lot more confidence.</em></h1><p>Your subjects, your pace, your progress. Everything you need to make revision feel a little more manageable.</p><div class="landing-cta"><button class="btn dark" data-open-auth="register" disabled>Create your free account <span>↗</span></button><button class="landing-secondary" data-open-auth="login" disabled>Already a member? Sign in →</button></div><div class="landing-note"><span>✓</span> Your own space to learn, practise and grow.</div></div><div class="landing-photo" role="img" aria-label="A calm study desk with books and a notebook"><div class="landing-float"><span>✳</span><div><strong>Make it stick</strong><small>One card at a time.</small></div></div></div></section>
+  <section class="landing-features"><div class="landing-feature-head"><div><p class="eyebrow">MADE FOR YOUR MOMENTUM</p><h2>Less overwhelm. More progress.</h2></div><p>A calmer way to turn what you learn into what you know.</p></div><div class="landing-feature-grid"><article><span>01 / YOUR SUBJECTS</span><h3>Make it yours.</h3><p>Pick the subjects you actually study and keep your workspace focused on you.</p></article><article><span>02 / FLASHCARDS</span><h3>Remember more.</h3><p>Find a ready-made set or create your own cards, private or shared.</p></article><article><span>03 / YOUR PROGRESS</span><h3>Keep moving.</h3><p>Build a plan and keep track of every little step along the way.</p></article></div></section><footer class="landing-footer"><span>revisepro &nbsp; ✳</span><span>Made for progress, not perfection.</span></footer></main>
+</div>
+<div class="app-shell" hidden>
   <aside class="sidebar">
-    <a class="brand" href="#home" aria-label="RevisePro home"><img class="brand-mark" src="logo.svg?v=20261106-5" alt="" width="42" height="42"><span>revise<span>pro</span><small>YOUR STUDY SPACE</small></span></a>
+    <a class="brand" href="#home" aria-label="RevisePro home"><img class="brand-mark" src="logo.svg?v=20261106-6" alt="" width="42" height="42"><span>revise<span>pro</span><small>YOUR STUDY SPACE</small></span></a>
     <div class="sidebar-label">WORKSPACE</div>
     <nav class="nav" aria-label="Main navigation">
       <a href="#home" data-nav="home"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span> Dashboard</a>
@@ -28,5 +33,5 @@
 </div>
 <dialog id="modal"><div id="modalContent"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div>
-<script type="module" src="app.js?v=20261106-5"></script>
+<script type="module" src="app.js?v=20261106-6"></script>
 </body></html>

@@ -5,70 +5,90 @@ import { JSDOM } from 'jsdom';
 import * as utils from '../public/study-utils.js';
 import { createAccountBackend, validateConfig } from '../public/account-backend.js';
 import { extraDecks, searchDecks } from '../public/decks.js';
+import { subjectCatalog, cleanSubjects } from '../public/subject-catalog.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
-const wait=()=>new Promise(resolve=>setTimeout(resolve,25));
-
-function setup(mock, configured=true) {
-  const dom=new JSDOM(html,{url:'https://example.test/public/',runScripts:'outside-only'});
-  const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,createAccountBackend,validateConfig,supabaseConfig: configured ? {url:'https://example.supabase.co',publishableKey:'sb_publishable_test'} : {},createClient:()=>mock});
-  w.scrollTo=()=>{};
-  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};
-  w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
+const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
+const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.com',user_metadata:{name:'Alex',subjects:['Biology','Mathematics']}};
+const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
+function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
+  const log={saved:null,created:null,signup:null,signOut:0,sets:[]};
+  const client={auth:{
+    getSession:async()=>({data:{session:session?{user:session}:null}}),
+    signInWithPassword:async()=>({data:{user:account}}),
+    signUp:async input=>(log.signup=input,{data:{session:null,user:account}}),
+    resend:async input=>(log.resend=input,{data:{}}),
+    signOut:async()=>{log.signOut++;return {data:{}};}
+  },from:table=>{
+    if(table==='revision_progress')return {
+      select:()=>({eq:()=>({maybeSingle:async()=>({data:progress?{progress}:null})})}),
+      upsert:async data=>{log.saved=data;return failSync?{error:new Error('offline')}:{data:null};}
+    };
+    return {
+      select:()=>({eq:(col,value)=>({order:()=>({limit:async()=>({data:log.sets.filter(s=>s[col]===value)})})})}),
+      insert:data=>({select:()=>({single:async()=>{const row={...data,id:'a1234567-1234-4123-8123-123456789abc',owner_id:account.id};log.created=row;log.sets.push(row);return {data:row};}})}),
+      delete:()=>({eq:async(_field,id)=>{log.sets=log.sets.filter(s=>s.id!==id);return {data:null};}}), update:values=>({eq:async(_field,id)=>{const set=log.sets.find(s=>s.id===id);if(set)Object.assign(set,values);return {data:null};}})
+    };
+  }};
+  return {client,log};
+}
+function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
+  const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
+  Object.assign(w,utils,{extraDecks,searchDecks,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  w.scrollTo=()=>{};w.confirm=()=>true;
+  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
   return {dom,w,run:()=>w.eval(`(async()=>{${app}\n})()`)};
 }
+const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('hashchange'));};
 
-test('guest mode works when Supabase is not configured',async()=>{
-  const {dom,w,run}=setup(null,false);await run();
-  assert.match(w.document.querySelector('#app').textContent,/1 \/ 6 starter topics/);
-  w.document.querySelector('#topAccount').click();
-  assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/);
-  dom.window.close();
+test('logged-out visitors see landing page and cannot access guest workspace',async()=>{
+  const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});await run();
+  assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
+  assert.match(w.document.querySelector('#landing').textContent,/confidence/i);
+  w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
+});
+test('signup requires subjects and sends subject selection with confirmation redirect',async()=>{
+  const {client,log}=mockClient();const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  q('[data-open-auth="register"]').click();q('[name="name"]').value='Alex';q('[name="email"]').value='alex@example.com';q('[name="password"]').value='longpassword';
+  q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('#authError').textContent,/select at least one/i);assert.equal(log.signup,null);
+  q('input[name="subjects"][value="Biology"]').checked=true;q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(log.signup.options.emailRedirectTo,'https://example.test/public/login.html');assert.deepEqual(Array.from(log.signup.options.data.subjects),['Biology']);assert.match(q('#modal').textContent,/Check your email/);assert.equal(q('.app-shell').hidden,true);dom.window.close();
+});
+test('confirmation callback signs out the temporary session and opens login',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client,{url:'https://example.test/public/?auth=confirmed#access_token=token&type=signup'});await run();
+  assert.equal(log.signOut,1);assert.equal(w.document.querySelector('.app-shell').hidden,true);assert.match(w.document.querySelector('#authForm').textContent,/Email confirmed/);assert.equal(w.document.querySelector('#authForm').dataset.mode,'login');dom.window.close();
+});
+test('existing account chooses subjects and saves progress without overwriting guest data',async()=>{
+  const existing={...account,user_metadata:{name:'Alex'}};const {client,log}=mockClient({session:existing,progress:{completed:{biology:true},reviews:{},tasks:[],activity:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  assert.match(q('#app').textContent,/Make this space yours/);q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.deepEqual(Array.from(log.saved.progress.subjects),['Biology']);assert.equal(JSON.parse(w.localStorage.getItem('revisepro-state')).completed.maths,true);assert.match(q('#app').textContent,/Hey, Alex/);dom.window.close();
+});
+test('signed-in users search and review selected starter sets',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#flashcards');assert.ok(q('#deckSearch'));q('#deckSearch').value='chloroplasts';q('#deckSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('.deck-card').textContent,/Photosynthesis/);
+  go(w,'#flashcards/bio-transport');q('#flipCard').click();assert.match(q('#flipCard').textContent,/net movement/i);q('#reviewCard').click();await wait();assert.ok(log.saved.progress.reviews['bio-transport-0']);dom.window.close();
+});
+test('users can create a private or public set and see its visibility',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#create-set');q('[name="title"]').value='My biology';const questions=w.document.querySelectorAll('[name="question"]');const answers=w.document.querySelectorAll('[name="answer"]');questions[0].value='Question one?';answers[0].value='Answer one';questions[1].value='Question two?';answers[1].value='Answer two';
+  q('#createSetForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.created.is_public,false);assert.equal(log.created.owner_id,account.id);assert.match(q('#app').textContent,/Your private set/);assert.ok(q('[data-set-visibility="true"]'));q('[data-set-visibility="true"]').click();await wait();assert.equal(log.created.is_public,true);assert.match(q('#app').textContent,/Community set/);q('[data-set-visibility="false"]').click();await wait();assert.equal(log.created.is_public,false);
+  go(w,'#create-set');q('[name="title"]').value='Shared set';const qs=w.document.querySelectorAll('[name="question"]'),as=w.document.querySelectorAll('[name="answer"]');qs[0].value='Q1';as[0].value='A1';qs[1].value='Q2';as[1].value='A2';q('[name="isPublic"]').checked=true;q('#createSetForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.created.is_public,true);dom.window.close();
+});
+test('failed progress sync keeps local changes and offers a resolution',async()=>{
+  const {client}=mockClient({session:account,failSync:true});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#planner');q('[name="title"]').value='Local change';q('#planForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(w.localStorage.getItem(`revisepro-state-user-${account.id}-pending`),'1');q('#topAccount').click();assert.match(q('#modal').textContent,/not synced/);assert.ok(q('#useLocal'));dom.window.close();
 });
 
-test('login loads remote progress and syncs only to the authenticated user',async()=>{
-  let saved=null;
-  const account={id:'user-123',email:'learner@example.com',user_metadata:{name:'Alex'}};
-  const mock={auth:{getSession:async()=>({data:{session:null}}), signInWithPassword:async()=>({data:{user:account}}), signOut:async()=>({data:{}})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{progress:{completed:{biology:true},reviews:{},tasks:[],activity:[]}}})})}),upsert:async data=>(saved=data,{data:null})})};
-  const {dom,w,run}=setup(mock);await run();const q=s=>w.document.querySelector(s);
-  q('#topAccount').click();q('[name="email"]').value='learner@example.com';q('[name="password"]').value='longpassword';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.match(q('#app').textContent,/Hey, Alex/);assert.match(q('#app').textContent,/1 \/ 6 starter topics/);
-  w.location.hash='#planner';w.dispatchEvent(new w.HashChangeEvent('hashchange'));q('[name="title"]').value='Practise algebra';q('#planForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.equal(saved.user_id,'user-123');assert.equal(saved.progress.completed.biology,true);assert.equal(saved.progress.completed.maths,undefined);assert.equal(saved.progress.tasks[0].title,'Practise algebra');
-  q('#topAccount').click();q('#logout').click();await wait();assert.match(q('#app').textContent,/Study planner/);assert.equal(JSON.parse(w.localStorage.getItem('revisepro-state')).completed.maths,true);
-  dom.window.close();
+test('community set content is escaped and other owners cannot see management buttons',async()=>{
+  const {client,log}=mockClient({session:account});log.sets.push({id:'e1234567-1234-4123-8123-123456789abc',owner_id:'other',subject:'Biology',title:'<img src=x onerror=alert(1)>',description:'<script>evil()</script>',is_public:true,cards:[['<b>question</b>','<img src=x onerror=alert(1)>']]});
+  const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#flashcards');assert.equal(q('#deckResults img'),null);assert.match(q('#deckResults').textContent,/<img/);
+  go(w,'#flashcards/set-e1234567-1234-4123-8123-123456789abc');assert.equal(q('#app script'),null);assert.equal(q('#flipCard b'),null);assert.equal(q('[data-set-visibility]'),null);assert.equal(q('[data-delete-set]'),null);dom.window.close();
 });
 
-test('signup requiring email confirmation does not create a progress row',async()=>{
-  let writes=0;
-  const mock={auth:{getSession:async()=>({data:{session:null}}),signUp:async()=>({data:{session:null,user:{id:'new-user'}}})},from:()=>({upsert:async()=>{writes++;return {data:null}}})};
-  const {dom,w,run}=setup(mock);await run();const q=s=>w.document.querySelector(s);
-  q('#topAccount').click();q('[data-auth-mode="register"]').click();q('[name="name"]').value='Alex';q('[name="email"]').value='alex@example.com';q('[name="password"]').value='longpassword';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.match(q('#modal').textContent,/Check your email/);assert.equal(writes,0);dom.window.close();
-});
-
-test('failed sync retains local changes and offers explicit conflict choices after reload',async()=>{
-  const account={id:'u1',email:'a@example.com',user_metadata:{name:'Alex'}};
-  const mock={auth:{getSession:async()=>({data:{session:{user:account}}})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:{progress:{completed:{},reviews:{},tasks:[],activity:[]}}})})}),upsert:async()=>({error:new Error('offline')})})};
-  const {dom,w,run}=setup(mock);await run();const q=s=>w.document.querySelector(s);
-  w.location.hash='#planner';w.dispatchEvent(new w.HashChangeEvent('hashchange'));q('[name="title"]').value='Local change';q('#planForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.equal(w.localStorage.getItem('revisepro-state-user-u1-pending'),'1');q('#topAccount').click();assert.match(q('#modal').textContent,/not synced/);assert.ok(q('#useLocal'));assert.ok(q('#useCloud'));dom.window.close();
-});
-
-test('flashcard library supports search, subject filtering, browsing and saving review progress',async()=>{
-  const {dom,w,run}=setup(null,false);await run();const q=s=>w.document.querySelector(s);
-  w.location.hash='#flashcards';w.dispatchEvent(new w.HashChangeEvent('hashchange'));
-  assert.ok(q('#deckSearch'));assert.equal(q('#deckSelect'),null);assert.equal(w.document.querySelectorAll('.deck-card').length,32);
-  q('#deckSearch').value='chloroplasts';q('#deckSearch').dispatchEvent(new w.Event('input',{bubbles:true}));
-  assert.equal(w.document.querySelectorAll('.deck-card').length,1);assert.match(q('.deck-card').textContent,/Photosynthesis/);
-  q('[data-filter="Mathematics"]').click();assert.match(q('#deckResults').textContent,/No sets found/);
-  q('#clearSearch').click();assert.equal(w.document.querySelectorAll('.deck-card').length,32);
-  w.location.hash='#flashcards/bio-transport';w.dispatchEvent(new w.HashChangeEvent('hashchange'));
-  assert.match(q('#flipCard').textContent,/diffusion/i);assert.equal(w.document.querySelectorAll('.card-list-item').length,5);
-  q('#flipCard').click();assert.match(q('#flipCard').textContent,/net movement/i);
-  q('#reviewCard').click();assert.equal(JSON.parse(w.localStorage.getItem('revisepro-state')).reviews['bio-transport-0'].length,10);assert.match(q('.study-progress').textContent,/1 \/ 5 reviewed/);
-  q('[data-card-index="4"]').click();assert.match(q('#flipCard').textContent,/root hair/i);q('#nextCard').click();assert.match(q('#flipCard').textContent,/diffusion/i);
-  dom.window.close();
+test('confirmation email can be requested again from login',async()=>{
+  const {client,log}=mockClient();const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  q('[data-open-auth="login"]').click();q('#resendConfirmation').click();assert.match(q('#authError').textContent,/valid email/);q('[name="email"]').value='alex@example.com';q('#resendConfirmation').click();await wait();
+  assert.equal(log.resend.type,'signup');assert.equal(log.resend.email,'alex@example.com');assert.equal(log.resend.options.emailRedirectTo,'https://example.test/public/login.html');assert.match(q('#authError').textContent,/check your email/i);dom.window.close();
 });

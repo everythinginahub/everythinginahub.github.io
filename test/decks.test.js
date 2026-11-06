@@ -17,3 +17,11 @@ test('search finds titles, subjects and card text, with combined subject filters
   assert.equal(searchDecks(extraDecks,'photosynthesis','Mathematics').length,0);
   assert.equal(searchDecks(extraDecks,'this does not exist').length,0);
 });
+
+test('broad subject catalogue has a substantial range of introductory decks',async()=>{
+  const {subjectCatalog,cleanSubjects}=await import('../public/subject-catalog.js');
+  assert.ok(subjectCatalog.length>=60);
+  assert.ok(new Set(extraDecks.map(d=>d.subject)).size>=50);
+  assert.ok(extraDecks.every(d=>subjectCatalog.includes(d.subject)));
+  assert.deepEqual(cleanSubjects([' Biology ', 'Biology','', 'Custom study']),['Biology','Custom study']);
+});
