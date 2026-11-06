@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f8f4"><meta name="description" content="A calmer way to make revision stick.">
+  <title>RevisePro — Your study space</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand" href="#home" aria-label="RevisePro home"><span class="brand-mark">✳</span><span>revise<span>pro</span><small>YOUR STUDY SPACE</small></span></a>
+    <div class="sidebar-label">WORKSPACE</div>
+    <nav class="nav" aria-label="Main navigation">
+      <a href="#home" data-nav="home"><span class="nav-icon">▦</span> Dashboard</a>
+      <a href="#subjects" data-nav="subjects"><span class="nav-icon">▤</span> My subjects</a>
+      <a href="#flashcards" data-nav="flashcards"><span class="nav-icon">▧</span> Flashcards</a>
+      <a href="#planner" data-nav="planner"><span class="nav-icon">▣</span> Study planner</a>
+      <a href="#resources" data-nav="resources"><span class="nav-icon">⌘</span> Resources</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="sidebar-quote"><span>✳</span><strong>Little steps.<br>Big progress.</strong><p>You're doing better than you think.</p></div><button class="side-account" id="accountButton"><span class="avatar">G</span><span><strong>Guest learner</strong><small>Save your progress</small></span><span class="side-arrow">↗</span></button></div>
+  </aside>
+  <div class="main-wrap"><header class="topbar"><div class="breadcrumb">My workspace <span>/</span> <strong id="crumb">Dashboard</strong></div><div class="top-actions"><span class="top-date" id="date"></span><button class="help-button" id="helpButton" aria-label="Help">?</button><button class="top-avatar" id="topAccount" aria-label="Account">G</button></div></header>
+    <main id="app" tabindex="-1"></main>
+  </div>
+</div>
+<dialog id="modal"><div id="modalContent"></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="app.js"></script>
+</body></html>
