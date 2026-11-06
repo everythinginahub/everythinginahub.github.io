@@ -1,6 +1,6 @@
 # RevisePro
 
-A revision workspace with starter GCSE-level notes, quizzes, flashcards, a planner and curated resources. Guest progress is stored in the browser. Account login and sync use Supabase when configured; GitHub Pages serves the site for free. Starter topics are not a complete or exam-board-specific curriculum.
+A revision workspace with starter GCSE-level notes, quizzes, 32 searchable flashcard sets (148 original cards across eight subjects), a planner and curated resources. Guest progress is stored in the browser. Account login and sync use Supabase when configured; GitHub Pages serves the site for free. Starter topics are not a complete or exam-board-specific curriculum.
 
 ## Set up free accounts on GitHub Pages
 
