@@ -14,7 +14,11 @@ Visit http://localhost:3000. Create an account to sync progress to the server. P
 
 ## Hosting and limitations
 
-GitHub Pages only hosts static files: the root page redirects to `public/`, where guest mode works, but account creation and cross-device sync will not work there. To enable accounts, deploy this Node server on a host with HTTPS and a persistent writable disk, and set `DATA_DIR` to that disk. Serve the frontend and API on the same origin. Back up the SQLite database and consider operational security, monitoring, abuse prevention, privacy and safeguarding policies, password reset, email verification, accessibility review, and legal requirements before inviting real users, especially children. This is a starter product, not a production-ready replacement for established revision platforms.
+GitHub Pages only hosts static files: the root page redirects to `public/`, where guest mode works, but account creation and cross-device sync do not work there. The Node server provides both the website and its account API on the same origin.
+
+`render.yaml` is a deployment blueprint for a single Render web service and a persistent disk. It configures automatic deploys from `main`, Node 22, a health check, and the durable SQLite data directory. **This file does not create or activate a service by itself.** A Render account with access to this repository is required to create the Blueprint, and the Starter service and disk incur charges. Once deployed, use the Render service URL for both the site and login; GitHub Pages will remain guest-only unless its traffic is separately directed to the hosted service.
+
+The backend is a starter implementation, not a production-ready replacement for an established revision platform. Back up the SQLite database and address operational security, monitoring, abuse prevention, privacy and safeguarding policies, password reset, email verification, accessibility review, and legal requirements before inviting real users, especially children. Do not deploy the SQLite database on an ephemeral filesystem: account and progress data would disappear on restart or redeploy.
 
 ## Tests
 

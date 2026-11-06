@@ -1,0 +1,25 @@
+# Render Blueprint: a single service serves the website and account API.
+# Starter and persistent disks are paid resources; creating this service requires
+# a Render account and approval of the charges. It is not provisioned by this file.
+services:
+  - type: web
+    name: revisepro
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: npm test
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: revisepro-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.3
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data

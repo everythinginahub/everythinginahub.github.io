@@ -23,6 +23,7 @@ createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     if (url.pathname.startsWith('/api/')) {
       if (req.method !== 'GET' && req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) return send(res, 403, { error: 'Invalid origin' });
+      if (url.pathname === '/api/health' && req.method === 'GET') return send(res, 200, { ok: true });
       if (url.pathname === '/api/session' && req.method === 'GET') { const u = userFor(req); return send(res, 200, { user: u ? safeUser(u) : null, progress: u ? JSON.parse(u.progress) : null }); }
       if ((url.pathname === '/api/register' || url.pathname === '/api/login') && req.method === 'POST') {
         const ip = req.socket.remoteAddress; const recent = (sessions.get(ip) || []).filter(t => t > Date.now() - 60000); recent.push(Date.now()); sessions.set(ip, recent); if (recent.length > 12) return send(res, 429, { error: 'Too many attempts. Please try again in a minute.' });
@@ -47,6 +48,6 @@ createServer(async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
     const pathname = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname); const root = resolve('./public'); const file = resolve(root, '.' + pathname);
     if (!file.startsWith(root + sep)) { res.writeHead(403); return res.end(); }
-    const content = await readFile(file); res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff' }); res.end(req.method === 'HEAD' ? undefined : content);
+    const content = await readFile(file); res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': extname(file) === '.html' ? 'no-cache' : 'public, max-age=3600' }); res.end(req.method === 'HEAD' ? undefined : content);
   } catch (error) { if (error.code === 'ENOENT') { res.writeHead(404); res.end('Not found'); } else { send(res, 400, { error: 'Could not process request.' }); } }
 }).listen(port, '0.0.0.0', () => console.log(`Revision workspace listening on ${port}`));
