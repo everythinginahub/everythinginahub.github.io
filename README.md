@@ -2,7 +2,7 @@
 
 A free-to-host revision workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the study workspace requires sign-in. Learners select their own subjects at signup, or on their next sign-in if they already have an account. They can change these later, use introductory notes, quizzes and searchable flashcards, plan study sessions, and follow curated resource links.
 
-The library has 77 starter sets and 283 original cards across 53 subjects, plus more subject choices and a custom-subject option. These are **introductory examples, not complete or exam-board-specific coverage**; some subjects currently have no ready-made cards. Learners can create sets for their subjects and choose whether they are private or public to signed-in users. The library shows up to 100 of a learner's latest sets and 100 recent public sets. Public sets are unmoderated user-generated content: do not put personal information in them, and check accuracy independently.
+The library has 77 starter sets with 1,540 original cards across 53 subjects (20 cards per set), plus more subject choices and a custom-subject option. These are **introductory examples, not complete or exam-board-specific coverage**; some subjects currently have no ready-made cards. Learners can create sets for their subjects and choose whether they are private or public to signed-in users. The library shows up to 100 of a learner's latest sets and 100 recent public sets. Public sets are unmoderated user-generated content: do not put personal information in them, and check accuracy independently.
 
 ## Supabase setup
 
