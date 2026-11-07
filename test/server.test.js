@@ -21,7 +21,7 @@ after(async()=>{await stopServer(); if(dir)await rm(dir,{recursive:true,force:tr
 const post=(path,data,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(data)});
 test('static app and full account flow',async()=>{
   assert.equal((await fetch(base+'/')).status,200);
-  assert.equal((await fetch(base+'/hero-art.jpg')).headers.get('content-type'),'image/jpeg');
+  assert.equal((await fetch(base+'/hero-art.jpg')).status,404);
   assert.equal((await fetch(base+'/logo.svg')).headers.get('content-type'),'image/svg+xml');
   assert.equal((await fetch(base+'/api/session')).status,200);
   assert.deepEqual(await (await fetch(base+'/api/health')).json(), {ok:true});
