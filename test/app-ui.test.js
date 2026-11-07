@@ -254,3 +254,8 @@ test('decorative starbursts are absent while existing rewards and site branding 
   go(w,'#shop');assert.equal(q('#reward-spark .reward-badge').textContent,'◇');assert.equal(q('[data-reward="spark"]').textContent,'Equipped');
   q('[data-reward="sun"]').click();await wait();assert.equal(q('.top-avatar').textContent,'●');assert.equal(q('.top-avatar').dataset.badge,'sun');dom.window.close();
 });
+
+test('skip link focuses the visible content for logged-out and signed-in visitors',async()=>{
+  const visitor=setup(null,{configured:false});await visitor.run();visitor.w.document.querySelector('.skip-link').click();assert.equal(visitor.w.document.activeElement.className,'landing-main');visitor.dom.window.close();
+  const {client}=mockClient({session:account});const signedIn=setup(client);await signedIn.run();signedIn.w.document.querySelector('.skip-link').click();assert.equal(signedIn.w.document.activeElement.id,'app');signedIn.dom.window.close();
+});
