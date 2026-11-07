@@ -1,8 +1,14 @@
 # RevisePro
 
-A free-to-host revision workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the study workspace requires sign-in. Learners select their own subjects at signup, or on their next sign-in if they already have an account. They can change these later, use introductory notes, quizzes and searchable flashcards, plan study sessions, and follow curated resource links.
+A free-to-host revision workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the study workspace requires sign-in. Learners select their own subjects at signup, or on their next sign-in if they already have an account. They can change these later, use introductory notes, quizzes and searchable flashcards, plan study sessions, play untimed study games, and follow curated resource links.
 
 The library has 105 starter sets with 2,100 original cards across all 67 listed subjects (20 cards per set), plus a custom-subject option. These are **introductory examples, not complete or exam-board-specific coverage**; custom subjects may not have ready-made cards. Learners can create sets for their subjects and choose whether they are private or public to signed-in users. The library shows up to 100 of a learner's latest sets and 100 recent public sets. Public sets are unmoderated user-generated content: do not put personal information in them, and check accuracy independently. The Video lessons section includes 34 selected third-party YouTube lessons, playable in the site with an accompanying flashcard suggestion, plus subject-specific YouTube searches (whose results are not reviewed). Thumbnails load from YouTube in the video library; choosing a lesson loads a privacy-enhanced YouTube player. YouTube and creators control playback, availability, adverts and data handling; an external YouTube link is provided if an embed is unavailable. Videos may not match every exam board.
+
+## Study games
+
+Signed-in learners can choose a starter, private or available public flashcard set and play **Match up**, **Quick quiz** or **Write & reveal**. Matching connects questions and answers; the quiz offers up to four choices and feedback; written recall is self-marked so different valid wording is possible. Rounds are shuffled and untimed. Duplicate questions or answers are excluded to avoid ambiguous choices; matching and the quiz need at least two distinct pairs, while written recall can use one. Game scores and typed responses are not saved; finishing a round records a study-activity day but does not change individual flashcard review marks. Leaving a game discards the round. Community sets are unmoderated and their accuracy should be checked.
+
+Game design draws on the Education Endowment Foundation's discussion of [low-stakes retrieval and feedback](https://educationendowmentfoundation.org.uk/news/voices-from-the-classroom-beyond-the-quiz-feedback-and-retrieval-practice), without claiming guaranteed outcomes. The controls use ordinary keyboard-operable buttons and do not require speed, drag gestures or audio.
 
 ## Supabase setup
 

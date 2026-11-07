@@ -8,6 +8,8 @@ import { extraDecks, searchDecks } from '../public/decks.js';
 import { subjects, starterDecks } from '../public/starter-decks.js';
 import { videos, filterVideos, youtubeThumbnail, youtubeEmbed, youtubeVideoId, videoPracticeDecks } from '../public/videos.js';
 import { subjectCatalog, cleanSubjects } from '../public/subject-catalog.js';
+import { uniqueGameCards, createMatch, selectMatch, createQuiz, answerQuiz, advanceQuiz, createRecall, revealRecall, markRecall } from '../public/games.js';
+import { gamesHub, gameSetCards, gameChooser, gameView } from '../public/game-views.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -23,7 +25,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
     signOut:async()=>{log.signOut++;return {data:{}};}
   },from:table=>{
     if(table==='revision_progress')return {
-      select:()=>({eq:()=>({maybeSingle:async()=>({data:progress?{progress}:null})})}),
+      select:()=>({eq:()=>({maybeSingle:async()=>({data:progress?{progress:structuredClone(progress)}:null})})}),
       upsert:async data=>{log.saved=data;return failSync?{error:new Error('offline')}:{data:null};}
     };
     return {
@@ -36,7 +38,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -144,4 +146,56 @@ test('watching a selected video opens an in-site player with fallback and practi
   assert.equal(new URL(q('.practice-deck').href).hash,'#flashcards/bio-transport');assert.match(q('.watch-tip').textContent,/recall/i);
   go(w,'#videos');assert.equal(q('iframe'),null);assert.equal(q('#videoSearch').value,'osmosis');assert.match(q('#videoGrid').textContent,/Osmosis/);
   go(w,'#videos/no-such-lesson');assert.match(q('#app').textContent,/Video not found/);assert.equal(q('iframe'),null);dom.window.close();
+});
+
+test('games hub finds sets and links from dashboard and flashcards',async()=>{
+  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  assert.ok(q('.dashboard-games[href="#games"]'));go(w,'#games');await wait();assert.equal(q('[data-nav="games"]').getAttribute('aria-current'),'page');assert.match(q('#app').textContent,/No timer/i);
+  q('#gameSearch').value='osmosis';q('#gameSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#gameSetGrid').textContent,/Transport in cells/);
+  q('#gameSearch').value='not a real set';q('#gameSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#gameSetGrid').textContent,/No sets found/);q('#clearGameSearch').click();assert.equal(q('#gameSearch').value,'');
+  go(w,'#flashcards/bio-transport');await wait();assert.ok(q('a[href="#games/bio-transport"]'));dom.window.close();
+});
+
+test('match game handles misses and completion without changing review marks',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#games/bio-transport');await wait();q('[data-game-start="match"]').click();assert.ok(q('.match-board'));assert.equal(log.saved,null);
+  const ids=[...w.document.querySelectorAll('[data-match-side="question"]')].map(x=>x.dataset.matchId);
+  q(`[data-match-side="question"][data-match-id="${ids[0]}"]`).click();q(`[data-match-side="answer"][data-match-id="${ids[1]}"]`).click();assert.match(q('.game-feedback').textContent,/Not a match/);
+  for(const id of ids){q(`[data-match-side="question"][data-match-id="${id}"]`).click();q(`[data-match-side="answer"][data-match-id="${id}"]`).click();}
+  await wait();assert.match(q('.game-result').textContent,/5 pairs matched/);assert.equal(log.saved.progress.activity.length,1);assert.deepEqual(Object.keys(log.saved.progress.reviews),[]);
+  q('[data-game-start="match"]').click();assert.ok(q('.match-board'));go(w,'#home');await wait();go(w,'#games/bio-transport');await wait();assert.ok(q('[data-game-start="quiz"]'));assert.equal(q('.match-board'),null);dom.window.close();
+});
+
+test('quiz offers feedback and a review of missed answers without persisting scores',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#games/bio-transport');await wait();q('[data-game-start="quiz"]').click();const deck=starterDecks.find(d=>d.id==='bio-transport');
+  for(let i=0;i<10;i++){
+    const question=q('#gameQuestion').textContent;const answer=deck.cards.find(card=>card[0]===question)[1];const choices=[...w.document.querySelectorAll('[data-quiz-answer]')];
+    (i===0?choices.find(button=>button.children[1].textContent!==answer):choices.find(button=>button.children[1].textContent===answer)).click();
+    assert.match(q('.quiz-feedback').textContent,/Answer:/);assert.match(q('#gameAnnouncer').textContent,/Answer:/);q('#nextQuestion').click();
+  }
+  await wait();assert.match(q('.game-result').textContent,/9 out of 10 correct/);assert.ok(q('.game-review-item'));assert.equal(log.saved.progress.activity.length,1);assert.equal('gameScore' in log.saved.progress,false);assert.deepEqual(Object.keys(log.saved.progress.reviews),[]);dom.window.close();
+});
+
+test('games escape community content and gracefully handle too-small sets',async()=>{
+  const {client,log}=mockClient({session:account});const id='e1234567-1234-4123-8123-123456789abc';log.sets.push({id,owner_id:account.id,subject:'Biology',title:'<img src=x onerror=alert(1)>',description:'test',is_public:false,cards:[['<b>Question</b>','<script>bad()</script>']]});
+  const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#games');await wait();assert.equal(q('#gameSetGrid img'),null);assert.match(q('#gameSetGrid').textContent,/<img/);
+  go(w,`#games/set-${id}`);await wait();assert.equal(q('.game-page-heading img'),null);assert.match(q('.game-notice').textContent,/at least two/);assert.ok(q('[data-game-start="match"]').disabled);dom.window.close();
+});
+
+
+test('write and reveal accepts own wording, escapes responses and supports one-card sets',async()=>{
+  const {client,log}=mockClient({session:account});const id='e1234567-1234-4123-8123-123456789abc';log.sets.push({id,owner_id:account.id,subject:'Biology',title:'My set',is_public:false,cards:[['<b>Prompt</b>','<script>answer</script>']]});
+  const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,`#games/set-${id}`);await wait();assert.ok(q('[data-game-start="quiz"]').disabled);assert.equal(q('[data-game-start="recall"]').disabled,false);
+  q('[data-game-start="recall"]').click();assert.equal(q('#gameQuestion b'),null);q('#recallInput').value='<img src=x onerror=alert(1)>';
+  q('#recallForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('.recall-reveal img'),null);assert.equal(q('.recall-reveal script'),null);assert.match(q('.recall-response').textContent,/<img/);assert.equal(log.saved,null);
+  q('[data-recall-mark="no"]').click();await wait();assert.match(q('.game-result').textContent,/0 out of 1 self-marked correct/);assert.match(q('.game-review').textContent,/<script>answer/);assert.equal(JSON.stringify(log.saved.progress).includes('<img'),false);dom.window.close();
+});
+
+
+test('community game content is escaped in matching and quiz modes',async()=>{
+  const {client,log}=mockClient({session:account});const id='e1234567-1234-4123-8123-123456789abc';log.sets.push({id,owner_id:'another',subject:'Biology',title:'Shared',is_public:true,cards:[['<b>Question</b>','<script>answer</script>'],['<img src=x onerror=alert(1)>','<svg onload=alert(1)>']]});
+  const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,`#games/set-${id}`);await wait();assert.match(q('.game-community-warning').textContent,/not reviewed/);
+  q('[data-game-start="match"]').click();assert.equal(q('.game-stage script'),null);assert.equal(q('.game-stage img'),null);assert.equal(q('.game-stage svg'),null);assert.match(q('.game-stage').textContent,/<script>answer/);
+  q('[data-game-exit]').click();q('[data-game-start="quiz"]').click();assert.equal(q('.game-stage script'),null);assert.equal(q('.game-stage img'),null);assert.equal(q('.game-stage svg'),null);dom.window.close();
 });
