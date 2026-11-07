@@ -16,6 +16,7 @@ import { rewardsCatalog, normalizeRewards, awardDaily, chooseReward } from '../p
 import { shopView } from '../public/reward-views.js';
 import { parseCardLines } from '../public/card-import.js';
 import { mountLive } from '../public/live-games.js';
+import { mountCommunityChat } from '../public/community-chat.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -44,7 +45,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -273,4 +274,9 @@ test('live games are available from games and flashcard sets',async()=>{
 test('subject setup preserves a live invitation for an existing account',async()=>{
   const existing={...account,user_metadata:{name:'Alex'}};const {client}=mockClient({session:existing,progress:{completed:{},reviews:{},tasks:[],activity:[]}});const {dom,w,run}=setup(client,{url:'https://example.test/public/#live/AABBCCDDEE'});await run();const q=s=>w.document.querySelector(s);
   assert.ok(q('#subjectsForm'));q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(w.location.hash,'#live/AABBCCDDEE');assert.ok(q('#liveJoin'));assert.match(q('#app').textContent,/AABBCCDDEE/);dom.window.close();
+});
+
+test('signed-in users can open community chat without a live game and navigate away',async()=>{
+  const {client}=mockClient({session:account});client.rpc=async name=>name==='community_chat_list'?{data:[]}:{data:null};const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#chat');await wait();assert.equal(q('[data-nav="chat"]').getAttribute('aria-current'),'page');assert.match(q('#app').textContent,/Community chat/);assert.match(q('#app').textContent,/no game needed/i);assert.ok(q('#communityInput'));go(w,'#home');assert.equal(q('#communityInput'),null);dom.window.close();
 });
