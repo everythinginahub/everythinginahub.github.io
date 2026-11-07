@@ -29,7 +29,7 @@ test('scroll reveals animate only offscreen content, once, without hiding other 
   const {dom,w,doc,cards,observers,played}=setup();const cleanup=initScrollReveals(doc,w), observer=observers[0];
   assert.equal(observer.targets.has(cards[0]),false);assert.equal(observer.targets.has(cards[1]),true);
   assert.equal(cards[1].style.opacity,'');observer.enter(cards[1]);assert.equal(played.length,1);assert.equal(observer.targets.has(cards[1]),false);
-  assert.equal(played[0].keyframes[0].opacity,.8);assert.equal(played[0].options.duration,420);cleanup();dom.window.close();
+  assert.equal(played[0].keyframes[0].opacity,.48);assert.equal(played[0].options.duration,650);cleanup();dom.window.close();
 });
 test('dynamic content is observed, focused content is not animated, and removed content is released',async()=>{
   const {dom,w,doc,cards,observers,played}=setup();const cleanup=initScrollReveals(doc,w), observer=observers[0];

@@ -47,8 +47,8 @@ export function initScrollReveals(doc = document, win = window) {
         observed.delete(element);
         if (!element.isConnected || element.contains(doc.activeElement) || typeof element.animate !== 'function') continue;
         const animation = element.animate(
-          [{ opacity: 0.8, transform: 'translateY(12px)' }, { opacity: 1, transform: 'translateY(0)' }],
-          { duration: 420, easing: 'cubic-bezier(.2,.7,.2,1)' }
+          [{ opacity: 0.48, transform: 'translateY(32px)' }, { opacity: 1, transform: 'translateY(0)' }],
+          { duration: 650, easing: 'cubic-bezier(.2,.7,.2,1)' }
         );
         animations.add(animation);
         animation.onfinish = animation.oncancel = () => animations.delete(animation);
