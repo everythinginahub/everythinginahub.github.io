@@ -2,10 +2,10 @@
 // progress. This is not a secure currency or a payment system.
 export const rewardsCatalog = [
   { id:'leaf', name:'Fresh leaf', symbol:'❧', price:0, color:'leaf', description:'A calm start for your study space.' },
-  { id:'sun', name:'Little sunshine', symbol:'☀', price:20, color:'sun', description:'A brighter way to show up.' },
+  { id:'sun', name:'Little sunshine', symbol:'●', price:20, color:'sun', description:'A brighter way to show up.' },
   { id:'moon', name:'Night owl', symbol:'☾', price:40, color:'moon', description:'For the quiet study sessions.' },
-  { id:'spark', name:'Bright spark', symbol:'✦', price:60, color:'spark', description:'Celebrate a moment of focus.' },
-  { id:'bloom', name:'Bloom', symbol:'✿', price:90, color:'bloom', description:'A reminder that progress grows.' },
+  { id:'spark', name:'Diamond', symbol:'◇', price:60, color:'spark', description:'Celebrate a moment of focus.' },
+  { id:'bloom', name:'Bloom', symbol:'♧', price:90, color:'bloom', description:'A reminder that progress grows.' },
   { id:'star', name:'North star', symbol:'★', price:120, color:'star', description:'Keep finding your way forward.' }
 ];
 export const dailyRewardValues = Object.freeze({ card:5, game:10, test:15 });
