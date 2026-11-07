@@ -1,6 +1,12 @@
 # School Hub
 
-A free-to-host school workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the workspace requires sign-in. The home screen links to Revision, the separate community Chat, Homework, Notes, Timetable and School tools. Learners select their subjects at signup; existing accounts without subjects can use Chat and the school tools immediately and choose subjects when they open revision. The original revision features, rewards, account data and old links remain available.
+A free-to-host school workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the workspace requires sign-in. The home screen links to Revision, eBooks, the separate community Chat, Homework, Notes, Timetable and School tools. Learners select their subjects at signup; existing accounts without subjects can use Chat and the school tools immediately and choose subjects when they open revision. The original revision features, rewards, account data and old links remain available.
+
+## eBooks
+
+The eBooks tab offers a searchable, category-filtered starter shelf of ten historical editions hosted by Internet Archive, plus an option to enter an Internet Archive item ID or `archive.org/details/…` / `archive.org/embed/…` link. Opening a book loads the Internet Archive reader in an iframe, with a direct link to the item if the reader fails. The shelf's decorative covers are original CSS illustrations, not book scans. Search filters only the starter shelf; the link to Internet Archive opens its broader collection separately.
+
+Internet Archive controls the content, reader, availability, borrowing requirements and privacy practices. School Hub does not save reading position. Some items may be unavailable or require a separate Internet Archive account; browser restrictions and network conditions may prevent embeds from loading. Custom items and external search are not reviewed by School Hub and may be unsuitable for children. Historical editions can contain outdated language or ideas. The hosted reader contacts Internet Archive only when a book is opened. Tests use mocked embeds; live reader rendering in a signed-in browser has not been verified.
 
 ## School-day tools
 

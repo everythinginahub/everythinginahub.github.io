@@ -18,6 +18,7 @@ import { parseCardLines } from '../public/card-import.js';
 import { mountLive } from '../public/live-games.js';
 import { mountCommunityChat } from '../public/community-chat.js';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
+import { ebookLibrary, ebookReader, mountEbookLibrary } from '../public/ebooks.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -46,7 +47,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -305,4 +306,14 @@ test('school tools calculate safely and timer resets on navigation',async()=>{
 test('chat and school tools work independently of selecting revision subjects',async()=>{
   const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   assert.ok(q('.hub-tile[href="#chat"]'));go(w,'#chat');assert.ok(q('#communityInput'));go(w,'#tools');assert.ok(q('#focusDisplay'));go(w,'#flashcards');assert.ok(q('#subjectsForm'));dom.window.close();
+});
+
+test('eBooks shelf searches, filters, and opens trusted Archive readers separately from revision',async()=>{
+  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  assert.ok(q('.hub-tile[href="#ebooks"]'));go(w,'#ebooks');assert.equal(q('[data-nav="ebooks"]').getAttribute('aria-current'),'page');assert.equal(q('#app iframe'),null);assert.ok(w.document.querySelectorAll('.book-card').length>=8);
+  q('#bookSearch').value='carroll';q('#bookSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('.book-card').length,1);assert.match(q('#bookGrid').textContent,/Alice/);
+  q('#bookSearch').value='';q('#bookSearch').dispatchEvent(new w.Event('input',{bubbles:true}));q('[data-book-filter="Nature"]').click();assert.equal(q('[data-book-filter="Nature"]').getAttribute('aria-pressed'),'true');assert.match(q('#bookGrid').textContent,/Darwin/);assert.doesNotMatch(q('#bookGrid').textContent,/Alice/);
+  q('#archiveBookInput').value='https://evil.test/details/abc';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#archiveBookError').textContent,/Internet Archive/);assert.equal(w.location.hash,'#ebooks');
+  q('#archiveBookInput').value='https://archive.org/details/secretgarden00burn/page/10';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));w.dispatchEvent(new w.HashChangeEvent('hashchange'));assert.equal(q('.reader-frame iframe').getAttribute('src'),'https://archive.org/embed/secretgarden00burn');assert.ok(q('a[href="https://archive.org/details/secretgarden00burn"]'));assert.equal(q('[data-nav="ebooks"]').getAttribute('aria-current'),'page');
+  go(w,'#ebooks/bad%22id');assert.equal(q('iframe'),null);assert.match(q('#app').textContent,/Book not found/);dom.window.close();
 });
