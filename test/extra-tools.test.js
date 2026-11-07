@@ -1,0 +1,4 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {convertUnits,countWords,dateDifference} from '../public/extra-tools.js';
+test('metric conversion handles scale and rejects incompatible input',()=>{assert.equal(convertUnits(250,'length','cm','m'),2.5);assert.equal(convertUnits(2,'mass','kg','g'),2000);assert.equal(convertUnits(500,'volume','ml','l'),.5);assert.throws(()=>convertUnits('','length','cm','m'));assert.throws(()=>convertUnits(1,'length','kg','m'));});
+test('word counter handles whitespace and unicode',()=>{assert.deepEqual(countWords(' Hello  world\n😀 '),{words:3,characters:16,charactersNoSpaces:11,minutes:1});assert.equal(countWords(' ').words,0);});
+test('date countdown uses calendar days across leap years and rejects invalid dates',()=>{assert.equal(dateDifference('2024-03-01','2024-02-28'),2);assert.equal(dateDifference('2024-01-01','2024-01-03'),-2);assert.throws(()=>dateDifference('2024-02-30','2024-02-01'));});

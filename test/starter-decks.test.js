@@ -4,10 +4,10 @@ import { starterDecks, subjects } from '../public/starter-decks.js';
 import { starterExpansions } from '../public/starter-expansions.js';
 
 test('all built-in flashcard sets contain at least 20 distinct, complete cards', () => {
-  assert.equal(starterDecks.length, 105);
+  assert.equal(starterDecks.length, 115);
   assert.equal(new Set(starterDecks.map(deck => deck.id)).size, starterDecks.length);
   assert.ok(Object.keys(starterExpansions).every(id => starterDecks.some(deck => deck.id === id)));
-  assert.equal(starterDecks.reduce((total, deck) => total + deck.cards.length, 0), 2100);
+  assert.equal(starterDecks.reduce((total, deck) => total + deck.cards.length, 0), 2300);
   for (const deck of starterDecks) {
     assert.ok(deck.cards.length >= 20, `${deck.id} has only ${deck.cards.length} cards`);
     const questions = deck.cards.map(([question, answer]) => {
@@ -40,4 +40,10 @@ test('every listed subject has at least one starter set', async () => {
   const { subjectCatalog } = await import('../public/subject-catalog.js');
   for (const subject of subjectCatalog) assert.ok(starterDecks.some(deck => deck.subject === subject), `${subject} has no starter set`);
   assert.ok(starterDecks.every(deck => subjectCatalog.includes(deck.subject)));
+});
+
+test('200 new cards are available in ten playable sets without changing old deck IDs',async()=>{
+  const {newRevisionDecks}=await import('../public/new-revision.js');const {uniqueGameCards}=await import('../public/games.js');const {createPractice}=await import('../public/practice.js');
+  assert.equal(newRevisionDecks.length,10);assert.equal(newRevisionDecks.reduce((n,deck)=>n+deck.cards.length,0),200);
+  for(const deck of newRevisionDecks){assert.equal(deck.cards.length,20);assert.equal(uniqueGameCards(deck.cards).length,20);assert.ok(createPractice(deck.cards,10));assert.ok(starterDecks.some(item=>item.id===deck.id));}
 });
