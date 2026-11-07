@@ -22,12 +22,12 @@ export function mountLiveChat({root,client,roomId,isHost,win=window}) {
       if(isHost||message.mine){const remove=win.document.createElement('button');remove.type='button';remove.className='live-chat-remove';remove.dataset.chatDelete=message.id;remove.setAttribute('aria-label',message.mine?'Delete your message':`Delete message from ${message.name}`);remove.textContent='Delete';header.append(remove);}
       const text=win.document.createElement('p');text.textContent=message.text;item.append(header,text);list.append(item);
     }
-    if(!data.messages.length&&!list.querySelector('.live-chat-empty')){const empty=win.document.createElement('p');empty.className='live-chat-empty';empty.textContent='No messages yet. Say hello!';list.append(empty);}
+    if(!data.messages.length){let empty=list.querySelector('.live-chat-empty');if(!empty){empty=win.document.createElement('p');empty.className='live-chat-empty';list.append(empty);}if(empty.textContent!=='No messages yet. Say hello!')empty.textContent='No messages yet. Say hello!';}
     if(nearBottom)list.scrollTop=list.scrollHeight;
   }
   function poll(){
     if(stopped)return Promise.resolve();if(inFlight)return inFlight;
-    inFlight=(async()=>{try{const data=await rpc('live_chat_list',{p_room:roomId});if(!stopped)render(data);}catch{if(!stopped)status.textContent='Chat connection interrupted. Retrying…';}})().finally(()=>{inFlight=null;});return inFlight;
+    inFlight=(async()=>{try{const data=await rpc('live_chat_list',{p_room:roomId});if(!stopped)render(data);}catch{if(!stopped){status.textContent='Chat connection interrupted. Retrying…';const empty=list.querySelector('.live-chat-empty');if(empty)empty.textContent='Chat could not load. Retrying…';}}})().finally(()=>{inFlight=null;});return inFlight;
   }
   async function refreshAfterWrite(){if(inFlight)await inFlight;await poll();}
   async function submit(e){

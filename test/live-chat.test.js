@@ -21,7 +21,7 @@ test('room chat sends, escapes text, supports moderation and preserves a rejecte
 test('room chat shows remote messages on polling and only offers deletion of your own',async()=>{
   const {dom,w,root}=setup();let messages=[];
   const client={rpc:async name=>name==='live_chat_list'?{data:{enabled:true,messages:structuredClone(messages)}}:{data:null}};
-  const chat=mountLiveChat({root,client,roomId:'room',isHost:false,win:w});await wait();assert.equal(root.querySelector('[data-chat-toggle]'),null);
+  const chat=mountLiveChat({root,client,roomId:'room',isHost:false,win:w});await wait();assert.equal(root.querySelector('[data-chat-toggle]'),null);assert.match(root.querySelector('#liveChatMessages').textContent,/No messages yet/);assert.doesNotMatch(root.querySelector('#liveChatMessages').textContent,/Loading/);
   messages=[{id:'a',name:'Other',text:'Hello!',mine:false},{id:'b',name:'Guest',text:'Hi!',mine:true}];await new Promise(r=>setTimeout(r,2600));assert.match(root.textContent,/Hello!/);assert.equal(root.querySelector('[data-chat-delete="a"]'),null);assert.ok(root.querySelector('[data-chat-delete="b"]'));chat.destroy();dom.window.close();
 });
 
@@ -32,4 +32,8 @@ test('chat input draft, focus, selection and panel survive game state redraw',as
   const panel=root.querySelector('#liveChatSlot'),input=root.querySelector('#liveChatInput');root.querySelector('#liveChatJump').click();assert.equal(w.document.activeElement,input);input.value='Still typing';input.focus();input.setSelectionRange(2,5);
   state={...state,status:'question',question:{number:0,text:'Q',choices:['A','B'],selected:null,correct:null,answered:0}};await new Promise(r=>setTimeout(r,2600));
   assert.equal(root.querySelector('#liveChatSlot'),panel);assert.equal(root.querySelector('#liveChatInput'),input);assert.equal(input.value,'Still typing');assert.equal(w.document.activeElement,input);assert.equal(input.selectionStart,2);assert.equal(input.selectionEnd,5);controller.destroy();dom.window.close();
+});
+
+test('a room-chat connection failure does not leave the loading message on screen',async()=>{
+  const {dom,w,root}=setup();const client={rpc:async()=>({error:{message:'offline'}})};const chat=mountLiveChat({root,client,roomId:'room',isHost:false,win:w});await wait();assert.match(root.querySelector('#liveChatMessages').textContent,/could not load/i);assert.match(root.querySelector('#liveChatStatus').textContent,/interrupted/i);assert.equal(root.querySelector('#liveChatInput').disabled,true);chat.destroy();dom.window.close();
 });

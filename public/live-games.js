@@ -1,5 +1,5 @@
 import { createQuiz } from './games.js?v=20261107-5';
-import { mountLiveChat } from './live-chat.js?v=20261107-13';
+import { mountLiveChat } from './live-chat.js?v=20261107-14';
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const codePattern = /^[0-9A-F]{10}$/;
 const chestIcon = `<svg viewBox="0 0 64 56" aria-hidden="true" focusable="false"><path d="M7 23V18C7 8 16 3 32 3s25 5 25 15v5" fill="#a85a21" stroke="#79400e" stroke-width="3"/><path d="M8 22h48v26c0 3-3 5-6 5H14c-3 0-6-2-6-5z" fill="#cb752a" stroke="#79400e" stroke-width="3"/><path d="M8 26h48M17 22v30M47 22v30" fill="none" stroke="#ffd469" stroke-width="5"/><rect x="26" y="23" width="12" height="13" rx="2" fill="#ffd469" stroke="#79400e" stroke-width="2"/><circle cx="32" cy="29" r="2" fill="#79400e"/></svg>`;
