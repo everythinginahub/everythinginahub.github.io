@@ -43,10 +43,10 @@ export function selectMatch(game, side, id) {
   game.question = null; game.answer = null;
   return true;
 }
-export function createQuiz(cards, random = Math.random) {
+export function createQuiz(cards, random = Math.random, limit = 10) {
   const pairs = uniqueGameCards(cards);
   if (pairs.length < 2) return null;
-  const questions = shuffled(pairs, random).slice(0, 10).map(pair => {
+  const questions = shuffled(pairs, random).slice(0, Math.max(1, Math.min(20, Number.isInteger(limit) ? limit : 10))).map(pair => {
     const others = shuffled(pairs.filter(other => other.id !== pair.id), random).slice(0, 3);
     return { ...pair, choices: shuffled([pair, ...others], random).map(item => ({ id: item.id, text: item.answer })) };
   });

@@ -10,6 +10,11 @@ import { videos, filterVideos, youtubeThumbnail, youtubeEmbed, youtubeVideoId, v
 import { subjectCatalog, cleanSubjects } from '../public/subject-catalog.js';
 import { uniqueGameCards, createMatch, selectMatch, createQuiz, answerQuiz, advanceQuiz, createRecall, revealRecall, markRecall } from '../public/games.js';
 import { gamesHub, gameSetCards, gameChooser, gameView } from '../public/game-views.js';
+import { createPractice, submitPractice } from '../public/practice.js';
+import { practiceHub, practiceChooser, practiceView } from '../public/practice-views.js';
+import { rewardsCatalog, normalizeRewards, awardDaily, chooseReward } from '../public/rewards.js';
+import { shopView } from '../public/reward-views.js';
+import { parseCardLines } from '../public/card-import.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -38,7 +43,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceHub,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -198,4 +203,40 @@ test('community game content is escaped in matching and quiz modes',async()=>{
   const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,`#games/set-${id}`);await wait();assert.match(q('.game-community-warning').textContent,/not reviewed/);
   q('[data-game-start="match"]').click();assert.equal(q('.game-stage script'),null);assert.equal(q('.game-stage img'),null);assert.equal(q('.game-stage svg'),null);assert.match(q('.game-stage').textContent,/<script>answer/);
   q('[data-game-exit]').click();q('[data-game-start="quiz"]').click();assert.equal(q('.game-stage script'),null);assert.equal(q('.game-stage img'),null);assert.equal(q('.game-stage svg'),null);dom.window.close();
+});
+
+test('practice tests mark answers on submission and support retakes without saving scores',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#flashcards/bio-transport');await wait();assert.ok(q('a[href="#tests/bio-transport"]'));go(w,'#tests');await wait();q('#testSearch').value='osmosis';q('#testSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#testSetGrid').textContent,/Transport in cells/);
+  go(w,'#tests/bio-transport');await wait();q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(w.document.querySelectorAll('.practice-question').length,5);
+  q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#practiceError').textContent,/at least one/);assert.equal(log.saved,null);
+  const deck=starterDecks.find(d=>d.id==='bio-transport');const fields=[...w.document.querySelectorAll('.practice-question')];
+  fields.slice(0,4).forEach((field,i)=>{const question=field.querySelector('legend strong').textContent,answer=deck.cards.find(card=>card[0]===question)[1];const choices=[...field.querySelectorAll('label')];const chosen=i===0?choices.find(label=>label.querySelector('span').textContent!==answer):choices.find(label=>label.querySelector('span').textContent===answer);chosen.querySelector('input').checked=true;});
+  q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('.practice-summary h2').textContent,/3 \/ 5/);assert.equal(w.document.querySelectorAll('.practice-review').length,5);assert.match(q('.practice-review:last-child').textContent,/UNANSWERED/);assert.equal(log.saved.progress.rewards.coins,15);assert.equal(log.saved.progress.activity.length,1);assert.deepEqual(Object.keys(log.saved.progress.reviews),[]);assert.equal('testScore' in log.saved.progress,false);
+  q('#retryPractice').click();q('.practice-question input').checked=true;q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.rewards.coins,15);dom.window.close();
+});
+
+test('rewards are earned once per activity, spent once and equipped without changing reviews',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#flashcards/bio-transport');await wait();q('#reviewCard').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);q('#reviewCard').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);
+  go(w,'#tests/bio-transport');await wait();q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));q('.practice-question input').checked=true;q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.rewards.coins,20);
+  go(w,'#shop');await wait();assert.match(q('.shop-wallet').textContent,/20/);assert.match(q('.reward-tasks').textContent,/Earned today/);q('[data-reward="sun"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,0);assert.equal(log.saved.progress.rewards.equipped,'sun');assert.equal(q('.top-avatar').dataset.badge,'sun');assert.ok(q('[data-reward="moon"]').disabled);
+  q('[data-reward="leaf"]').click();await wait();q('[data-reward="sun"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,0);assert.equal(log.saved.progress.rewards.equipped,'sun');assert.equal(Object.keys(log.saved.progress.reviews).length,2);dom.window.close();
+});
+
+test('test generation escapes learner content and handles sets too small to test',async()=>{
+  const {client,log}=mockClient({session:account});const id='e1234567-1234-4123-8123-123456789abc';log.sets.push({id,owner_id:'another',subject:'Biology',title:'<img src=x onerror=alert(1)>',is_public:true,cards:[['<b>Question</b>','<script>answer</script>'],['<img src=x>','<svg onload=alert(1)>']]});
+  const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,`#tests/set-${id}`);await wait();assert.equal(q('.game-page-heading img'),null);assert.match(q('.game-page-heading').textContent,/<img/);assert.match(q('.game-community-warning').textContent,/not reviewed/);q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('#practiceForm script'),null);assert.equal(q('#practiceForm svg'),null);assert.equal(q('#practiceForm img'),null);q('.practice-question input').checked=true;q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('.practice-review script'),null);dom.window.close();
+});
+
+test('bulk card import checks input and never silently overwrites a draft',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#create-set');await wait();
+  q('#bulkCards').value='bad line';q('#importCards').click();assert.match(q('#importError').textContent,/tab/);assert.equal(w.document.querySelectorAll('#creatorCards .creator-card').length,2);
+  q('[name="question"]').value='Draft';w.confirm=()=>false;q('#bulkCards').value='First\tOne\n<img>\t<script>answer</script>';q('#importCards').click();assert.equal(q('[name="question"]').value,'Draft');
+  w.confirm=()=>true;q('#importCards').click();assert.equal(w.document.querySelectorAll('#creatorCards .creator-card').length,2);assert.equal(w.document.querySelectorAll('[name="question"]')[1].value,'<img>');assert.equal(q('#creatorCards img'),null);q('[name="title"]').value='My import';q('#createSetForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.created.cards[1][1],'<script>answer</script>');dom.window.close();
+});
+
+test('game completion awards coins once and the streak reflects study activity',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#games/bio-transport');await wait();q('[data-game-start="match"]').click();const ids=[...w.document.querySelectorAll('[data-match-side="question"]')].map(x=>x.dataset.matchId);
+  for(const id of ids){q(`[data-match-side="question"][data-match-id="${id}"]`).click();q(`[data-match-side="answer"][data-match-id="${id}"]`).click();}await wait();assert.equal(log.saved.progress.rewards.coins,10);assert.match(q('#topCoins').textContent,/10/);go(w,'#home');await wait();assert.match(q('.streak-panel').textContent,/1 day streak/);assert.equal(w.document.querySelectorAll('.streak-day.active').length,1);dom.window.close();
 });
