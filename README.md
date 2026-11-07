@@ -4,7 +4,7 @@ A free-to-host revision workspace on GitHub Pages, with Supabase accounts and pr
 
 The library has 105 starter sets with 2,100 original cards across all 67 listed subjects (20 cards per set), plus a custom-subject option. These are **introductory examples, not complete or exam-board-specific coverage**; custom subjects may not have ready-made cards. Learners can create sets for their subjects and choose whether they are private or public to signed-in users. The library shows up to 100 of a learner's latest sets and 100 recent public sets. Public sets are unmoderated user-generated content: do not put personal information in them, and check accuracy independently. The Video lessons section includes 34 selected third-party YouTube lessons, playable in the site with an accompanying flashcard suggestion, plus subject-specific YouTube searches (whose results are not reviewed). Thumbnails load from YouTube in the video library; choosing a lesson loads a privacy-enhanced YouTube player. YouTube and creators control playback, availability, adverts and data handling; an external YouTube link is provided if an embed is unavailable. Videos may not match every exam board.
 
-The interface uses subtle, one-time scroll reveals for content entering the viewport and short hover feedback. Content remains visible without JavaScript animation support, and motion is disabled for people who request reduced motion in their device settings.
+The interface uses one-time scroll reveals for content entering the viewport, short page entrances and hover feedback. Content remains visible without JavaScript animation support, and motion is disabled for people who request reduced motion in their device settings.
 
 ## Study games
 
