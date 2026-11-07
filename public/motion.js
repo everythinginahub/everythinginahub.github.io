@@ -6,7 +6,7 @@ const revealTargets = [
   '.game-intro-grid > div', '.game-set-card', '.game-mode-card',
   '.video-card', '.video-discovery', '.watch-tip', '.watch-practice',
   '.practice-question', '.practice-review', '.reward-task', '.reward-card',
-  '.task', '.resource-card'
+  '.task', '.resource-card', '.live-modes article', '.live-panel'
 ].join(',');
 
 export function initScrollReveals(doc = document, win = window) {
