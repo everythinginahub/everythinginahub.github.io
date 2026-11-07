@@ -26,3 +26,14 @@ export function taskDateLabel(date, today = localDate()) {
   const label = parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   return date < today ? `Overdue · ${label}` : label;
 }
+
+// Calendar days are built in local time so DST changes do not shift the labels.
+export function recentStudyDays(activity, now = new Date(), count = 7) {
+  const done = new Set(Array.isArray(activity) ? activity : []);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Array.from({length:count}, (_,i) => {
+    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (count - 1 - i));
+    const date = localDate(day);
+    return { date, label:day.toLocaleDateString('en-GB',{weekday:'short'}), description:day.toLocaleDateString('en-GB',{day:'numeric',month:'short'}), active:done.has(date), today:date===localDate(today) };
+  });
+}

@@ -10,6 +10,14 @@ Signed-in learners can choose a starter, private or available public flashcard s
 
 Game design draws on the Education Endowment Foundation's discussion of [low-stakes retrieval and feedback](https://educationendowmentfoundation.org.uk/news/voices-from-the-classroom-beyond-the-quiz-feedback-and-retrieval-practice), without claiming guaranteed outcomes. The controls use ordinary keyboard-operable buttons and do not require speed, drag gestures or audio.
 
+## Practice tests, streak and rewards
+
+Each set links to an untimed multiple-choice practice test with a choice of up to 5, 10 or 20 questions. Questions and distractors come from the set itself, not an exam board or AI; other choices can sometimes be plausible. Learners can change answers before submission, leave questions blank (counted as incorrect), review all answers and retry. At least two unique pairs and one answered question are required. Tests and scores are session-only; completing a test records study activity but does not change flashcard review marks. Flashcards and the games hub also link to a set's quick quiz and games.
+
+The dashboard shows a local-calendar streak and the last seven days of study. A virtual, non-monetary rewards shop awards 5 coins for reviewing a card, 10 for completing a game and 15 for a submitted test, each once per local day. Coins unlock cosmetic account badges only; they are not money, prizes or secure currency. Existing progress receives no retroactive coins. The balance, badges and daily claims are part of the private progress JSON; like other progress, simultaneous cross-device edits are last-write-wins and may overwrite one another. Tests use mocks, not a live multi-device transaction test.
+
+Learners can paste their own tab-separated question-and-answer pairs into a set draft (up to 50); it is not an AI importer. Gizmo and Quizlet have additional products such as AI generation and tutoring, advanced spaced repetition, multiplayer and native mobile apps; those are not implemented here. For the researched products' current study modes, see [Quizlet's study guide](https://help.quizlet.com/hc/en-us/articles/360030841732-Studying-on-Quizlet) and [Gizmo's overview](https://gizmo.ai/).
+
 ## Supabase setup
 
 1. Create a free Supabase project. Run [`supabase/setup.sql`](supabase/setup.sql) and [`supabase/flashcard_sets.sql`](supabase/flashcard_sets.sql) in its SQL Editor. The latter adds the flashcard table and row-level policies: authenticated users can read their own and public sets, but only their own sets can be changed or deleted. Anonymous users have no access. The progress table has separate per-user policies.
