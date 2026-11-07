@@ -1,3 +1,4 @@
+import { starterExpansions } from './starter-expansions.js?v=20261107-1';
 // Original introductory revision cards. Coverage is deliberately labelled as
 // general GCSE-level material, not a complete exam-board specification.
 export const extraDecks = [
@@ -236,6 +237,9 @@ extraDecks.push(
   {id:'hospitality-service',subject:'Hospitality',title:'Hospitality basics',description:'Service and hygiene',color:'peach',cards:[['What is customer service?','Helping customers and responding to their needs.'],['What is cross-contamination?','The transfer of harmful microorganisms or allergens between foods or surfaces.'],['Why is hand hygiene important?','It reduces the spread of contaminants and infection.']]},
   {id:'welsh-intro',subject:'Welsh',title:'Everyday Welsh',description:'Simple words and phrases',color:'pink',cards:[['What does “bore da” mean?','Good morning.'],['What does “diolch” mean?','Thank you.'],['What does “ie” mean?','Yes.']]}
 );
+
+// Append rather than reorder: review progress is indexed by deck and card position.
+for (const deck of extraDecks) deck.cards.push(...(starterExpansions[deck.id] || []));
 
 export function searchDecks(decks, query = '', subject = 'All') {
   const terms = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
