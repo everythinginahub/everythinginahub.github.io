@@ -11,7 +11,7 @@ import { subjectCatalog, cleanSubjects } from '../public/subject-catalog.js';
 import { uniqueGameCards, createMatch, selectMatch, createQuiz, answerQuiz, advanceQuiz, createRecall, revealRecall, markRecall } from '../public/games.js';
 import { gamesHub, gameSetCards, gameChooser, gameView } from '../public/game-views.js';
 import { createPractice, submitPractice } from '../public/practice.js';
-import { practiceHub, practiceChooser, practiceView } from '../public/practice-views.js';
+import { practiceChooser, practiceView } from '../public/practice-views.js';
 import { rewardsCatalog, normalizeRewards, awardDaily, chooseReward } from '../public/rewards.js';
 import { shopView } from '../public/reward-views.js';
 import { parseCardLines } from '../public/card-import.js';
@@ -43,7 +43,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceHub,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -54,7 +54,7 @@ const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('
 test('logged-out visitors see landing page and cannot access guest workspace',async()=>{
   const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});await run();
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
-  assert.match(w.document.querySelector('#landing').textContent,/confidence/i);
+  assert.match(w.document.querySelector('#landing').textContent,/Study your way/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
 });
 test('signup requires subjects and sends subject selection with confirmation redirect',async()=>{
@@ -76,7 +76,7 @@ test('existing account chooses subjects and saves progress without overwriting g
 test('signed-in users search and review selected starter sets',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   go(w,'#flashcards');assert.ok(q('#deckSearch'));q('#deckSearch').value='chloroplasts';q('#deckSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok([...w.document.querySelectorAll('.deck-card')].some(card=>/Photosynthesis/.test(card.textContent)));
-  go(w,'#flashcards/bio-transport');q('#flipCard').click();assert.match(q('#flipCard').textContent,/net movement/i);q('#reviewCard').click();await wait();assert.ok(log.saved.progress.reviews['bio-transport-0']);dom.window.close();
+  go(w,'#flashcards/bio-transport/study');q('#flipCard').click();assert.match(q('#flipCard').textContent,/net movement/i);q('#reviewCard').click();await wait();assert.ok(log.saved.progress.reviews['bio-transport-0']);dom.window.close();
 });
 test('users can create a private or public set and see its visibility',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
@@ -93,7 +93,7 @@ test('community set content is escaped and other owners cannot see management bu
   const {client,log}=mockClient({session:account});log.sets.push({id:'e1234567-1234-4123-8123-123456789abc',owner_id:'other',subject:'Biology',title:'<img src=x onerror=alert(1)>',description:'<script>evil()</script>',is_public:true,cards:[['<b>question</b>','<img src=x onerror=alert(1)>']]});
   const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   go(w,'#flashcards');assert.equal(q('#deckResults img'),null);assert.match(q('#deckResults').textContent,/<img/);
-  go(w,'#flashcards/set-e1234567-1234-4123-8123-123456789abc');assert.equal(q('#app script'),null);assert.equal(q('#flipCard b'),null);assert.equal(q('[data-set-visibility]'),null);assert.equal(q('[data-delete-set]'),null);dom.window.close();
+  go(w,'#flashcards/set-e1234567-1234-4123-8123-123456789abc');assert.equal(q('#app script'),null);assert.equal(q('.set-preview-card b'),null);assert.match(q('.set-preview-card').textContent,/<b>/);assert.equal(q('[data-set-visibility]'),null);assert.equal(q('[data-delete-set]'),null);dom.window.close();
 });
 
 test('confirmation email can be requested again from login',async()=>{
@@ -106,7 +106,7 @@ test('expanded starter sets can be browsed and the twentieth card reviewed',asyn
   const progress={...defaultProgress,reviews:{'bio-transport-4':'2026-01-01'}};
   const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   go(w,'#subject/biology');assert.match(q('#app').textContent,/20 cards/);
-  go(w,'#flashcards/bio-transport');assert.equal(w.document.querySelectorAll('.card-list-item').length,20);assert.match(q('.study-progress').textContent,/1 \/ 20 reviewed/);
+  go(w,'#flashcards/bio-transport/study');assert.equal(w.document.querySelectorAll('.card-list-item').length,20);assert.match(q('.study-progress').textContent,/1 \/ 20 reviewed/);
   q('[data-card-index="19"]').click();assert.match(q('.study-progress').textContent,/Card 20 of 20/);q('#reviewCard').click();await wait();
   assert.equal(log.saved.progress.reviews['bio-transport-4'],'2026-01-01');assert.ok(log.saved.progress.reviews['bio-transport-19']);dom.window.close();
 });
@@ -136,7 +136,7 @@ test('dashboard, subject view and flashcards lead to newly added content',async(
   assert.ok(q('.dashboard-video[href="#videos"]'));go(w,'#subject/biology');q('[data-open-video-subject="Biology"]').click();w.dispatchEvent(new w.HashChangeEvent('hashchange'));
   assert.equal(q('[data-video-filter="Biology"]').getAttribute('aria-pressed'),'true');assert.match(q('#videoGrid').textContent,/Osmosis/);
   go(w,'#flashcards');q('[data-filter="All subjects"]').click();q('#deckSearch').value='everyday italian';q('#deckSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#deckResults').textContent,/Everyday Italian/);
-  go(w,'#flashcards/italian-intro');assert.equal(w.document.querySelectorAll('.card-list-item').length,20);q('#reviewCard').click();await wait();assert.ok(log.saved.progress.reviews['italian-intro-0']);dom.window.close();
+  go(w,'#flashcards/italian-intro/study');assert.equal(w.document.querySelectorAll('.card-list-item').length,20);q('#reviewCard').click();await wait();assert.ok(log.saved.progress.reviews['italian-intro-0']);dom.window.close();
 });
 
 test('watching a selected video opens an in-site player with fallback and practice',async()=>{
@@ -207,8 +207,10 @@ test('community game content is escaped in matching and quiz modes',async()=>{
 
 test('practice tests mark answers on submission and support retakes without saving scores',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  go(w,'#flashcards/bio-transport');await wait();assert.ok(q('a[href="#tests/bio-transport"]'));go(w,'#tests');await wait();q('#testSearch').value='osmosis';q('#testSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#testSetGrid').textContent,/Transport in cells/);
-  go(w,'#tests/bio-transport');await wait();q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(w.document.querySelectorAll('.practice-question').length,5);
+  assert.equal(q('[data-nav="tests"]'),null);assert.equal(q('a[href="#tests"]'),null);
+  go(w,'#flashcards/bio-transport');await wait();assert.equal(q('[data-nav="flashcards"]').getAttribute('aria-current'),'page');assert.ok(q('a[href="#flashcards/bio-transport/study"]'));assert.ok(q('a[href="#games/bio-transport"]'));assert.ok(q('a[href="#tests/bio-transport"]'));assert.equal(w.document.querySelectorAll('.set-preview-card').length,20);assert.equal(q('.set-preview-card').open,false);q('.set-preview-card summary').click();assert.equal(q('.set-preview-card').open,true);
+  go(w,'#tests');await wait();assert.ok(q('#deckSearch'));assert.equal(q('[data-nav="flashcards"]').getAttribute('aria-current'),'page');assert.equal(q('#testSearch'),null);
+  go(w,'#tests/bio-transport');await wait();assert.equal(q('[data-nav="flashcards"]').getAttribute('aria-current'),'page');assert.equal(new URL(q('.game-page-heading .back-link').href).hash,'#flashcards/bio-transport');q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(w.document.querySelectorAll('.practice-question').length,5);
   q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#practiceError').textContent,/at least one/);assert.equal(log.saved,null);
   const deck=starterDecks.find(d=>d.id==='bio-transport');const fields=[...w.document.querySelectorAll('.practice-question')];
   fields.slice(0,4).forEach((field,i)=>{const question=field.querySelector('legend strong').textContent,answer=deck.cards.find(card=>card[0]===question)[1];const choices=[...field.querySelectorAll('label')];const chosen=i===0?choices.find(label=>label.querySelector('span').textContent!==answer):choices.find(label=>label.querySelector('span').textContent===answer);chosen.querySelector('input').checked=true;});
@@ -218,7 +220,7 @@ test('practice tests mark answers on submission and support retakes without savi
 
 test('rewards are earned once per activity, spent once and equipped without changing reviews',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  go(w,'#flashcards/bio-transport');await wait();q('#reviewCard').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);q('#reviewCard').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);
+  go(w,'#flashcards/bio-transport/study');await wait();q('#reviewCard').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);q('#reviewCard').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);
   go(w,'#tests/bio-transport');await wait();q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));q('.practice-question input').checked=true;q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.rewards.coins,20);
   go(w,'#shop');await wait();assert.match(q('.shop-wallet').textContent,/20/);assert.match(q('.reward-tasks').textContent,/Earned today/);q('[data-reward="sun"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,0);assert.equal(log.saved.progress.rewards.equipped,'sun');assert.equal(q('.top-avatar').dataset.badge,'sun');assert.ok(q('[data-reward="moon"]').disabled);
   q('[data-reward="leaf"]').click();await wait();q('[data-reward="sun"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,0);assert.equal(log.saved.progress.rewards.equipped,'sun');assert.equal(Object.keys(log.saved.progress.reviews).length,2);dom.window.close();
