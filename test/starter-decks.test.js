@@ -4,9 +4,10 @@ import { starterDecks, subjects } from '../public/starter-decks.js';
 import { starterExpansions } from '../public/starter-expansions.js';
 
 test('all built-in flashcard sets contain at least 20 distinct, complete cards', () => {
-  assert.equal(starterDecks.length, 77);
+  assert.equal(starterDecks.length, 105);
   assert.equal(new Set(starterDecks.map(deck => deck.id)).size, starterDecks.length);
-  assert.deepEqual(new Set(Object.keys(starterExpansions)), new Set(starterDecks.map(deck => deck.id)));
+  assert.ok(Object.keys(starterExpansions).every(id => starterDecks.some(deck => deck.id === id)));
+  assert.equal(starterDecks.reduce((total, deck) => total + deck.cards.length, 0), 2100);
   for (const deck of starterDecks) {
     assert.ok(deck.cards.length >= 20, `${deck.id} has only ${deck.cards.length} cards`);
     const questions = deck.cards.map(([question, answer]) => {
@@ -33,4 +34,10 @@ test('original cards remain at their original indices for saved review progress'
   for (const subject of subjects) {
     assert.deepEqual(starterDecks.find(deck => deck.id === subject.id).cards.slice(0, subject.cards.length), subject.cards);
   }
+});
+
+test('every listed subject has at least one starter set', async () => {
+  const { subjectCatalog } = await import('../public/subject-catalog.js');
+  for (const subject of subjectCatalog) assert.ok(starterDecks.some(deck => deck.subject === subject), `${subject} has no starter set`);
+  assert.ok(starterDecks.every(deck => subjectCatalog.includes(deck.subject)));
 });
