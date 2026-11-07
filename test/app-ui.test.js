@@ -18,7 +18,7 @@ import { parseCardLines } from '../public/card-import.js';
 import { mountLive } from '../public/live-games.js';
 import { mountCommunityChat } from '../public/community-chat.js';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
-import { ebookLibrary, ebookReader, mountEbookLibrary } from '../public/ebooks.js';
+import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '../public/ebooks.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -47,8 +47,8 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
-  w.scrollTo=()=>{};w.confirm=()=>true;
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
   return {dom,w,run:()=>w.eval(`(async()=>{${app}\n})()`)};
@@ -314,6 +314,30 @@ test('eBooks shelf searches, filters, and opens trusted Archive readers separate
   q('#bookSearch').value='carroll';q('#bookSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('.book-card').length,1);assert.match(q('#bookGrid').textContent,/Alice/);
   q('#bookSearch').value='';q('#bookSearch').dispatchEvent(new w.Event('input',{bubbles:true}));q('[data-book-filter="Nature"]').click();assert.equal(q('[data-book-filter="Nature"]').getAttribute('aria-pressed'),'true');assert.match(q('#bookGrid').textContent,/Darwin/);assert.doesNotMatch(q('#bookGrid').textContent,/Alice/);
   q('#archiveBookInput').value='https://evil.test/details/abc';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#archiveBookError').textContent,/Internet Archive/);assert.equal(w.location.hash,'#ebooks');
-  q('#archiveBookInput').value='https://archive.org/details/secretgarden00burn/page/10';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));w.dispatchEvent(new w.HashChangeEvent('hashchange'));assert.equal(q('.reader-frame iframe').getAttribute('src'),'https://archive.org/embed/secretgarden00burn');assert.ok(q('a[href="https://archive.org/details/secretgarden00burn"]'));assert.equal(q('[data-nav="ebooks"]').getAttribute('aria-current'),'page');
+  q('#archiveBookInput').value='https://archive.org/details/secretgarden00burn/page/10';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));w.dispatchEvent(new w.HashChangeEvent('hashchange'));await wait();assert.match(q('#readerContent').textContent,/Project Gutenberg/);q('[data-reader-mode=archive]').click();assert.equal(q('.reader-frame iframe').getAttribute('src'),'https://archive.org/embed/secretgarden00burn');assert.ok(q('a[href="https://archive.org/details/secretgarden00burn"]'));assert.equal(q('[data-nav="ebooks"]').getAttribute('aria-current'),'page');
   go(w,'#ebooks/bad%22id');assert.equal(q('iframe'),null);assert.match(q('#app').textContent,/Book not found/);dom.window.close();
+});
+
+test('local book reader loads without Archive, saves position and settings, searches, and lazily opens a scan',async()=>{
+  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#ebooks/wonderfulwizardo00baumiala');await wait();
+  assert.match(q('#readerContent').textContent,/Project Gutenberg/);assert.equal(q('iframe'),null);assert.ok(!q('[data-reader-page=next]').disabled);
+  q('[data-reader-page=next]').click();assert.equal(q('#readerPageInput').value,'2');q('#readerTheme').value='night';q('#readerTheme').dispatchEvent(new w.Event('change',{bubbles:true}));assert.equal(q('#readerPaper').dataset.theme,'night');
+  go(w,'#home');go(w,'#ebooks/wonderfulwizardo00baumiala');await wait();assert.equal(q('#readerPageInput').value,'2');assert.equal(q('#readerTheme').value,'night');q('#readerSearch').value='reading';q('#readerSearchForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#readerStatus').textContent,/Found on page/);
+  q('[data-reader-mode=archive]').click();assert.equal(q('iframe').getAttribute('src'),'https://archive.org/embed/wonderfulwizardo00baumiala');q('[data-reader-mode=text]').click();assert.equal(q('#readerTextPanel').hidden,false);dom.window.close();
+});
+
+test('word counter, metric converter, and date countdown work without saving text',async()=>{
+ const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#tools');q('#wordCounterInput').value='one two three';q('#wordCounterInput').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#wordCounterResult').textContent,/3 words/);
+ q('#unitForm [name=value]').value='250';q('#unitForm [name=from]').value='cm';q('#unitForm [name=to]').value='m';q('#unitForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#unitResult').textContent,/2.5 m/);
+ q('#dateForm [name=date]').value='2099-01-01';q('#dateForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#dateResult').textContent,/days to go/);assert.equal(log.saved,null);dom.window.close();
+});
+test('homework, notes and timetable support edits and useful filters without losing other data',async()=>{
+ const progress={...defaultProgress,tasks:[{title:'Maths work',date:'2026-11-09',done:false},{title:'History essay',date:'',done:true}],schoolNotes:[{title:'Physics',body:'Waves'},{title:'History',body:'Sources'}],schoolLessons:[{title:'Maths',day:0,time:'09:00',room:'A1'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+ go(w,'#planner');q('[data-task-filter=done]').click();assert.equal(q('[data-planner-task][data-task-done=false]').hidden,true);assert.equal(q('[data-planner-task][data-task-done=true]').hidden,false);q('[data-task-edit="0"]').click();q('#planForm [name=title]').value='Maths chapter 2';q('#planForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.tasks[0].title,'Maths chapter 2');assert.equal(log.saved.progress.tasks[1].done,true);
+ go(w,'#notes');q('#schoolNoteSearch').value='physics';q('#schoolNoteSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.school-note')].filter(n=>!n.hidden).length,1);
+ go(w,'#timetable');q('[data-school-lesson-edit="0"]').click();q('#schoolLessonForm [name=title]').value='Further Maths';q('#schoolLessonForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.schoolLessons[0].title,'Further Maths');assert.equal(log.saved.progress.schoolNotes.length,2);dom.window.close();
+});
+
+test('book load failure is visible and can be retried',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);let failed=true;w.fetch=async()=>failed?{ok:false}:{ok:true,text:async()=>('Project Gutenberg\n\nA working book.')};await run();const q=s=>w.document.querySelector(s);go(w,'#ebooks/alicesadventures00carr_13');await wait();assert.match(q('#readerStatus').textContent,/Could not load/);assert.equal(q('#readerRetry').hidden,false);failed=false;q('#readerRetry').click();await wait();assert.match(q('#readerContent').textContent,/working book/);assert.equal(q('#readerRetry').hidden,true);dom.window.close();
 });
