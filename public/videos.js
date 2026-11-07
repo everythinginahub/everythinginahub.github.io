@@ -26,7 +26,15 @@ export const videos = [
   {id:'music-listening',title:'Practice listening questions',creator:'YouTube lesson',level:'GCSE',subjects:['Music'],description:'Practise responding to unfamiliar musical extracts.',url:'https://www.youtube.com/watch?v=BRz8pJ9LDHQ'},
   {id:'french-phrases',title:'French phrases for speaking and writing',creator:'YouTube lesson',level:'GCSE',subjects:['French'],description:'A selection of phrases to explore for GCSE French.',url:'https://www.youtube.com/watch?v=Nm2bsLQm_uQ'},
   {id:'spanish-conjugation',title:'Spanish conjugation practice',creator:'YouTube lesson',level:'GCSE',subjects:['Spanish'],description:'Practise several Spanish verb tenses.',url:'https://www.youtube.com/watch?v=MzIwom-GJ3Q'},
-  {id:'history-medicine',title:'Medicine through time',creator:'YouTube lesson',level:'GCSE · OCR',subjects:['History'],description:'An overview of a specific history course topic; check it against your specification.',url:'https://www.youtube.com/watch?v=TtZNM5bnQGg'}
+  {id:'history-medicine',title:'Medicine through time',creator:'YouTube lesson',level:'GCSE · OCR',subjects:['History'],description:'An overview of a specific history course topic; check it against your specification.',url:'https://www.youtube.com/watch?v=TtZNM5bnQGg'},
+  {id:'pe-fitt',title:'The FITT principle',creator:'YouTube lesson',level:'GCSE',subjects:['Physical Education','Sport Science'],description:'Frequency, intensity, time and type in a training plan.',url:'https://www.youtube.com/watch?v=GMW72ACS19M'},
+  {id:'sociology-families',title:'Changing family structures',creator:'allsociology',level:'GCSE',subjects:['Sociology'],description:'A revision lesson about changes in family structures.',url:'https://www.youtube.com/watch?v=ZIZ7abwt7_c'},
+  {id:'food-nutrients',title:'Nutrients and a balanced diet',creator:'YouTube lesson',level:'GCSE',subjects:['Food Preparation and Nutrition','Biology','Combined Science'],description:'An introduction to nutrients and their roles in the body.',url:'https://www.youtube.com/watch?v=4W7dJRkhWIE'},
+  {id:'economics-supply',title:'Demand and supply',creator:'tutor2u',level:'A level',subjects:['Economics'],description:'A revision session on demand and supply.',url:'https://www.youtube.com/watch?v=luyELddQ8YY'},
+  {id:'german-greetings',title:'German conversation: greetings',creator:'YouTube lesson',level:'Beginner',subjects:['German'],description:'A brief introduction to common German greetings.',url:'https://www.youtube.com/watch?v=o_4njFBDUFQ'},
+  {id:'design-specification',title:'Writing a design specification',creator:'YouTube lesson',level:'GCSE / GCE',subjects:['Design and Technology','Electronics','Product Design'],description:'A guide to design specifications with electronics examples.',url:'https://www.youtube.com/watch?v=1Xrcn0_eN_Y'},
+  {id:'art-elements',title:'Elements of art and principles of design',creator:'YouTube lesson',level:'Introduction',subjects:['Art and Design','Graphic Design'],description:'Explore visual elements and design principles.',url:'https://www.youtube.com/watch?v=7K-cu3kYCAY'},
+  {id:'history-source-skills',title:'Evaluating historical sources',creator:'YouTube lesson',level:'GCSE',subjects:['History'],description:'Consider reliability, usefulness and value in source questions.',url:'https://www.youtube.com/watch?v=GEvCBBKP5po'}
 ];
 
 export function filterVideos(items, query = '', subject = 'My subjects', selected = []) {
@@ -39,3 +47,37 @@ export function filterVideos(items, query = '', subject = 'My subjects', selecte
     return subjectMatch && (!term || haystack.includes(term));
   });
 }
+
+// Only accept canonical YouTube watch URLs; IDs are also used in embed and
+// thumbnail URLs. This avoids embedding arbitrary origins if the catalogue changes.
+export function youtubeVideoId(url) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.origin !== 'https://www.youtube.com' || parsed.pathname !== '/watch' || parsed.username || parsed.password) return null;
+    const id = parsed.searchParams.get('v');
+    return /^[A-Za-z0-9_-]{11}$/.test(id || '') ? id : null;
+  } catch { return null; }
+}
+export function youtubeThumbnail(url) {
+  const id = youtubeVideoId(url);
+  return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null;
+}
+export function youtubeEmbed(url) {
+  const id = youtubeVideoId(url);
+  return id ? `https://www.youtube-nocookie.com/embed/${id}?rel=0` : null;
+}
+
+// Related sets offer a simple retrieval-practice step after watching; they are
+// subject suggestions, not a claim of exact exam-board coverage.
+export const videoPracticeDecks={
+  'bio-osmosis':'bio-transport','bio-diffusion':'bio-transport','bio-food-chains':'bio-ecology-new','bio-trophic':'bio-ecology-new',
+  'chem-periodic-video':'chem-periodic','chem-bonding-video':'chem-bonding','chem-metal-video':'chem-periodic',
+  'physics-parallel':'physics-electricity','physics-half-life':'physics-radiation-new','physics-generator':'physics-magnetism-new',
+  'math-ratio':'maths-ratio-new','math-proportion':'maths-ratio-new','math-quadratic':'maths-equations',
+  'eng-unseen':'english-techniques','eng-poetry-compare':'english-structure','eng-punctuation':'english-grammar-new',
+  'geo-river':'geography-rivers','geo-tectonics':'geography-hazards-new','cs-translators':'cs-systems','business-profit':'business-basics',
+  'psych-research':'psychology-research','religion-ethics':'religious-ethics','music-listening':'music-basics',
+  'french-phrases':'french-intro','spanish-conjugation':'spanish-intro','history-medicine':'history-evidence',
+  'pe-fitt':'pe-training','sociology-families':'sociology-basics','food-nutrients':'food-nutrition','economics-supply':'economics-markets',
+  'german-greetings':'german-intro','design-specification':'dt-design','art-elements':'art-basics','history-source-skills':'history-evidence'
+};

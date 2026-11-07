@@ -6,7 +6,7 @@ import * as utils from '../public/study-utils.js';
 import { createAccountBackend, validateConfig } from '../public/account-backend.js';
 import { extraDecks, searchDecks } from '../public/decks.js';
 import { subjects, starterDecks } from '../public/starter-decks.js';
-import { videos, filterVideos } from '../public/videos.js';
+import { videos, filterVideos, youtubeThumbnail, youtubeEmbed, youtubeVideoId, videoPracticeDecks } from '../public/videos.js';
 import { subjectCatalog, cleanSubjects } from '../public/subject-catalog.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
@@ -36,7 +36,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -112,7 +112,7 @@ test('video library filters selected subjects and search with safe external link
   q('[data-video-filter="All subjects"]').click();assert.ok([...w.document.querySelectorAll('.video-card')].some(card=>/Covalent bonding/.test(card.textContent)));
   q('#videoSearch').value='covalent';q('#videoSearch').dispatchEvent(new w.Event('input',{bubbles:true}));
   assert.equal(w.document.querySelectorAll('.video-card').length,1);assert.match(q('#videoCount').textContent,/1 video/);
-  assert.equal(q('.video-card').href,'https://www.youtube.com/watch?v=7IkYm7ZgiAw');assert.equal(q('.video-card').target,'_blank');assert.match(q('.video-card').rel,/noopener/);
+  assert.equal(new URL(q('.video-card').href).hash,'#videos/chem-bonding-video');assert.equal(q('.video-card img').src,'https://i.ytimg.com/vi/7IkYm7ZgiAw/mqdefault.jpg');assert.equal(q('.video-card img').getAttribute('loading'),'lazy');
   q('#videoSearch').value='nothing will match';q('#videoSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#videoGrid').textContent,/No selected videos/);
   q('#clearVideoSearch').click();assert.equal(q('#videoSearch').value,'');assert.equal(q('[data-video-filter="My subjects"]').getAttribute('aria-pressed'),'true');
   assert.match(q('.video-discovery').textContent,/not selected or reviewed/);assert.ok(q('.video-discovery-link').href.startsWith('https://www.youtube.com/results?search_query='));dom.window.close();
@@ -130,4 +130,18 @@ test('dashboard, subject view and flashcards lead to newly added content',async(
   assert.equal(q('[data-video-filter="Biology"]').getAttribute('aria-pressed'),'true');assert.match(q('#videoGrid').textContent,/Osmosis/);
   go(w,'#flashcards');q('[data-filter="All subjects"]').click();q('#deckSearch').value='everyday italian';q('#deckSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#deckResults').textContent,/Everyday Italian/);
   go(w,'#flashcards/italian-intro');assert.equal(w.document.querySelectorAll('.card-list-item').length,20);q('#reviewCard').click();await wait();assert.ok(log.saved.progress.reviews['italian-intro-0']);dom.window.close();
+});
+
+test('watching a selected video opens an in-site player with fallback and practice',async()=>{
+  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  go(w,'#videos');assert.equal(q('iframe'),null,'do not load players while browsing');
+  q('#videoSearch').value='osmosis';q('#videoSearch').dispatchEvent(new w.Event('input',{bubbles:true}));
+  const image=q('.video-thumbnail');assert.equal(image.getAttribute('alt'),'');image.dispatchEvent(new w.Event('error'));assert.equal(image.hidden,true);
+  go(w,'#videos/bio-osmosis');const frame=q('.video-player iframe');assert.ok(frame);assert.equal(frame.src,'https://www.youtube-nocookie.com/embed/vCJVXYmXkzM?rel=0');
+  assert.match(frame.title,/Osmosis/);assert.equal(frame.getAttribute('referrerpolicy'),'strict-origin-when-cross-origin');assert.ok(frame.hasAttribute('allowfullscreen'));
+  assert.equal(q('[data-nav="videos"]').getAttribute('aria-current'),'page');assert.match(q('.watch-fallback').textContent,/restrict embedding/);
+  assert.equal(q('.watch-source a').href,'https://www.youtube.com/watch?v=vCJVXYmXkzM');assert.match(q('.watch-source a').rel,/noopener/);
+  assert.equal(new URL(q('.practice-deck').href).hash,'#flashcards/bio-transport');assert.match(q('.watch-tip').textContent,/recall/i);
+  go(w,'#videos');assert.equal(q('iframe'),null);assert.equal(q('#videoSearch').value,'osmosis');assert.match(q('#videoGrid').textContent,/Osmosis/);
+  go(w,'#videos/no-such-lesson');assert.match(q('#app').textContent,/Video not found/);assert.equal(q('iframe'),null);dom.window.close();
 });
