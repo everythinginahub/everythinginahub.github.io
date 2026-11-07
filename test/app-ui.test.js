@@ -17,6 +17,7 @@ import { shopView } from '../public/reward-views.js';
 import { parseCardLines } from '../public/card-import.js';
 import { mountLive } from '../public/live-games.js';
 import { mountCommunityChat } from '../public/community-chat.js';
+import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -45,7 +46,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -72,7 +73,7 @@ test('confirmation callback signs out the temporary session and opens login',asy
 });
 test('existing account chooses subjects and saves progress without overwriting guest data',async()=>{
   const existing={...account,user_metadata:{name:'Alex'}};const {client,log}=mockClient({session:existing,progress:{completed:{biology:true},reviews:{},tasks:[],activity:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.match(q('#app').textContent,/Make this space yours/);q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  go(w,'#flashcards');assert.match(q('#app').textContent,/Make this space yours/);q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
   assert.deepEqual(Array.from(log.saved.progress.subjects),['Biology']);assert.equal(JSON.parse(w.localStorage.getItem('revisepro-state')).completed.maths,true);assert.match(q('#app').textContent,/Hey, Alex/);dom.window.close();
 });
 test('signed-in users search and review selected starter sets',async()=>{
@@ -279,4 +280,29 @@ test('subject setup preserves a live invitation for an existing account',async()
 test('signed-in users can open community chat without a live game and navigate away',async()=>{
   const {client}=mockClient({session:account});client.rpc=async name=>name==='community_chat_list'?{data:[]}:{data:null};const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   go(w,'#chat');await wait();assert.equal(q('[data-nav="chat"]').getAttribute('aria-current'),'page');assert.match(q('#app').textContent,/Community chat/);assert.match(q('#app').textContent,/no game needed/i);assert.ok(q('#communityInput'));go(w,'#home');assert.equal(q('#communityInput'),null);dom.window.close();
+});
+
+test('school hub preserves revision links and adds synced notes and a weekly timetable',async()=>{
+  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  for(const path of ['#revision','#chat','#planner','#notes','#timetable','#tools'])assert.ok(q(`.hub-tile[href="${path}"]`),path);
+  go(w,'#revision');assert.ok(q('a[href="#flashcards"]'));assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#videos"]'));
+  go(w,'#notes');q('#schoolNoteForm [name=title]').value='<img src=x>';q('#schoolNoteForm [name=body]').value='First line\nSecond line';q('#schoolNoteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(q('.school-note img'),null);assert.match(q('.school-note').textContent,/<img src=x>/);assert.equal(log.saved.progress.schoolNotes[0].body,'First line\nSecond line');assert.equal(log.saved.progress.completed.biology,true);
+  q('[data-school-note-edit]').click();q('#schoolNoteForm [name=body]').value='Updated';q('#schoolNoteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Updated');
+  go(w,'#timetable');q('#schoolLessonForm [name=title]').value='Maths';q('#schoolLessonForm [name=day]').value='1';q('#schoolLessonForm [name=time]').value='09:15';q('#schoolLessonForm [name=room]').value='A12';q('#schoolLessonForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('.school-week').textContent,/Tuesday[\s\S]*09:15[\s\S]*Maths[\s\S]*A12/);assert.equal(log.saved.progress.schoolLessons[0].day,1);
+  go(w,'#notes');assert.match(q('.school-note').textContent,/Updated/);q('[data-school-note-delete]').click();await wait();assert.equal(log.saved.progress.schoolNotes.length,0);assert.equal(log.saved.progress.schoolLessons.length,1);
+  go(w,'#timetable');q('[data-school-lesson-delete]').click();await wait();assert.equal(log.saved.progress.schoolLessons.length,0);dom.window.close();
+});
+
+test('school tools calculate safely and timer resets on navigation',async()=>{
+  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#tools');
+  q('#schoolCalcForm [name=expression]').value='(12 + 8) / 4';q('#schoolCalcForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#schoolCalcResult').textContent,/Answer: 5/);
+  q('#schoolCalcForm [name=expression]').value='1/0';q('#schoolCalcForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#schoolCalcResult').textContent,/divide by zero/);
+  q('#schoolPercentForm [name=score]').value='36';q('#schoolPercentForm [name=total]').value='40';q('#schoolPercentForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#schoolPercentResult').textContent,/90%/);
+  q('#focusMinutes').value='1';q('#focusStart').click();assert.equal(q('#focusStart').textContent,'Pause');assert.equal(q('#focusMinutes').disabled,true);q('#focusStart').click();assert.equal(q('#focusStart').textContent,'Resume');go(w,'#home');go(w,'#tools');assert.equal(q('#focusDisplay').textContent,'25:00');dom.window.close();
+});
+
+test('chat and school tools work independently of selecting revision subjects',async()=>{
+  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  assert.ok(q('.hub-tile[href="#chat"]'));go(w,'#chat');assert.ok(q('#communityInput'));go(w,'#tools');assert.ok(q('#focusDisplay'));go(w,'#flashcards');assert.ok(q('#subjectsForm'));dom.window.close();
 });
