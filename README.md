@@ -1,6 +1,16 @@
-# RevisePro
+# School Hub
 
-A free-to-host revision workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the study workspace requires sign-in. Learners select their own subjects at signup, or on their next sign-in if they already have an account. They can change these later, use introductory notes, quizzes and searchable flashcards, plan study sessions, play untimed study games, and follow curated resource links.
+A free-to-host school workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors see a public introduction; the workspace requires sign-in. The home screen links to Revision, the separate community Chat, Homework, Notes, Timetable and School tools. Learners select their subjects at signup; existing accounts without subjects can use Chat and the school tools immediately and choose subjects when they open revision. The original revision features, rewards, account data and old links remain available.
+
+## School-day tools
+
+- **Homework** uses the existing study planner and preserves its tasks; add a title and optional date, mark tasks complete or delete them.
+- **Notes** supports up to 30 notes (80-character title and 1,000-character body), with editing and deletion. **Timetable** supports up to 60 weekly lessons with a day, local start time and optional room.
+- **School tools** includes a 1–90 minute focus timer, a basic arithmetic calculator with brackets, and a score-to-percentage calculator. The focus timer is session-only, resets on leaving the page and does not send notifications. Percentages are not grade predictions.
+
+Homework, notes and timetable entries are stored in the same account progress JSON as revision, subject to its overall 100,000-byte limit and last-write-wins syncing. A sync error leaves a pending local copy; use the account menu to resolve it. Notes and timetables are not shared with other learners, but are not end-to-end encrypted and may be accessible to the service operator; avoid sensitive information. Neither the new tools nor chat have been verified in a real cross-device browser session.
+
+The launcher is inspired by the general all-in-one feel of KindleHub, without copying its assets or targeting Kindle devices. School Hub does not provide KindleHub's encrypted group chat: its Chat remains the existing shared, moderated-by-limited-rules community conversation described below.
 
 The library has 105 starter sets with 2,100 original cards across all 67 listed subjects (20 cards per set), plus a custom-subject option. These are **introductory examples, not complete or exam-board-specific coverage**; custom subjects may not have ready-made cards. Learners can create sets for their subjects and choose whether they are private or public to signed-in users. The library shows up to 100 of a learner's latest sets and 100 recent public sets. Public sets are unmoderated user-generated content: do not put personal information in them, and check accuracy independently. The Video lessons section includes 34 selected third-party YouTube lessons, playable in the site with an accompanying flashcard suggestion, plus subject-specific YouTube searches (whose results are not reviewed). Thumbnails load from YouTube in the video library; choosing a lesson loads a privacy-enhanced YouTube player. YouTube and creators control playback, availability, adverts and data handling; an external YouTube link is provided if an embed is unavailable. Videos may not match every exam board.
 
