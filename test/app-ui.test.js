@@ -242,3 +242,15 @@ test('game completion awards coins once and the streak reflects study activity',
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#games/bio-transport');await wait();q('[data-game-start="match"]').click();const ids=[...w.document.querySelectorAll('[data-match-side="question"]')].map(x=>x.dataset.matchId);
   for(const id of ids){q(`[data-match-side="question"][data-match-id="${id}"]`).click();q(`[data-match-side="answer"][data-match-id="${id}"]`).click();}await wait();assert.equal(log.saved.progress.rewards.coins,10);assert.match(q('#topCoins').textContent,/10/);go(w,'#home');await wait();assert.match(q('.streak-panel').textContent,/1 day streak/);assert.equal(w.document.querySelectorAll('.streak-day.active').length,1);dom.window.close();
 });
+
+test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
+  const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
+  const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261107-6');
+  assert.equal(q('.top-avatar').textContent,'◇');assert.match(q('#topCoins').textContent,/0 coins/);
+  for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
+    go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
+  }
+  go(w,'#shop');assert.equal(q('#reward-spark .reward-badge').textContent,'◇');assert.equal(q('[data-reward="spark"]').textContent,'Equipped');
+  q('[data-reward="sun"]').click();await wait();assert.equal(q('.top-avatar').textContent,'●');assert.equal(q('.top-avatar').dataset.badge,'sun');dom.window.close();
+});
