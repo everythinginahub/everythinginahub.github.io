@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f6f4ef"><meta name="description" content="A personal hub for lists, tasks, habits, notes, books, games and useful tools.">
   <title>Everything Hub — Apps for everyday life</title>
-  <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261114-11"><link rel="stylesheet" href="style.css?v=20261114-10"><link rel="stylesheet" href="site-design.css?v=20261114-11">
+  <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261114-11"><link rel="stylesheet" href="style.css?v=20261114-10"><link rel="stylesheet" href="site-design.css?v=20261114-12">
 </head>
 <body>
 <a class="skip-link" href="#app">Skip to content</a>
@@ -28,11 +28,12 @@
   </main>
 </div>
 <div class="app-shell" hidden>
-  <div class="main-wrap"><header class="topbar"><div class="topbar-start"><a href="#home" class="top-brand" aria-label="Everything Hub home"><img src="logo.svg?v=20261114-11" alt="" width="27" height="27"><span>Everything Hub</span></a><div class="breadcrumb"><a href="#home" class="app-home-link" aria-label="Back to home screen"><span>Home</span></a><span class="breadcrumb-divider" aria-hidden="true">/</span><strong id="crumb">Home</strong></div></div><div class="top-actions"><span class="top-date" id="date"></span><button class="help-button" id="helpButton" aria-label="Help">?</button><button class="top-avatar" id="topAccount" aria-label="Account">G</button></div></header>
+  <div class="main-wrap"><header class="topbar"><div class="topbar-start"><a href="#home" class="top-brand" aria-label="Everything Hub home"><img src="logo.svg?v=20261114-11" alt="" width="27" height="27"><span>Everything Hub</span></a><div class="breadcrumb"><a href="#home" class="app-home-link" aria-label="Back to home screen"><span>Home</span></a><span class="breadcrumb-divider" aria-hidden="true">/</span><strong id="crumb">Home</strong></div></div><div class="top-actions"><button type="button" id="openAppSwitcher" class="app-switcher-trigger" aria-haspopup="dialog" aria-controls="appSwitcher" title="Switch apps (Alt+A)">Apps</button><span class="top-date" id="date"></span><button class="help-button" id="helpButton" aria-label="Help">?</button><button class="top-avatar" id="topAccount" aria-label="Account">G</button></div></header>
     <main id="app" tabindex="-1"></main>
   </div>
 </div>
+<dialog id="appSwitcher" aria-labelledby="appSwitcherTitle"><div class="switcher-head"><div><p>EVERYTHING HUB</p><h2 id="appSwitcherTitle">Switch apps</h2></div><button type="button" id="closeAppSwitcher" aria-label="Close app switcher">×</button></div><label class="switcher-search" for="switcherSearch">Search apps<input type="search" id="switcherSearch" placeholder="Search by name or purpose…" autocomplete="off"></label><p class="switcher-hint">Pin your favourites for quick access. Saved on this device.</p><div id="switcherResults"></div><p id="switcherStatus" class="sr-only" role="status" aria-live="polite"></p></dialog>
 <dialog id="modal"><div id="modalContent"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div><div id="gameAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-<script type="module" src="app.js?v=20261114-11"></script>
+<script type="module" src="app.js?v=20261114-12"></script>
 </body></html>
