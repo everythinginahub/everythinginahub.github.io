@@ -448,3 +448,36 @@ test('featured games route opens the selected local game and cleans up on naviga
 test('an open note flushes before navigation and sign out without losing unrelated progress',async()=>{
  const progress={...defaultProgress,schoolNotes:[{title:'Existing',body:'Old'}],schoolLessons:[{title:'Maths',day:0,time:'09:00'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#notes');q('[data-note-edit="0"]').click();q('[data-note-form=edit] [name=body]').value='Saved when leaving';go(w,'#home');await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Saved when leaving');assert.equal(log.saved.progress.schoolLessons[0].title,'Maths');go(w,'#notes');q('#noteNew').click();q('[data-note-form=compose] [name=body]').value='Saved before logout';q('#topAccount').click();q('#logout').click();await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Saved before logout');assert.equal(log.signOut,1);}finally{dom.window.close();}
 });
+
+test('app switcher searches, pins and navigates without changing synced progress',async()=>{
+ const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+ q('#openAppSwitcher').click();assert.equal(q('#appSwitcher').open,true);assert.equal(w.document.activeElement.id,'switcherSearch');
+ const search=q('#switcherSearch');search.value='notes';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('[data-switcher-link]').length,1);assert.equal(q('[data-switcher-link]').getAttribute('href'),'#notes');
+ q('[data-switcher-pin="notes"]').click();assert.equal(q('[data-switcher-pin="notes"]').getAttribute('aria-pressed'),'true');assert.equal(log.saved,null);
+ q('[data-switcher-link]').click();go(w,'#notes');assert.equal(q('#appSwitcher').open,false);assert.ok(q('#notesApp'));
+ q('#openAppSwitcher').click();assert.equal(q('#switcherResults [data-switcher-link]').getAttribute('href'),'#notes');assert.equal(q('[data-switcher-link]').getAttribute('aria-current'),'page');q('#closeAppSwitcher').click();
+ w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'a',altKey:true,bubbles:true}));assert.equal(q('#appSwitcher').open,true);
+ }finally{dom.window.close();}
+});
+
+test('tasks, saved links and resources can be searched without changing account data',async()=>{
+ const progress={...defaultProgress,tasks:[{title:'Book train',done:false},{title:'Buy bread',done:true}],everydayBookmarks:[{name:'Library',url:'https://example.com/books',note:'Reading'},{name:'Weather',url:'https://example.org',note:'Forecast'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s),type=(input,value)=>{input.value=value;input.dispatchEvent(new w.Event('input',{bubbles:true}));};
+ go(w,'#planner');type(q('#taskSearch'),'bread');assert.equal(w.document.querySelectorAll('[data-planner-task]:not([hidden])').length,1);assert.match(q('[data-planner-task]:not([hidden])').textContent,/Buy bread/);type(q('#taskSearch'),'missing');assert.match(q('#taskFilterEmptyText').textContent,/No tasks match/);
+ go(w,'#bookmarks');type(q('#bookmarkSearch'),'reading');assert.equal(w.document.querySelectorAll('[data-bookmark-search]:not([hidden])').length,1);type(q('#bookmarkSearch'),'missing');assert.equal(q('#bookmarkNoResults').hidden,false);
+ go(w,'#resources');type(q('#resourceSearch'),'anki');assert.equal(w.document.querySelectorAll('[data-resource]:not([hidden])').length,1);type(q('#resourceSearch'),'missing');assert.equal(q('#resourceEmpty').hidden,false);assert.equal(log.saved,null);
+ }finally{dom.window.close();}
+});
+
+test('book shelf can sort titles and authors without modifying the collection',()=>{
+ const dom=new JSDOM(`<main>${ebookLibrary()}</main>`,{url:'https://example.test/'});try{const root=dom.window.document.querySelector('main'),controller=mountEbookLibrary({root,win:dom.window});const select=root.querySelector('#bookSort');select.value='title';select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));assert.match(root.querySelector('.book-card h3').textContent,/Christmas Carol/);select.value='author';select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));assert.match(root.querySelector('.book-card h3').textContent,/Sherlock Holmes/);assert.ok(root.querySelector('.book-description'));controller.destroy();}finally{dom.window.close();}
+});
+
+test('tool search keeps the timer and other tool forms mounted',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#tools');const q=s=>w.document.querySelector(s);q('#focusMinutes').value='5';q('#focusStart').click();const search=q('#toolSearch');search.value='temperature';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#focusDisplay').closest('.school-panel').hidden,true);assert.equal(q('#temperatureForm').closest('.school-panel').hidden,false);search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#focusDisplay').closest('.school-panel').hidden,false);assert.equal(q('#focusStart').textContent,'Pause');}finally{dom.window.close();}
+});
+test('AI chat can be disconnected without leaving the app',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#ai');const q=s=>w.document.querySelector(s);q('#loadAiChat').click();assert.ok(q('#aiEmbed iframe'));assert.equal(q('#unloadAiChat').hidden,false);q('#unloadAiChat').click();assert.equal(q('#aiEmbed iframe'),null);assert.ok(q('#loadAiChat'));}finally{dom.window.close();}
+});
+test('game collection clears search and category together',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#arcade/library');const q=s=>w.document.querySelector(s);q('[data-embed-filter="puzzle"]').click();q('#embedSearch').value='no such game';q('#embedSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#embedCount').textContent,/^0 /);q('#embedReset').click();assert.equal(q('#embedSearch').value,'');assert.equal(q('[data-embed-filter="all"]').getAttribute('aria-pressed'),'true');assert.ok(w.document.querySelectorAll('.embed-card').length>0);}finally{dom.window.close();}
+});

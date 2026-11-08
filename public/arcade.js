@@ -1,6 +1,6 @@
 import {featuredCards, spotlightView, mountSpotlight} from './featured-games.js?v=20261114-8';
 import {geometryDashView, mountGeometryDash} from './geometry-dash.js?v=20261114-7';
-import {libraryView, embedView, mountLibrary} from './embedded-games.js?v=20261114-8';
+import {libraryView, embedView, mountLibrary} from './embedded-games.js?v=20261114-12';
 import {newRunner,newOrbit,newReef,jumpRunner,launchReef,stepGame,WIDTH,HEIGHT} from './arcade-engine.js?v=20261113-1';
 import {drawArcade} from './arcade-render.js?v=20261113-1';
 

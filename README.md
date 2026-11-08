@@ -36,6 +36,12 @@ The ten starter books now open **locally hosted Project Gutenberg text editions*
 
 The Internet Archive scan remains available as an optional, separate edition, as well as a link to the original item. Pasting an Archive item ID or URL still opens its embedded viewer, with a direct link as fallback; custom items do not have locally hosted copies. Internet Archive controls its reader, content, availability, borrowing requirements and privacy practices. Custom content and external search are not reviewed by Everything Hub and may be unsuitable for children. Some scans may require an Archive account or fail to embed.
 
+## Getting around and finding things
+
+The **Apps** button is available throughout the workspace; use it to search for an app, pin favourites, or return to a recent app. On a keyboard, Alt+A opens the switcher. Pins and recent apps are stored separately for each signed-in account on this device, not synced to other devices. Opening another app still leaves the current page, so session-only tools such as the focus timer reset as usual.
+
+Tasks, saved links, revision resources and everyday tools can be searched in place. The book shelf supports title and author sorting, and the game collection has a control to clear both its search and category. The AI chat embed can be disconnected without leaving its page. These controls don't change saved account progress.
+
 ## AI chat
 
 The AI chat app embeds the independently operated [Free AI Chat Space by Zacheus10](https://huggingface.co/spaces/Zacheus10/free-ai-chat) on Hugging Face after the user chooses to load it. The Space describes its model as Qwen3-4B-Instruct, not Gemini. It sends messages to that third-party service, has free GPU limits and queues, and can change, become unavailable or require sign-in. It is not moderated by Everything Hub and is not suitable for unsupervised children. Do not send sensitive information; verify important answers. The old `#kindle-ai` link still opens this page. Gemini's own consumer chat does not provide a supported embed for this site.

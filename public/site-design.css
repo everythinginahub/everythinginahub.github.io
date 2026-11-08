@@ -200,3 +200,49 @@ dialog::backdrop { background:#24323b80; }
 .cover-ochre { background:#e9dfc9; color:#6c5b3f; }
 .geometry-entry { margin-bottom:38px; }
 .os-app-grid.home-directory .hub-tile[hidden] { display:none; }
+
+/* Quick navigation, kept separate from account data. */
+.app-switcher-trigger { border:1px solid #ccd6d5; background:#f6f7f2; color:#304f62; border-radius:4px; padding:7px 11px; font-size:12px; font-weight:700; cursor:pointer; }
+.app-switcher-trigger:hover { background:#e8eeeb; border-color:#9fb0b0; }
+#appSwitcher { width:min(560px,calc(100vw - 32px)); max-height:min(720px,calc(100dvh - 32px)); padding:24px; overflow:auto; color:#263942; }
+.switcher-head { display:flex; justify-content:space-between; align-items:start; gap:20px; }
+.switcher-head p { margin:0 0 6px; color:#8a6551; font-size:10px; font-weight:750; letter-spacing:.09em; }
+.switcher-head h2 { margin:0; font:400 29px/1.2 Georgia,serif; }
+.switcher-head button { width:34px; height:34px; border:1px solid #d5ded8; border-radius:4px; background:#f5f6f1; color:#425c68; font-size:22px; cursor:pointer; }
+.switcher-search,.bookmark-search,.resource-search { display:grid; gap:6px; margin-top:20px; color:#465c63; font-size:12px; font-weight:700; }
+.switcher-search input,.bookmark-search input,.resource-search input,.task-search input,.book-sort select { width:100%; min-height:42px; padding:10px 12px; border:1px solid #cbd4d0; border-radius:4px; background:#fff; color:#293f48; font:inherit; }
+.switcher-hint { margin:10px 0 16px; color:#6c7b78; font-size:11px; line-height:1.5; }
+.switcher-row { display:flex; align-items:stretch; border-top:1px solid #e0e5df; }
+.switcher-row>a { display:flex; align-items:center; flex:1; min-width:0; gap:12px; padding:12px 4px; text-decoration:none; color:#2b414b; }
+.switcher-row>a:hover { background:#f2f5f1; }
+.switcher-row>a>span:nth-child(2) { flex:1; min-width:0; display:grid; gap:4px; }
+.switcher-row strong { font-size:13px; }
+.switcher-row small { color:#667875; font-size:11px; }
+.switcher-row em { font-size:10px; font-style:normal; color:#627d80; }
+.switcher-icon { display:grid; place-items:center; flex:none; width:32px; height:32px; background:#e8efeb; color:#557480; border-radius:4px; }
+.switcher-icon svg { width:17px; height:17px; }
+.switcher-row>button { align-self:center; flex:none; width:38px; height:38px; border:0; background:transparent; color:#9c7459; font-size:22px; cursor:pointer; }
+.switcher-row>button:hover { background:#f5f0e8; }
+.switcher-empty { padding:22px 0; color:#657875; }
+.task-search { display:block; margin:16px 0 4px; }
+.habit-summary { margin:16px 0; padding:12px 15px; border-left:3px solid #829d9b; background:#edf1ec; color:#405c60; font-size:13px; font-weight:650; }
+.bookmark-row[hidden],.resource-card[hidden],#bookmarkNoResults[hidden],#resourceEmpty[hidden] { display:none!important; }
+#bookmarkSearchCount,#resourceCount { color:#6d7c77; font-size:12px; margin:8px 0 14px; }
+.resource-search { max-width:440px; }
+.book-sort { display:flex; align-items:center; gap:10px; margin-top:18px; color:#546a6a; font-size:12px; font-weight:700; }
+.book-sort select { width:auto; min-height:36px; padding:6px 30px 6px 10px; }
+.book-card-info .book-description { margin-top:9px; color:#62736f; line-height:1.45; }
+@media(max-width:480px) {
+ .app-switcher-trigger { padding:7px 8px; }
+ .breadcrumb { min-width:0; }
+ .breadcrumb strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:85px; }
+ .topbar-start { overflow:hidden; }
+ #appSwitcher { padding:20px; }
+ .switcher-row small { line-height:1.4; }
+}
+.tool-search { display:grid; gap:6px; max-width:440px; margin:18px 0 8px; color:#465c63; font-size:12px; font-weight:700; }
+.tool-search input { min-height:42px; padding:10px 12px; border:1px solid #cbd4d0; border-radius:4px; background:#fff; color:#293f48; font:inherit; }
+.tool-count { color:#6d7c77; font-size:12px; margin:8px 0 16px; }
+.school-tool-grid>.school-panel[hidden],#toolEmpty[hidden],#unloadAiChat[hidden] { display:none!important; }
+#unloadAiChat { margin-top:14px; }
+.embed-reset { border:0; background:transparent; color:#315f77; padding:8px 0; font-size:12px; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
