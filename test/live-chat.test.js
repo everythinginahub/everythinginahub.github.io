@@ -37,3 +37,7 @@ test('chat input draft, focus, selection and panel survive game state redraw',as
 test('a room-chat connection failure does not leave the loading message on screen',async()=>{
   const {dom,w,root}=setup();const client={rpc:async()=>({error:{message:'offline'}})};const chat=mountLiveChat({root,client,roomId:'room',isHost:false,win:w});await wait();assert.match(root.querySelector('#liveChatMessages').textContent,/could not load/i);assert.match(root.querySelector('#liveChatStatus').textContent,/interrupted/i);assert.equal(root.querySelector('#liveChatInput').disabled,true);chat.destroy();dom.window.close();
 });
+
+test('room chat owner badge uses the server flag rather than a nickname',async()=>{
+ const {dom,w,root}=setup();let tick;w.setInterval=fn=>(tick=fn,1);w.clearInterval=()=>{};let messages=[{id:'1',name:'Guest',text:'Hi',mine:false,isOwner:true},{id:'2',name:'Owner',text:'Hi',mine:false,isOwner:false}];const client={rpc:async()=>({data:{enabled:true,messages:structuredClone(messages)}})};const chat=mountLiveChat({root,client,roomId:'room',isHost:false,win:w});try{await wait();assert.equal(root.querySelector('[data-message-id="1"] .chat-owner-badge').textContent,'Owner');assert.equal(root.querySelector('[data-message-id="2"] .chat-owner-badge'),null);messages[0].isOwner=false;tick();await wait();assert.equal(root.querySelector('[data-message-id="1"] .chat-owner-badge'),null);}finally{chat.destroy();dom.window.close();}
+});
