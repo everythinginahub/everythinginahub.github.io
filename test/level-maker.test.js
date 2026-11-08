@@ -35,3 +35,18 @@ test('the starter course is finishable with well-timed jumps',()=>{
 test('oversized account progress is not overwritten when saving a level',()=>{
  const dom=new JSDOM(`<main>${designerView()}</main>`,{url:'https://example.test'}),w=dom.window,root=w.document.querySelector('main'),state={important:'x'.repeat(91000)};let saves=0;const ctl=mountDesigner({root,state,userId:'full',save:()=>saves++,toast:()=>{},win:w});root.querySelector('#makerSave').click();assert.equal(saves,0);assert.equal(state.designerLevels,undefined);assert.equal(state.important.length,91000);assert.match(root.querySelector('#makerStatus').textContent,/Not enough account progress space/);assert.ok(w.localStorage.getItem('everything-level-draft-full'));ctl.destroy();dom.window.close();
 });
+
+test('external game is opt-in, separate from the editor, and stops when playtesting',()=>{
+ const dom=new JSDOM(`<main>${designerView()}</main>`,{url:'https://example.test'}),w=dom.window,root=w.document.querySelector('main');w.HTMLCanvasElement.prototype.getContext=()=>null;w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};
+ const ctl=mountDesigner({root,state:{},userId:'embed',save:()=>{},toast:()=>{},win:w}),q=s=>root.querySelector(s);
+ assert.equal(q('#dashFrame'),null);assert.ok(q('#dashGameTitle').compareDocumentPosition(q('#makerGrid')) & w.Node.DOCUMENT_POSITION_FOLLOWING);assert.match(q('.dash-separation').textContent,/cannot be imported/);
+ q('#dashLoad').click();const frame=q('#dashFrame');assert.equal(frame.src,'https://arcadino.com/game/geometry-dash-lite/embed/');assert.equal(frame.getAttribute('referrerpolicy'),'no-referrer');assert.ok(frame.getAttribute('sandbox').includes('allow-scripts'));assert.equal(q('#dashPlaceholder').hidden,true);
+ q('#makerPlay').click();assert.equal(q('#dashFrame'),null);assert.equal(q('#dashPlaceholder').hidden,false);assert.equal(q('#makerPlayPanel').hidden,false);assert.match(q('#dashStatus').textContent,/stopped/);
+ q('#makerStart').click();q('#dashLoad').click();assert.match(q('#makerOverlayTitle').textContent,/Paused/);q('#dashStop').click();assert.equal(q('#dashFrame'),null);assert.equal(q('#dashStop').hidden,true);ctl.destroy();w.close();
+});
+
+test('enhanced playtest renderer handles each theme and object without changing the level',async()=>{
+ const {drawLevel}=await import('../public/level-render.js');const calls=[];const ctx=new Proxy({createLinearGradient:()=>({addColorStop(){}})}, {get(target,key){return key in target?target[key]:(...args)=>calls.push([key,...args]);},set(target,key,val){target[key]=val;return true;}});
+ for(const theme of ['dusk','ocean','sunset']){const level={...blank(),theme,cells:['block','spike','pad','coin'].map((type,i)=>({x:i+4,y:0,type}))};const run=createRun(level),before=JSON.stringify(run.level);drawLevel(ctx,run,640,360,{reducedMotion:true});assert.equal(JSON.stringify(run.level),before);}
+ assert.ok(calls.some(c=>c[0]==='arc'));assert.ok(calls.some(c=>c[0]==='fillText'));
+});
