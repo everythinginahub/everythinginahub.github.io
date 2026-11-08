@@ -29,3 +29,9 @@ test('malformed legacy reward data is handled safely and only known badges survi
   const wallet=normalizeRewards({coins:-10,owned:['__proto__','sun','sun'],equipped:'__proto__',daily:{date:'bad',claimed:['game','game','invalid']}});
   assert.equal(wallet.coins,0);assert.deepEqual(wallet.owned,['leaf','sun']);assert.equal(wallet.equipped,'leaf');assert.deepEqual(wallet.daily.claimed,['game']);assert.ok(rewardsCatalog.every(item=>typeof item.price==='number'));
 });
+
+test('everyday activities award once a day without disturbing legacy balances or badges',()=>{
+ let wallet={coins:42,owned:['leaf','sun'],equipped:'sun',daily:{date:'2026-11-07',claimed:['card']}};
+ for(const [kind,amount] of [['task',5],['habit',5],['list',5],['reading',5],['arcade',10]]){let result=awardDaily(wallet,kind,'2026-11-07');assert.equal(result.gained,amount);wallet=result.wallet;assert.equal(awardDaily(wallet,kind,'2026-11-07').gained,0);}
+ assert.equal(wallet.coins,72);assert.equal(wallet.equipped,'sun');assert.ok(wallet.owned.includes('sun'));assert.ok(wallet.daily.claimed.includes('card'));const next=awardDaily(wallet,'task','2026-11-08');assert.equal(next.gained,5);assert.deepEqual(next.wallet.daily.claimed,['task']);assert.equal(chooseReward(next.wallet,'wave').status,'purchased');
+});
