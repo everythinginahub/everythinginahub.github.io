@@ -437,3 +437,7 @@ test('Geometry Dash replaces the editor without deleting existing account data',
  go(w,'#arcade/designer');assert.ok(q('#geometryFrame'));assert.equal(q('#makerGrid'),null);
  go(w,'#subjects');q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(JSON.stringify(log.saved.progress.designerLevels),JSON.stringify(legacy));}finally{dom.window.close();}
 });
+
+test('featured games route opens the selected local game and cleans up on navigation',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#arcade');assert.ok(q('a[href="#arcade/spotlight/radius-raid"]'));go(w,'#arcade/spotlight/radius-raid');assert.equal(q('#spotlightFrame').getAttribute('src'),'games/radius-raid/index.html');go(w,'#arcade');assert.equal(q('#spotlightFrame'),null);go(w,'#arcade/play/sudoku');assert.ok(q('.embedded-frame iframe'));}finally{dom.window.close();}
+});
