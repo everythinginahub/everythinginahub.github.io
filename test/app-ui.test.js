@@ -430,6 +430,10 @@ test('turning a hosted book page earns once; loading and switching editions do n
  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#ebooks/wonderfulwizardo00baumiala');await wait();assert.equal(log.saved,null);assert.equal(q('[data-reader-page="next"]').disabled,false);q('[data-reader-page="next"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);q('[data-reader-page="next"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);q('[data-reader-mode="archive"]').click();await wait();assert.equal(log.saved.progress.rewards.coins,5);dom.window.close();
 });
 
-test('level maker is reachable from Games and saves to account progress',async()=>{
- const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#arcade');assert.ok(q('a[href="#arcade/designer"]'));go(w,'#arcade/designer');assert.ok(q('#makerGrid'));q('[data-x="4"][data-y="0"]').click();q('#makerName').value='My course';q('#makerName').dispatchEvent(new w.Event('input',{bubbles:true}));q('#makerSave').click();await wait();assert.equal(log.saved.progress.designerLevels[0].level.name,'My course');assert.equal(log.saved.progress.designerLevels[0].level.cells.some(c=>c.x===4&&c.y===0&&c.type==='spike'),true);assert.equal(log.saved.progress.completed.biology,true);go(w,'#arcade');assert.equal(q('#makerGrid'),null);dom.window.close();
+test('Geometry Dash replaces the editor without deleting existing account data',async()=>{
+ const legacy=[{id:'keep',level:{name:'Old course'}}];const {client,log}=mockClient({session:account,progress:{...defaultProgress,designerLevels:legacy}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);try{
+ go(w,'#arcade');assert.ok(q('a[href="#arcade/geometry-dash"]'));assert.doesNotMatch(q('#app').textContent,/level maker/i);
+ go(w,'#arcade/geometry-dash');assert.match(q('#app h1').textContent,/Geometry Dash/);assert.equal(q('#geometryFrame').src,'https://www.geometrydash.com/');assert.equal(q('#makerGrid'),null);
+ go(w,'#arcade/designer');assert.ok(q('#geometryFrame'));assert.equal(q('#makerGrid'),null);
+ go(w,'#subjects');q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(JSON.stringify(log.saved.progress.designerLevels),JSON.stringify(legacy));}finally{dom.window.close();}
 });

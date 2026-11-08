@@ -1,5 +1,5 @@
 import { mountTimetableImport } from './timetable-import.js?v=20261109-2';
-import { arcadeView, mountArcade } from './arcade.js?v=20261114-6';
+import { arcadeView, mountArcade } from './arcade.js?v=20261114-7';
 import { listsView, habitsView, bookmarksView, mountEveryday, localDay } from './everyday.js?v=20261114-4';
 import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from './ebooks.js?v=20261114-4';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from './school-tools.js?v=20261109-2';
