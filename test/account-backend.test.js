@@ -54,3 +54,8 @@ test('bundled Supabase client sends auth and progress requests', async () => {
   assert.equal(post.headers.get('authorization'),'Bearer test-token');
   assert.equal(JSON.parse(post.body).user_id,account.id);
 });
+
+test('nickname changes use account-scoped RPCs and signup records the chosen nickname',async()=>{
+ const calls=[];const api=createAccountBackend({auth:{signUp:async data=>(calls.push(data),{data:{session:null}})},rpc:async(name,args)=>(calls.push({name,args}),{data:name==='community_nickname_get'?'Reader':'New Reader'})});
+ await api.signUp('Reader','a@b.co','password','https://example.com/');assert.equal(calls[0].options.data.nickname,'Reader');assert.equal(await api.getNickname(),'Reader');assert.equal(await api.setNickname('New Reader'),'New Reader');assert.deepEqual(calls.at(-1),{name:'community_nickname_set',args:{p_nickname:'New Reader'}});
+});

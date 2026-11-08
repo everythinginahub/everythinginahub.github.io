@@ -29,8 +29,8 @@ const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
 const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.com',user_metadata:{name:'Alex',subjects:['Biology','Mathematics']}};
 const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
 function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
-  const log={saved:null,created:null,signup:null,signOut:0,sets:[]};
-  const client={auth:{
+  const log={saved:null,created:null,signup:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
+  const client={rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
     getSession:async()=>({data:{session:session?{user:session}:null}}),
     signInWithPassword:async()=>({data:{user:account}}),
     signUp:async input=>(log.signup=input,{data:{session:null,user:account}}),
@@ -69,7 +69,7 @@ test('signup does not require school subjects and sends a confirmation redirect'
   const {client,log}=mockClient();const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   q('[data-open-auth="register"]').click();q('[name="name"]').value='Alex';q('[name="email"]').value='alex@example.com';q('[name="password"]').value='longpassword';
   assert.equal(q('input[name="subjects"]'),null);q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.equal(log.signup.options.emailRedirectTo,'https://example.test/public/login.html');assert.deepEqual(Array.from(log.signup.options.data.subjects),[]);assert.match(q('#modal').textContent,/Check your email/);assert.equal(q('.app-shell').hidden,true);dom.window.close();
+  assert.equal(log.signup.options.data.nickname,'Alex');assert.equal(log.signup.options.emailRedirectTo,'https://example.test/public/login.html');assert.deepEqual(Array.from(log.signup.options.data.subjects),[]);assert.match(q('#modal').textContent,/Check your email/);assert.equal(q('.app-shell').hidden,true);dom.window.close();
 });
 test('confirmation callback signs out the temporary session and opens login',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client,{url:'https://example.test/public/?auth=confirmed#access_token=token&type=signup'});await run();
@@ -480,4 +480,13 @@ test('AI chat can be disconnected without leaving the app',async()=>{
 });
 test('game collection clears search and category together',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#arcade/library');const q=s=>w.document.querySelector(s);q('[data-embed-filter="puzzle"]').click();q('#embedSearch').value='no such game';q('#embedSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#embedCount').textContent,/^0 /);q('#embedReset').click();assert.equal(q('#embedSearch').value,'');assert.equal(q('[data-embed-filter="all"]').getAttribute('aria-pressed'),'true');assert.ok(w.document.querySelectorAll('.embed-card').length>0);}finally{dom.window.close();}
+});
+
+
+test('existing accounts choose their chat nickname in profile settings and it persists',async()=>{
+ const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#chat');await wait();assert.match(q('#communityIdentity').textContent,/Choose a nickname/);assert.equal(q('#communityInput').disabled,true);assert.equal(q('#communityNickname'),null);
+ q('#topAccount').click();q('#openProfileSettings').click();await wait();assert.equal(q('#settingsNickname').value,'');q('#settingsNickname').value='Study Fox';q('#nicknameForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.nickname,'Study Fox');assert.match(q('#nicknameStatus').textContent,/saved/i);assert.match(q('#communityIdentity').textContent,/Study Fox/);assert.equal(q('#communityInput').disabled,false);
+ q('#modal').close();go(w,'#home');go(w,'#chat');await wait();assert.match(q('#communityIdentity').textContent,/Study Fox/);
+ q('#communityOpenSettings').click();await wait();assert.equal(q('#settingsNickname').value,'Study Fox');q('#settingsNickname').value='admin';q('#nicknameForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#nicknameError').textContent,/nickname/i);assert.equal(log.nickname,'Study Fox');
+ }finally{dom.window.close();}
 });

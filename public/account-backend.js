@@ -21,10 +21,12 @@ export function createAccountBackend(client) {
     async session() { return check(await client.auth.getSession()).session?.user || null; },
     async signIn(email, password) { return check(await client.auth.signInWithPassword({ email, password })).user; },
     async signUp(name, email, password, redirectTo, subjects = []) {
-      return check(await client.auth.signUp({ email, password, options: { data: { name, subjects }, emailRedirectTo: redirectTo } }));
+      return check(await client.auth.signUp({ email, password, options: { data: { name, nickname: name, subjects }, emailRedirectTo: redirectTo } }));
     },
     async resendConfirmation(email,redirectTo) { check(await client.auth.resend({type:'signup',email,options:{emailRedirectTo:redirectTo}})); },
     async signOut() { check(await client.auth.signOut({scope:'local'})); },
+    async getNickname() { return check(await client.rpc('community_nickname_get',{})); },
+    async setNickname(nickname) { return check(await client.rpc('community_nickname_set',{p_nickname:nickname})); },
     async listSets(userId) {
       const columns='id,owner_id,title,subject,description,is_public,cards,created_at';
       const [own,shared] = await Promise.all([
