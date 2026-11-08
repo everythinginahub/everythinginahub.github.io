@@ -34,6 +34,10 @@ The ten starter books now open **locally hosted Project Gutenberg text editions*
 
 The Internet Archive scan remains available as an optional, separate edition, as well as a link to the original item. Pasting an Archive item ID or URL still opens its embedded viewer, with a direct link as fallback; custom items do not have locally hosted copies. Internet Archive controls its reader, content, availability, borrowing requirements and privacy practices. Custom content and external search are not reviewed by Everything Hub and may be unsuitable for children. Some scans may require an Archive account or fail to embed.
 
+## KindleHub AI
+
+The KindleHub AI launcher opens the separately operated KindleHub assistant at `https://kindlehub.pro/chat` in a new tab. KindleHub's published security configuration disallows framing, so the assistant is not embedded or integrated with Everything Hub accounts or data. KindleHub controls its own privacy, access, providers and usage limits.
+
 ## Existing school and learning tools
 
 - **Tasks** uses the existing study planner and preserves its tasks. Add or edit a title and optional date, star important tasks, filter the list, mark tasks complete or delete them. Stars are saved with the same account progress as the rest of the task. The list-first design is inspired by Google Tasks; it does not connect to or sync with Google Tasks.
