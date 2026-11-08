@@ -58,7 +58,7 @@ const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('
 test('logged-out visitors see landing page and cannot access guest workspace',async()=>{
   const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});await run();
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
-  assert.match(w.document.querySelector('#landing').textContent,/School days,\s*made simpler/i);
+  assert.match(w.document.querySelector('#landing').textContent,/Your school day,\s*in one place/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
 });
 test('signup requires subjects and sends subject selection with confirmation redirect',async()=>{
@@ -75,7 +75,7 @@ test('confirmation callback signs out the temporary session and opens login',asy
 test('existing account chooses subjects and saves progress without overwriting guest data',async()=>{
   const existing={...account,user_metadata:{name:'Alex'}};const {client,log}=mockClient({session:existing,progress:{completed:{biology:true},reviews:{},tasks:[],activity:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   go(w,'#flashcards');assert.match(q('#app').textContent,/Make this space yours/);q('input[name="subjects"][value="Biology"]').checked=true;q('#subjectsForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.deepEqual(Array.from(log.saved.progress.subjects),['Biology']);assert.equal(JSON.parse(w.localStorage.getItem('revisepro-state')).completed.maths,true);assert.match(q('#app').textContent,/Hey, Alex/);dom.window.close();
+  assert.deepEqual(Array.from(log.saved.progress.subjects),['Biology']);assert.equal(JSON.parse(w.localStorage.getItem('revisepro-state')).completed.maths,true);assert.match(q('#app').textContent,/Hello, Alex/);dom.window.close();
 });
 test('signed-in users search and review selected starter sets',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
@@ -250,7 +250,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261107-18');
+  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261107-19');
   assert.equal(q('.top-avatar').textContent,'◇');assert.match(q('#topCoins').textContent,/0 coins/);
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
@@ -346,15 +346,15 @@ test('book load failure is visible and can be retried',async()=>{
 test('school-day landing and navigation put organisation before revision',async()=>{
   const visitor=setup(null,{configured:false});await visitor.run();const landing=visitor.w.document.querySelector('#landing');
   for(const word of ['Timetable','Homework','Reading','Chat','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
-  assert.match(landing.querySelector('.brand').textContent,/School Hub/);visitor.dom.window.close();
+  assert.match(landing.querySelector('.brand').textContent,/School Hub/);assert.match(landing.querySelector('.preview-heading').textContent,/Inside School Hub/);assert.equal(landing.querySelectorAll('.preview-list a,.preview-list button').length,0);visitor.dom.window.close();
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   const nav=[...w.document.querySelectorAll('.nav > a[data-nav]')].map(a=>a.dataset.nav);assert.ok(nav.indexOf('planner')<nav.indexOf('revision'));assert.ok(nav.indexOf('timetable')<nav.indexOf('revision'));
   const apps=[...w.document.querySelectorAll('.dashboard-tiles .hub-tile')].map(a=>a.getAttribute('href'));assert.ok(apps.indexOf('#timetable')<apps.indexOf('#revision'));assert.equal(q('.school-hero-link').getAttribute('href'),'#planner');
-  assert.match(q('.widget-timetable').textContent,/Add your lessons/);assert.equal(q('.widget-timetable').getAttribute('href'),'#timetable');dom.window.close();
+  assert.match(q('.widget-timetable').textContent,/Add lessons to your timetable/);assert.equal(q('.widget-timetable').getAttribute('href'),'#timetable');dom.window.close();
 });
 
 test('dashboard shows only today’s lessons in time order and escapes lesson data',async()=>{
   const today=(new Date().getDay()+6)%7;const progress={...defaultProgress,schoolLessons:[{title:'Later lesson',day:today,time:'15:00'}, {title:'<img src=x onerror=alert(1)>',day:today,time:'09:00'}, {title:'Another day',day:(today+1)%7,time:'08:00'}]};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const widget=w.document.querySelector('.widget-timetable');
-  assert.match(widget.textContent,/2 lessons today/);assert.match(widget.textContent,/<img src=x onerror=alert\(1\)>/);assert.match(widget.textContent,/09:00/);assert.doesNotMatch(widget.textContent,/Another day|Later lesson/);assert.equal(widget.querySelector('img'),null);dom.window.close();
+  assert.match(w.document.querySelector('.home-hero-summary').textContent,/2 lessons/);assert.match(widget.textContent,/2 lessons today/);assert.match(widget.textContent,/<img src=x onerror=alert\(1\)>/);assert.match(widget.textContent,/09:00/);assert.doesNotMatch(widget.textContent,/Another day|Later lesson/);assert.equal(widget.querySelector('img'),null);dom.window.close();
 });
