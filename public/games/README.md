@@ -1,0 +1,9 @@
+# Featured games
+
+These are locally hosted browser games from their creators. They are loaded in a script-only sandbox; the opaque origin means game high scores/settings are kept only for the current embedded session. Opening a game in its own tab may allow that game to use local browser storage. The hub does not connect their scores to account progress or rewards.
+
+- **JavaScript Racer**, Jake Gordon, https://github.com/jakesgordon/javascript-racer, MIT (see `pseudo-racer/LICENSE`). Changes: responsive layout, touch controls, default medium rendering resolution, muted autoplay failure handling, sandbox storage fallback, omit Ogg audio, remove links to other demos. The bundled MP3 is from that repository. The bundled stats.js library has its own MIT licence in `pseudo-racer/STATS-LICENSE.txt`.
+- **Radius Raid**, Jack Rugile, https://github.com/jackrugile/radius-raid, MIT (see `radius-raid/LICENSE.md`). Changes: gracefully handle unavailable local storage; use HTML5 audio to work in an opaque-origin sandbox; disable an external credits button that cannot open from the sandbox. The bundled Howler library has its own MIT license in `radius-raid/HOWLER-LICENSE.txt`.
+- **Can't Get Back**, Kipkat, https://github.com/js13kGames/cant-get-back, MIT (see `cant-get-back/LICENSE`). Changes: use the readable build, make the canvas fit the frame, and skip the extended introduction when Space is pressed. ZzFX's attribution is retained in the source.
+
+Screenshots in `../assets/game-screenshots/` are real game frames: Radius Raid's is from the author's repository, Racer and Can't Get Back were captured from the running games, and Skyline, Orbit and Reef were captured from the hub's own renderer and simulation. Images are cropped or scaled to fit the cards. Original source assets and marks belong to their creators.

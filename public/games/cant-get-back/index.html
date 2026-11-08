@@ -1,0 +1,1011 @@
+<!DOCTYPE HTML>
+<html>
+<meta charset="utf-8">
+<head>
+  <style>
+    body,
+    html {
+      background-color: #020;
+      margin: 0px;
+    }
+
+    canvas {
+      z-index: 2;
+      position: absolute;
+      left: 50%;
+      translate: -50% 0;
+      width: min(76vh, 90vw);
+      border: 3 px solid #020;
+      -webkit-transform: perspective(600px) rotateX(30deg);
+      transform: perspective(600px) rotateX(30deg);
+      border: 10px inset #00A808;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id=c width=600 height=600></canvas>
+  <script>
+  // sound effects made with ZZFX Tool (made by Frank Force)
+  // ZzFXmicro - Zuper Zmall Zound Zynth - MIT License - Copyright 2019 Frank Force
+  zzfx_v = .5;
+  zzfx_x = new AudioContext;
+  zzfx = (e, f, a, b = 1, d = .1, g = 0, h = 0, k = 0, l = 0) => {
+      let S = 44100,
+          P = Math.PI;
+      a *= 2 * P / S;
+      a *= 1 + f * (2 * Math.random() - 1);
+      g *= 1E3 * P / (S ** 2);
+      b = 0 < b ? S * (10 < b ? 10 : b) | 0 : 1;
+      d *= b | 0;
+      k *= 2 * P / S;
+      l *= P;
+      f = [];
+      for (var m = 0, n = 0, c = 0; c < b; ++c) f[c] = e * zzfx_v * Math
+          .cos(m * a * Math.cos(n * k + l)) * (c < d ? c / d : 1 - (c -
+              d) / (b - d)), m += 1 + h * (2 * Math.random() - 1), n +=
+          1 + h * (2 * Math.random() - 1), a += g;
+      e = zzfx_x.createBuffer(1, b, S);
+      a = zzfx_x.createBufferSource();
+      e.getChannelData(0).set(f);
+      a.buffer = e;
+      a.connect(zzfx_x.destination);
+      a.start();
+      return a
+  }
+  let r = Math.random;
+  let frame = 0;
+  let l = frame;
+  let lag = 0
+  let started = 0
+  c = document.getElementById("c")
+  x = null;
+  window.onmousemove = f => {
+      if (!l) {
+          playMusic()
+          l = 1
+          console.log("loaded")
+          x = c.getContext("2d")
+          document.addEventListener("keydown", keydown,
+              true) // for controls
+          document.addEventListener("keyup", keyup, true)
+          anim();
+      }
+  }
+
+  document.body.onload = f => {
+      if (!l) {
+          playMusic()
+          l = 1
+          console.log("loaded")
+          x = c.getContext("2d")
+          document.addEventListener("keydown", keydown,
+              true) // for controls
+          document.addEventListener("keyup", keyup, true)
+          anim();
+      }
+  }
+
+  let pressedKeys = {};
+  radarItems = [];
+
+  let keyExists = keyCode => "32.38.40.37.39.77.69.87.65.83.68".split(".")
+      .indexOf(keyCode.toString()) > -1
+
+  function keydown(event) {
+      if (!pressedKeys[event.keyCode]) {
+          pressedKeys[event.keyCode] = 1;
+          if (keyExists(event.keyCode)) zzfx(.2, .1, 1319, .05, .34, .9, 1,
+              3.6, .47); // ZzFX 74550
+      }
+  }
+
+  function keyup(event) {
+      pressedKeys[event.keyCode] = 0;
+      if (keyExists(event.keyCode)) zzfx(.2, .1, 219, .05, .9, .9, 2, 3.6,
+          .47); // ZzFX 74550
+  }
+
+  function background(sh) {
+      if (!lag) {
+          R = frame / 20
+          for (i = 0; i <= 30; i++) {
+              for (j = 0; j <= 30; j++) {
+                  x.fillStyle =
+                      `hsl(${100+(S=Math.sin,S)((S(i+R)*vX+S(j+R)*vY)+((i-14.5)**2+(j-14.5)**2)**.5-R)*20},99%,${sh}%)`
+                  x.fillRect(
+                      i * 20,
+                      j * 20,
+                      20,
+                      20)
+              }
+          }
+      } else {
+          x.fillStyle = '#141'
+          x.fillRect(0, 0, 600, 600)
+      }
+  }
+
+  // sounds used in the music
+
+  let MusicSounds = {
+      kick: function () {
+          zzfx(.9, .1, 257, .2, .08, 0, 2, .2, .3);
+      }, // from ZzFX 58314
+      hat: function () {
+          zzfx(.2, 1, 9999, .1, .1, 0, 4, 0, 0);
+      }, // from ZzFX 4535
+      snareclap: function () {
+          zzfx(.2, 0, 777, .3, 0, 0, 4, 0, 0);
+      }, // from ZzFX 87801 - was bugged but KilledByAPixel helped me realize I was using an old version of zzfx
+      synth: function (note, length = 1) {
+          zzfx(.2, .01, 440 * ((2 ** (1 / 12)) ** note), length, .1,
+              0, 0, 0, 0);
+      },
+      sub: function (note) {
+          zzfx(1, .01, 440 * ((2 ** (1 / 12)) ** note), 1, .1, .2, .2,
+              .2, .2);
+      }
+  }
+
+  let melodyShift = 69 // lol
+
+  SoundPatterns = {
+      'beat': (beat = [MusicSounds.kick, null, MusicSounds.hat, null,
+          MusicSounds.snareclap, null, MusicSounds.hat, null
+      ]).concat(beat),
+      'melody': [0, 8, 7, 3, 0, 8, 7, 1, 0, 12, 11, 7, 8, 7, 1, 0],
+      'melody2': [0, 8, 7, 3, 0, 8, 7, 1, 0, 12, 11, 7, 8, 7, 1, 0].map(
+          z = q => q - 7),
+      'sub': [-24, null, null, null, -27, null, null, null, -32, null,
+          null, null, -31, null, null, null
+      ],
+  }
+
+  function melodyShuffle(a) { // thx Jeff
+      let j, x, i;
+      for (i = a.length - 1; i > 0; i--) {
+          j = Math.floor(Math.random() * (i + 1));
+          x = a[i];
+          a[i] = a[j];
+          a[j] = x;
+      }
+      return a;
+  }
+
+  let tempo = 250
+  let sq = 0;
+
+  function playMusic() {
+      // beat
+      for (soundID in SoundPatterns.beat) {
+          sound = SoundPatterns.beat[soundID]
+          note = SoundPatterns.melody[soundID]
+          if (sound !== null) setTimeout(sound, soundID * tempo)
+      }
+      for (noteID in SoundPatterns.melody) {
+          setTimeout(f => {
+              if (sq % 64 < 32) noteInfo = SoundPatterns.melody[sq %
+                  16]
+              else noteInfo = SoundPatterns.melody2[sq % 16]
+              MusicSounds.synth(noteInfo, .1 + r() / 3)
+              sq++;
+          }, noteID * tempo)
+      }
+      for (subID in SoundPatterns.sub) {
+          setTimeout(f => {
+              subInfo = SoundPatterns.sub[sq % 16]
+              if (subInfo != null) MusicSounds.sub(subInfo - 24)
+          }, subID * tempo)
+      }
+      if (sq % 256 == 0) melodyShuffle(SoundPatterns.melody2)
+      if (!mute) setTimeout(playMusic, tempo * 16)
+  }
+
+  function text(txt, X, Y, size, anim, color, help = 0) {
+      x.font = `${size}em monospace`
+      for (charIndex in txt) {
+          let char = txt[charIndex];
+          x.fillStyle = '#000';
+          x.fillText(char, X + charIndex * size * 8 + 3 * Math.cos(frame /
+              10 + charIndex), Y + Math.sin(frame / 20 + charIndex /
+              2) * anim + 3 * Math.sin(frame / 10 + charIndex))
+          x.fillStyle = color;
+          if (help) {
+              if (Math.sin(charIndex * 12 + Math.cos(charIndex / 5 + frame /
+                      30) + frame / 10) > .5) x.fillStyle = "red"
+              x.strokeStyle = "#aa0"
+              x.strokeText(char, X + charIndex * size * 8, Y + Math.sin(
+                  frame / 20 + charIndex / 2) * anim)
+          }
+          x.fillText(char, X + charIndex * size * 8, Y + Math.sin(frame / 20 +
+              charIndex / 2) * anim)
+      }
+  }
+
+  let q = 1
+  let qIncreases = 0 // for a background animation
+  function menu() // only for menu, gameplay help and buttons
+  {
+      x.font = '5em monospace';
+      background(30 * q);
+      text("PRESS SPACE TO START",
+          300 - 240 + (q - 1) * (r() - .5) * 200,
+          300 - 100 * q - 2000 * (q - 1), 3, 10, "#a41")
+      text("you can't go",
+          300 - 200 + (q - 1) * (r() - .5),
+          400 * q + (q - 1) * (r() - .5), 2, 5 + frame % 5, "blue")
+      text("back",
+          200 + 100 * q, 400 + 200 * (q - 1), 2 - (q - 1) * 5,
+          r() * 20 / (1 / q), "red") // very glitchy and beautiful
+      text("in a world that changes every step",
+          300 - 200 + (q - 1) * (r() - .5) * 200, 450 - 300 * (q - 1),
+          1.5, 5 * Math.sin(frame / 5 + r() / 4), "navy")
+      text("made by kipkat", 20, 600 - q * 20, 1.4, 0, '#242')
+      if (pressedKeys[32]) { // Start immediately; instructions are shown in the hub.
+          started = 1
+          qIncreases = 1
+          zzfx(1, .1, 23, .7, .61, 0, 2.7, 1.5, .38); // ZzFX 75692
+      }
+      if (q < -100) started = 1, zzfx(1, .1, 23, .7, .61, 0, 2.7, 1.5,
+      .38); // ZzFX 75692
+      if (qIncreases) q -= .01; // it decreases to create that nice effect
+  }
+
+  let vX = 0
+  let vY = 0;
+
+  function character(X, Y, vX, vY, size = 40) {
+      x.fillStyle = `hsl(${250+vX*20},99%,50%)`
+      x.beginPath()
+      for (i = 5; i--;) {
+          x.arc(X + Math.sin(z = (Math.PI / 2 * i + vX)) * size, Y + Math.cos(
+              z) * size, 0, 0, 0) // show the x velocity
+      }
+      x.fill();
+      x.strokeStyle = `hsl(${250+vY*20},89%,20%)`;
+      x.lineWidth = 2;
+      x.stroke();
+      x.fillStyle = `hsl(${250+vY*20},89%,20%)`
+      x.beginPath()
+      for (i = 5; i--;) {
+          x.arc(X + Math.sin(z = (Math.PI / 2 * i + vY)) * size * 3 / 4, Y +
+              Math.cos(z) * size * 3 / 4, 0, 0, 0) // show the y velocity
+      }
+      x.fill();
+      x.strokeStyle = `hsl(${250+vX*20},99%,50%)`;
+      x.lineWidth = 2;
+      x.stroke();
+  }
+
+  function drawEnemy(X, Y, vX, vY) {
+      x.fillStyle = "#000"
+      x.beginPath()
+      for (i = 5; i--;) {
+          x.arc(X + Math.sin(z = ((Math.PI / 2 * i + vX * vY / 49) + Math.sin(
+                  frame / 15))) * 20, Y + Math.cos(z) * 20, 0, 0,
+              0) // it's the same trick to draw rotating squares
+      }
+      x.fill();
+      x.lineWidth = 3;
+      x.strokeStyle = 'red';
+      x.stroke();
+
+      // RADAR VIEW
+      radarItems.push(["red", X, Y])
+
+
+      if (r() < .001 && enemyList.length < 5) spawnEnemy(X,
+          Y) // they can rarely duplicate
+  }
+
+  let enemyList = []
+  let isGeneratorVisible = false;
+
+  function spawnEnemy(X, Y) {
+      zzfx(.3, .1, 700, 1, .5, 0, 0, 0, 0); // ZzFX 68512
+      enemyList.push({
+          X: X,
+          Y: Y,
+          vX: 0,
+          vY: 0,
+          speed: 0.01 + r() / 3
+      })
+  }
+
+  let getHr = () => r() * 800 - 100
+
+  aiBotOn = 0;
+
+  let mute = 0;
+
+  function controls() { // i know it's hard coded but it's not bad
+      /* FUNCTION ALSO USED FOR SPAWNING
+          - spawn = spawns enemies
+          - generator = spawns generator
+        */
+
+      let spawn = 0;
+      let generator = 0;
+      if (r() < .007 + (maxHealth - 3) / 3000) spawn = 1;
+      if (r() < .006 - activatedGenerators.length / 9000) generator =
+      1; // the chance of generators spawning gets smaller
+      if (pressedKeys[38]) {
+          vY -= .5;
+          if (spawn && started) spawnEnemy(getHr(), -100);
+          if (generator && !isGeneratorVisible) spawnGenerator(getHr(), -100),
+              isGeneratorVisible = true;
+          if (r() < .005) pickups.push(new oHealing(getHr(), -100))
+          if (r() < .002 && !praying) pickups.push(new oTotem(getHr(), -100))
+          if (r() < .004) pickups.push(new oSpeedus(getHr(), -100))
+          if (r() < .001) pickups.push(new oHeart(getHr(), -100))
+      }
+      if (pressedKeys[40]) {
+          vY += .5;
+          if (spawn && started) spawnEnemy(getHr(), 650);
+          if (generator && !isGeneratorVisible) spawnGenerator(getHr(), 650),
+              isGeneratorVisible = true;
+          if (r() < .003) pickups.push(new oHealing(getHr(), -100))
+          if (r() < .002 && !praying) pickups.push(new oTotem(getHr(), -100))
+          if (r() < .004) pickups.push(new oSpeedus(getHr(), -100))
+          if (r() < .001) pickups.push(new oHeart(getHr(), -100))
+      }
+      if (pressedKeys[37]) {
+          vX -= .5;
+          if (spawn && started) spawnEnemy(-100, getHr());
+          if (generator && !isGeneratorVisible) spawnGenerator(-100, getHr()),
+              isGeneratorVisible = true;
+          if (r() < .003) pickups.push(new oHealing(getHr(), -100))
+          if (r() < .002 && !praying) pickups.push(new oTotem(getHr(), -100))
+          if (r() < .004) pickups.push(new oSpeedus(getHr(), -100))
+          if (r() < .001) pickups.push(new oHeart(getHr(), -100))
+      }
+      if (pressedKeys[39]) {
+          vX += .5;
+          if (spawn && started) spawnEnemy(650, getHr());
+          if (generator && !isGeneratorVisible) spawnGenerator(650, getHr()),
+              isGeneratorVisible = true;
+          if (r() < .003) pickups.push(new oHealing(getHr(), -100))
+          if (r() < .002 && !praying) pickups.push(new oTotem(getHr(), -100))
+          if (r() < .004) pickups.push(new oSpeedus(getHr(), -100))
+          if (r() < .001) pickups.push(new oHeart(getHr(), -100))
+      }
+      if (pressedKeys[76]) {
+          grassPositions.length = 500
+          bloodPositions.length = 200
+          lag = 1;
+      }
+      if (pressedKeys[87]) {
+          fireBullet(0, -1 * r() - 5)
+      }
+      if (pressedKeys[65]) {
+          fireBullet(-1 * r() - 5, 0)
+      }
+      if (pressedKeys[83]) {
+          fireBullet(0, r() * 1 + 5)
+      }
+      if (pressedKeys[68]) {
+          fireBullet(r() * 1 + 5, 0)
+      }
+
+      // EASTER EGG - SELF PLAYING BOT (IKR, BUGGY)
+      if (pressedKeys[192] == 1) {
+          if (!aiBotOn) {
+              aiBotOn = 1
+              aiHandle = setInterval(f => {
+                  pressedKeys[69] = 1
+                  for (p of pickups) {
+                      if (p.constructor.name == "pickupHealing" &&
+                          health >= maxHealth) continue;
+                      if (p.constructor.name == "pickupTotem" &&
+                          praying) continue;
+                      pressedKeys[39] = pressedKeys[37] = 0
+                      if (p.X > 300) pressedKeys[39] = 1
+                      else pressedKeys[37] = 1
+                      pressedKeys[38] = pressedKeys[40] = 0
+                      if (p.Y > 300) pressedKeys[40] = 1
+                      else pressedKeys[38] = 1
+                  }
+                  for (g of generators) {
+                      if (g.which - 1 != lastActiveGenerator) break;
+                      pressedKeys[39] = pressedKeys[37] = 0
+                      if (g.x > 300) pressedKeys[39] = 1
+                      else pressedKeys[37] = 1
+                      pressedKeys[38] = pressedKeys[40] = 0
+                      if (g.y > 300) pressedKeys[40] = 1
+                      else pressedKeys[38] = 1
+                  }
+                  if (enemyList.length == 0) {
+                      if (frame % 100 == 0) pressedKeys[[38, 40, 39,
+                          37
+                      ][Math.floor(r() * 4)]] = 1
+                  } else {
+                      let eX = eY = 0
+                      for (q of enemyList) {
+                          eX += q.X
+                          eY += q.Y
+                      }
+                      eX /= enemyList.length
+                      eY /= enemyList.length
+                      pressedKeys[39] = pressedKeys[37] = 0
+                      if (eX < 300) {
+                          pressedKeys[39] = 1
+                          if (r() < .5) fireBullet(-5, (r() - .5) * 2)
+                      } else {
+                          pressedKeys[37] = 1
+                          if (r() < .5) fireBullet(+5, (r() - .5) * 2)
+                      }
+                      pressedKeys[38] = pressedKeys[40] = 0
+                      if (eY < 300) {
+                          pressedKeys[40] = 1
+                          if (r() < .5) fireBullet((r() - .5) * 2, -5)
+                      } else {
+                          pressedKeys[38] = 1
+                          if (r() < .5) fireBullet((r() - .5) * 2, +5)
+                      }
+                  }
+              }, 100)
+          }
+      }
+  }
+
+  // init objects
+  let grassPositions = []
+  let bloodPositions = []
+  let generators = []
+  let activatedGenerators = [];
+  let lastActiveGenerator = 0;
+  let bullets = []
+
+  for (i = 999; i--;) {
+      grassPositions.push({
+          x: getHr(),
+          y: getHr(),
+          color: `hsl(${100+r()*10|0},${r()*90|0}%,${30+r()*10|0}%)`, // n|0 is short for Math.floor(n)
+          perspective: 1 + r() / 10, // adds a 3d effect
+          height: -10 - r() * 20
+      })
+      if (r() < .4) bloodPositions.push({
+          x: getHr(),
+          y: getHr(),
+          size: [r() * 20, r() * 20],
+          rot: r() * Math.PI,
+          color: `hsla(${r()*50|0},${50+r()*49|0}%,${r()*30|0}%,0.3)`,
+          perspective: 1 - r() / 9
+      })
+  }
+
+  function enemies() {
+      let max = 12
+      for (enemy of enemyList) {
+          drawEnemy(enemy.X, enemy.Y, enemy.vX, enemy.vY)
+          if (enemy.X > 300) {
+              if (enemy.vX > -max) enemy.vX -= enemy.speed
+          } else {
+              if (enemy.vX < max) enemy.vX += enemy.speed
+          }
+          if (enemy.Y > 300) {
+              if (enemy.vY > -max) enemy.vY -= enemy.speed
+          } else {
+              if (enemy.vY < max) enemy.vY += enemy.speed
+          }
+          enemy.X += enemy.vX / 2;
+          enemy.Y += enemy.vY / 2;
+          enemy.X -= vX
+          enemy.Y -= vY
+          // checking if it hits the player
+          if ((A = Math.abs)(z = (enemy.X - 300)) < 35 && A(z = (enemy.Y -
+                  300)) < 35) {
+              if (!praying) {
+                  vX = enemy.vX * 5
+                  vY = enemy.vY * 5
+                  enemy.vX *= -1
+                  enemy.vY *= -1
+                  zzfx(1, .1, 160, .1, .45, 5, 4.1, 8.6, .93); // ZzFX 5569
+                  health--;
+              } else {
+                  enemy.vX *= -1.2
+                  enemy.vY *= -1.2
+                  enemy.X += enemy.vX * 2
+                  enemy.Y += enemy.vY * 2
+                  zzfx(1, .1, 1309, .2, .59, .1, 2.5, 0, .43);
+              }
+          }
+      }
+      for (i in enemyList) {
+          let enemy = enemyList[i];
+          if (enemy.X < -100 || enemy.Y < -100 || enemy.X > 700 || enemy.Y >
+              700) {
+              enemyList.splice(i, 1)
+              zzfx(.5, .1, 409, 0, 1, .37, 0, 0, .24);
+          }
+      }
+  }
+
+  function grass() {
+      for (grassBlock of grassPositions) {
+          x.fillStyle = grassBlock.color;
+          x.fillRect(grassBlock.x, grassBlock.y, 2, grassBlock.height)
+          grassBlock.x -= vX * grassBlock.perspective;
+          grassBlock.y -= vY * grassBlock.perspective;
+          if (grassBlock.x < -100) grassBlock.x = 700, grassBlock.y = getHr()
+          if (grassBlock.y < -100) grassBlock.x = getHr(), grassBlock.y = 700
+          if (grassBlock.x > 700) grassBlock.x = -100, grassBlock.y = getHr()
+          if (grassBlock.y > 700) grassBlock.x = getHr(), grassBlock.y = -100
+          if ((A = Math.abs)(z = (grassBlock.x - 300)) < 50 && A(z = (
+                  grassBlock.y - 300)) < 50) grassBlock.x += z / 20,
+              grassBlock.y += z / 20
+          if (!lag) grassBlock.x += Math.sin(frame / 5 * grassBlock
+              .perspective) / 10
+      }
+  }
+
+  let bulletRateLimit = 0;
+
+  function fireBullet(vX, vY) {
+      if (bulletRateLimit < 0) {
+          bullets.push({
+              x: 300,
+              y: 300,
+              vX: vX + (r() - .5) / 2,
+              vY: vY + (r() - .5) / 2
+          })
+          zzfx(1, .1, 32, .2, .54, 3, 4.2, 0, .42); // ZzFX 68463
+          bulletRateLimit = 10
+      }
+  }
+
+  function drawBullets() {
+      for (bulletId in bullets) {
+          let bullet = bullets[bulletId];
+          x.beginPath();
+          x.fillStyle = '#fff'
+          x.ellipse(bullet.x, bullet.y, 9, 9, 0, 0, 6.28);
+          x.fill()
+          if (bullet.x < -100 || bullet.y < -100 || bullet.x > 700 || bullet
+              .y > 700) {
+              bullets.splice(bulletId, 1)
+          }
+          bullet.x += bullet.vX * 2
+          bullet.y += bullet.vY * 2
+          bullet.x -= vX
+          bullet.y -= vY
+          for (enemy of enemyList) {
+              if (enemy.X < bullet.x) bullet.vX -= .04
+              else bullet.vX += .04
+              if (enemy.Y < bullet.y) bullet.vY -= .04
+              else bullet.vY += .04
+              if (((enemy.X - bullet.x) ** 2 + (enemy.Y - bullet.y) ** 2) **
+                  .5 < 30) {
+                  enemy.vX = bullet.vX * 3
+                  enemy.vY = bullet.vY * 3
+                  bullets.splice(bulletId, 1)
+              }
+          }
+      }
+      bulletRateLimit--;
+  }
+
+  function notBlood() {
+      for (bloodPart of bloodPositions) {
+          x.fillStyle = bloodPart.color;
+          x.beginPath()
+          x.ellipse(bloodPart.x, bloodPart.y, bloodPart.size[0], bloodPart
+              .size[1], bloodPart.rot, 0, 7)
+          x.fill()
+          bloodPart.x -= vX * bloodPart.perspective;
+          bloodPart.y -= vY * bloodPart.perspective;
+          if (bloodPart.x < -100) bloodPart.x = 650, bloodPart.y = getHr()
+          if (bloodPart.y < -100) bloodPart.x = getHr(), bloodPart.y = 650
+          if (bloodPart.x > 650) bloodPart.x = -100, bloodPart.y = getHr()
+          if (bloodPart.y > 650) bloodPart.x = getHr(), bloodPart.y = -100
+          if ((A = Math.abs)(z = (bloodPart.x - 300)) < 50 && A(z = (bloodPart
+                  .y - 300)) < 50) bloodPart.x += z / 10, bloodPart.y += z /
+              10
+      }
+  }
+
+  function spawnGenerator(X, Y) {
+      generators.push({
+          which: Math.floor(1 + r() * maxGenerators),
+          x: X,
+          y: Y,
+          rotation: 0
+      })
+      zzfx(.3, .1, 550, .9, .48, 5.8, 0, 21.7, .79);
+  }
+
+  function drawGenerators() {
+      for (genId in generators) {
+          gen = generators[genId]
+          for (i = 0; i < 9 + gen.which; i++) {
+              let z = Math.floor(Math.sin(i * i * gen.which) * 128 + 128)
+              x.fillStyle = `rgb(${z},${z},${z})`
+              x.fillRect(gen.x, gen.y, Math.sin(gen.which ** 2 + i * gen
+                  .which + gen.rotation) * 50, Math.cos(gen.which **
+                  2 * i + gen.rotation) * 50)
+              if (activatedGenerators.indexOf(gen.which) > -1) gen.rotation +=
+                  .002
+          }
+          text(gen.which.toString(), gen.x - 20, gen.y - 5, 3.5, 2,
+              activatedGenerators.indexOf(gen.which) < 0 ? "red" : "lime")
+          gen.x -= vX
+          gen.y -= vY
+
+          // RADAR VIEW
+          radarItems.push(["lime", gen.x, gen.y])
+
+
+          if (gen.x < -100 || gen.x > 700 || gen.y < -100 || gen.y > 700)
+              generators.splice(genId, 1), isGeneratorVisible = false;
+          if (((gen.x - 300) ** 2 + (gen.y - 300) ** 2) ** .5 < 100 &&
+              activatedGenerators.indexOf(gen.which) < 0) {
+              if (lastActiveGenerator == gen.which - 1) {
+                  text("Press E to activate generator", gen.x - 220, gen.y -
+                      20, 2, 5, "#0ff")
+                  if (pressedKeys[69]) { // nice
+                      activatedGenerators.push(gen.which)
+                      lastActiveGenerator = gen.which;
+                      zzfx(1, .1, 127, .2, .63, 0, 0, 28.9, .77);
+                      if (health < maxHealth) health++
+                  }
+              } else {
+                  text("Can't activate", gen.x - 100, gen.y - 50, 2, 5, "red")
+                  if (pressedKeys[69]) {
+                      if (frame % 5 == 0) zzfx(1, .1, 464, .1, .3, .1, .5,
+                          3.6, .82); // ZzFX 51937 but edited a little
+                  }
+              }
+          }
+      }
+  }
+
+  let health = 3; // starting health
+
+  function drawLives() {
+      for (i = 0; i < health; i++) {
+          x.fillStyle = "red";
+          text("❤︎", 10 + i * 25, 590, 2, 2, 'red');
+      }
+  }
+
+  let step = showHelp = 1;
+
+  function howToPlay() {
+      text("You are trapped in a maze", 20, 700 - step, 2.8, 5, "#ff0", 0)
+      text("To get back to your home", 100, 800 - step, 2, 3, "#f00", 0)
+      text("you must turn on the generators", 50, 850 - step, 2, 3, "#f00", 0)
+      text("in order. That will enable a bomb that", 20, 900 - step, 1.8, 3,
+          "#f00", 0)
+      text("will break this world.", 110, 950 - step, 2, 3, "#f00", 1)
+      text("Everything disappears as you pass by it.", 10, 1000 - step, 1.8,
+          3, "#f00", 1)
+      text("Move with the arrow keys", 800 - step, 1050 - step, 2, 3.5,
+          "#fff", 1)
+      text("Avoid the squares", 850 - step, 1100 - step, 3, 3, "#0f0", 1)
+      drawEnemy(1340 - step, 1090 - step, step / 20, step / 30)
+      text("Use W, A, S, D to fire", 900 - step, 1150 - step, 2.4, 3, "#000",
+          1)
+      text("Use E to interact with objects", 950 - step, 1200 - step, 2.4, 3,
+          "#0a0", 1)
+      character(300, 1526 - step, (1226 - step) / 70, (1226 - step) / 100);
+      step += 1;
+  }
+
+  // FINALLY THIS BEAUTIFUL PART
+  pickups = [];
+
+  let oHealing = function pickupHealing(X, Y) {
+      this.X = X;
+      this.Y = Y;
+      this.id = r();
+      this.delete = function () {
+          for (pkupId in pickups) {
+              if (pickups[pkupId].id == this.id) {
+                  pickups.splice(pkupId, 1)
+              }
+          }
+      }
+      this.draw = function pickupDraw() {
+          x.fillStyle = 'white';
+          x.fillRect(this.X - 20, this.Y - 20, 40, 40);
+          text("+", this.X - 15, this.Y + 10, 4, 1, 'red');
+
+          // RADAR VIEW
+          radarItems.push(["blue", this.X, this.Y])
+
+          this.X -= vX
+          this.Y -= vY
+          if (((this.X - 300) ** 2 + (this.Y - 300) ** 2) ** .5 <
+              30) {
+              if (health < maxHealth) {
+                  text("Press E to heal", this.X - 120, this.Y - 30,
+                      2, 3, "yellow")
+                  if (pressedKeys[69]) {
+                      health = maxHealth;
+                      tempHealth = maxHealth;
+                      this.delete();
+                      zzfx(1, .1, 426, .5, .04, 0, .4, 50.7,
+                      .68); // ZzFX 91644
+                  }
+              } else {
+                  text("Your health is full", this.X - 150, this.Y -
+                      30, 2, 3, "yellow")
+              }
+          }
+          if (this.X < -100 || this.Y < -100 || this.X > 700 || this
+              .Y > 700) {
+              this.delete();
+          }
+      }
+  }
+
+  let tempHealth;
+
+  let oTotem = function pickupTotem(X, Y) {
+      this.X = X;
+      this.Y = Y;
+      this.id = r();
+      this.delete = function () {
+          for (pkupId in pickups) {
+              if (pickups[pkupId].id == this.id) {
+                  pickups.splice(pkupId, 1)
+              }
+          }
+      }
+      this.draw = function pickupDraw() {
+          x.fillStyle = '#110';
+          x.fillRect(this.X - 30, this.Y - 30, 60, 60); // body
+          x.fillRect(this.X - 10, this.Y - 50, 20, 20); // head
+          x.fillRect(this.X - 30, this.Y + 30, 20, 50); // leg 1
+          x.fillRect(this.X + 10, this.Y + 30, 20, 50); // leg 2
+          x.strokeStyle = '#221'
+          // just copy pasted lmao
+          x.strokeRect(this.X - 30, this.Y - 30, 60, 60); // body
+          x.strokeRect(this.X - 10, this.Y - 50, 20, 20); // head
+          x.strokeRect(this.X - 30, this.Y + 30, 20, 50); // leg 1
+          x.strokeRect(this.X + 10, this.Y + 30, 20, 50); // leg 2
+
+          // RADAR VIEW
+          radarItems.push(['blue', this.X, this.Y])
+
+          this.X -= vX
+          this.Y -= vY
+          if (((this.X - 300) ** 2 + (this.Y - 300) ** 2) ** .5 <
+              50) {
+              text(praying ? "You are already praying" :
+                  "Press E to pray to totem", this.X - 180, this
+                  .Y - 70, 2, 3, "yellow")
+              if (pressedKeys[69] && !praying) {
+                  praying = 1;
+                  tempHealth = health;
+                  gs = `grayscale(${r()*20+80}%)`
+                  c.style.filter =
+                      `hue-rotate(${(maxGenerators-5)*100}deg)`
+                  document.body.style.filter =
+                      `hue-rotate(${(maxGenerators-5)*100}deg)`
+                  document.body.style.filter += gs
+                  c.style.filter += gs
+                  prayHandle = setInterval(f => {
+                      gs = `grayscale(${r()*20+80}%)`
+                      c.style.filter =
+                          `hue-rotate(${(maxGenerators-5)*100}deg)`
+                      document.body.style.filter =
+                          `hue-rotate(${(maxGenerators-5)*100}deg)`
+                      document.body.style.filter += gs
+                      c.style.filter += gs
+                      health = tempHealth;
+                  }, 1000)
+                  setTimeout(f => {
+                      praying = 0
+                      clearInterval(prayHandle)
+                      c.style.filter =
+                          `hue-rotate(${(maxGenerators-5)*100}deg)`
+                      document.body.style.filter =
+                          `hue-rotate(${(maxGenerators-5)*100}deg)`
+                      zzfx(1, .5, 400, 2, .5, .1, .9, .15,
+                      0); // ZzFX 47464 (ending)
+                  }, 7777)
+                  this.delete();
+                  zzfx(1, .5, 400, 2, .5, .1, .9, .15,
+                  0); // ZzFX 47464 (opening)
+              }
+          }
+          if (this.X < -100 || this.Y < -100 || this.X > 700 || this
+              .Y > 700) {
+              this.delete();
+          }
+      }
+  }
+
+  let maxSpeed = 1.07
+
+  let oSpeedus = function pickupSpeedus(X, Y) {
+      this.X = X;
+      this.Y = Y;
+      this.id = r();
+      this.delete = function () {
+          for (pkupId in pickups) {
+              if (pickups[pkupId].id == this.id) {
+                  pickups.splice(pkupId, 1)
+              }
+          }
+      }
+      this.draw = function pickupDraw() {
+          x.fillStyle = 'blue';
+          x.fillRect(this.X - 20, this.Y - 20, 40, 40);
+          x.strokeStyle = `hsl(${frame/2},99%,50%)`
+          x.strokeRect(this.X - 24, this.Y - 24, 48, 48);
+          text("SPD", this.X - 21, this.Y + 10, 2, 1, 'lime');
+
+          // RADAR VIEW
+          radarItems.push(["blue", this.X, this.Y])
+
+          this.X -= vX
+          this.Y -= vY
+          if (((this.X - 300) ** 2 + (this.Y - 300) ** 2) ** .5 <
+              30) {
+              text("Press E to use", this.X - 110, this.Y - 30, 2, 3,
+                  "yellow")
+              if (pressedKeys[69]) {
+                  maxSpeed = .8
+                  this.delete();
+                  zzfx(1, .1, 426, .5, .04, 0, .4, 50.7,
+                  .68); // ZzFX 91644
+                  c.style.filter += "sepia(80%)"
+                  setTimeout(f => {
+                      c.style.filter = c.style.filter.replace(
+                          "sepia(80%)", "")
+                  }, 500)
+              }
+          }
+          if (this.X < -100 || this.Y < -100 || this.X > 700 || this
+              .Y > 700) {
+              this.delete();
+          }
+      }
+  }
+
+  let oHeart = function pickupHeart(X, Y) {
+      this.X = X;
+      this.Y = Y;
+      this.id = r();
+      this.delete = function () {
+          for (pkupId in pickups) {
+              if (pickups[pkupId].id == this.id) {
+                  pickups.splice(pkupId, 1)
+              }
+          }
+      }
+      this.draw = function pickupDraw() {
+          text("+❤", this.X - 20, this.Y + 5, 3, 1, 'lime');
+
+          // RADAR VIEW
+          radarItems.push(["cyan", this.X, this.Y])
+
+          this.X -= vX
+          this.Y -= vY
+          if (((this.X - 300) ** 2 + (this.Y - 300) ** 2) ** .5 <
+              40) {
+              text("Press E to use", this.X - 110, this.Y - 30, 2, 3,
+                  "yellow")
+              if (pressedKeys[69]) {
+                  health++
+                  this.delete();
+                  zzfx(1, .1, 426, .5, .04, 0, .4, 50.7,
+                  .68); // ZzFX 91644
+              }
+          }
+          if (this.X < -100 || this.Y < -100 || this.X > 700 || this
+              .Y > 700) {
+              this.delete();
+          }
+      }
+  }
+
+
+  let maxGenerators = 5;
+  let maxHealth = 3;
+
+  function levelUp() {
+      zzfx(.6, .1, 1, .5, .93, .4, .9, 50, 0);
+      activatedGenerators.length = [];
+      lastActiveGenerator = 0
+      maxGenerators++;
+      maxHealth++;
+      health = maxHealth;
+      c.style.filter = `hue-rotate(${(maxGenerators-5)*100}deg)`
+      document.body.style.filter = `hue-rotate(${(maxGenerators-5)*100}deg)`
+      vY = vX = (r() - .5) * 2000
+      tempo -= 10
+  }
+
+  function drawRadar() {
+      x.drawImage(c, 505, 505, 70, 70)
+      x.fillStyle = '#111a'
+      x.strokeStyle = "#222a"
+      x.fillRect(500, 500, 80, 80)
+      x.strokeRect(500, 500, 80, 80)
+      for (itemOnRadar of radarItems) {
+          x.fillStyle = itemOnRadar[0]
+          x.fillRect(itemOnRadar[1] / 10 + 508, itemOnRadar[2] / 10 + 508, 4,
+              4)
+          x.beginPath();
+          x.moveTo(540, 540)
+          x.strokeStyle = itemOnRadar[0]
+          x.lineTo(itemOnRadar[1] / 10 + 510, itemOnRadar[2] / 10 + 510)
+          x.stroke();
+          x.closePath();
+      }
+      radarItems = []
+  }
+
+  let praying = false;
+
+  function anim() // main loop
+  {
+      if (!started) {
+          if (health < 1) {
+              background(5)
+              text("YOU DIED!", 120, 300, r() / 4 + 5, r() * 9, "red")
+              vX = 0;
+              vY = 0;
+              text("Press space to reset", 30, 400, 3.27, 3, "yellow")
+              activatedGenerators.length = [];
+              lastActiveGenerator = 0
+              isGeneratorVisible = false;
+              pickups.length = [];
+              if (aiBotOn) pressedKeys[32] = 1;
+              if (pressedKeys[32]) health = maxHealth
+              pressedKeys[32] = 0;
+          } else {
+              menu();
+              if (step < 1400 && qIncreases) howToPlay();
+              if (step > 1225) {
+                  started = 1
+              }
+              if (pressedKeys[77]) {
+                  mute = 1;
+              }
+          }
+      } else {
+          background(10);
+          notBlood();
+          grass();
+          drawGenerators();
+          for (pkup of pickups) {
+              pkup.draw();
+          }
+          enemies();
+          drawBullets();
+          /*main*/
+          character(300, 300, vX, vY);
+          if (!praying) drawLives();
+          text("Generators left: " + (maxGenerators - lastActiveGenerator)
+              .toString(), 5, 25, 2, 1, "#af2")
+          drawRadar();
+          controls();
+          if (pressedKeys[77]) {
+              mute = 1;
+          }
+          vX /= maxSpeed, vY /= maxSpeed
+          if (maxSpeed < 1.07) maxSpeed += .01
+          if (health < 1) started = false, background(0), enemyList = [],
+              generators = [], vX = (r() - .5) * 900, vY = (r() - .5) * 900;
+          if (activatedGenerators.length == maxGenerators) levelUp();
+      }
+      /*
+      if (!lag) {
+        document.getElementById("fx").getContext("2d").drawImage(c,0-vX/5,0-vY/5,600-vX/5,600-vY/5)
+      }
+      else {
+        document.getElementById("fx").style.display="none";
+      }
+      */
+      requestAnimationFrame(anim, frame++);
+  }
+  </script>
+</body>
+
+</html>
