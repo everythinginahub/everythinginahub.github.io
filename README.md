@@ -4,7 +4,7 @@ A free-to-host personal workspace on GitHub Pages, with Supabase accounts and pr
 
 ## Everyday spaces
 
-- **Lists:** create up to 10 named checklists with up to 40 items each; add, edit, check, remove and clear checked items. Lists can be renamed or deleted.
+- **Lists:** create up to 10 named checklists with up to 40 items each; search lists and items, filter by completion, add multiple items at once, reorder, edit and check items. Duplicate, reset or copy a list, and undo the most recent removal or deletion while the page is open. A duplicate starts unchecked; clipboard access depends on the browser. List progress is saved with account progress; search, drafts and undo are only kept while the Lists page is open.
 - **Habits:** create up to 12 habits and mark or undo a check-in for the current local day. The previous seven calendar days are shown; up to 90 check-in dates are retained per habit. There are no reminders or notifications.
 - **Saved links:** save, edit and remove up to 40 HTTP(S) website addresses. Links open external sites in a new tab; those sites are not reviewed or controlled by the hub. Do not store sensitive links or information.
 - **Tasks:** the existing homework planner is now a general task list. Previously saved homework and the old `#planner` link are preserved. Completing a task no longer records a study day; past activity is unchanged.
