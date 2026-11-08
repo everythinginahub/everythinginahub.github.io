@@ -25,7 +25,7 @@ export function shuffled(items, random = Math.random) {
 export function createMatch(cards, random = Math.random) {
   const pairs = shuffled(uniqueGameCards(cards), random).slice(0, 5);
   if (pairs.length < 2) return null;
-  return { mode: 'match', pairs, questions: shuffled(pairs, random), answers: shuffled(pairs, random), question: null, answer: null, matched: [], attempts: 0, message: 'Choose a question, then its matching answer.', complete: false };
+  return { mode: 'match', pairs, questions: shuffled(pairs, random), answers: shuffled(pairs, random), question: null, answer: null, matched: [], attempts: 0, streak: 0, bestStreak: 0, message: 'Choose a question, then its matching answer.', complete: false };
 }
 export function selectMatch(game, side, id) {
   if (!game || game.mode !== 'match' || game.complete || !['question', 'answer'].includes(side) || !game.pairs.some(pair => pair.id === id) || game.matched.includes(id)) return false;
@@ -36,10 +36,10 @@ export function selectMatch(game, side, id) {
   }
   game.attempts++;
   if (game.question === game.answer) {
-    game.matched.push(game.question);
+    game.matched.push(game.question); game.streak++; game.bestStreak = Math.max(game.bestStreak, game.streak);
     game.complete = game.matched.length === game.pairs.length;
     game.message = game.complete ? 'All pairs matched. Great work!' : `Match found! ${game.matched.length} of ${game.pairs.length} pairs matched.`;
-  } else game.message = 'Not a match. Try another pair.';
+  } else { game.streak = 0; game.message = 'Not a match. Try another pair.'; }
   game.question = null; game.answer = null;
   return true;
 }
@@ -50,14 +50,14 @@ export function createQuiz(cards, random = Math.random, limit = 10) {
     const others = shuffled(pairs.filter(other => other.id !== pair.id), random).slice(0, 3);
     return { ...pair, choices: shuffled([pair, ...others], random).map(item => ({ id: item.id, text: item.answer })) };
   });
-  return { mode: 'quiz', questions, position: 0, selected: null, correct: 0, missed: [], complete: false, message: '' };
+  return { mode: 'quiz', questions, position: 0, selected: null, correct: 0, missed: [], streak: 0, bestStreak: 0, complete: false, message: '' };
 }
 export function answerQuiz(game, id) {
   const current = game?.questions?.[game.position];
   if (!game || game.mode !== 'quiz' || game.complete || game.selected !== null || !current?.choices.some(choice => choice.id === id)) return false;
   game.selected = id;
-  if (id === current.id) { game.correct++; game.message = 'Correct!'; }
-  else { game.missed.push({ question: current.question, answer: current.answer }); game.message = 'Not quite. The answer is shown below.'; }
+  if (id === current.id) { game.correct++; game.streak++; game.bestStreak = Math.max(game.bestStreak, game.streak); game.message = game.streak > 1 ? `Correct! ${game.streak} in a row.` : 'Correct!'; }
+  else { game.streak = 0; game.missed.push({ question: current.question, answer: current.answer }); game.message = 'Not quite. The answer is shown below.'; }
   return true;
 }
 export function advanceQuiz(game) {
@@ -70,7 +70,7 @@ export function advanceQuiz(game) {
 export function createRecall(cards, random = Math.random) {
   const questions = shuffled(uniqueGameCards(cards), random).slice(0, 10);
   if (!questions.length) return null;
-  return { mode: 'recall', questions, position: 0, revealed: false, response: '', correct: 0, missed: [], complete: false, message: '' };
+  return { mode: 'recall', questions, position: 0, revealed: false, response: '', correct: 0, missed: [], streak: 0, bestStreak: 0, complete: false, message: '' };
 }
 export function revealRecall(game, response) {
   if (!game || game.mode !== 'recall' || game.complete || game.revealed || typeof response !== 'string') return false;
@@ -82,8 +82,8 @@ export function revealRecall(game, response) {
 export function markRecall(game, remembered) {
   if (!game || game.mode !== 'recall' || game.complete || !game.revealed || typeof remembered !== 'boolean') return false;
   const current = game.questions[game.position];
-  if (remembered) game.correct++;
-  else game.missed.push({ question: current.question, answer: current.answer });
+  if (remembered) { game.correct++; game.streak++; game.bestStreak = Math.max(game.bestStreak, game.streak); }
+  else { game.streak = 0; game.missed.push({ question: current.question, answer: current.answer }); }
   if (game.position + 1 === game.questions.length) { game.complete = true; game.message = 'Recall round complete.'; }
   else { game.position++; game.revealed = false; game.response = ''; game.message = ''; }
   return true;

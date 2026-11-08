@@ -5,7 +5,7 @@ import {newRunner,jumpRunner,stepRunner,newOrbit,stepOrbit,newReef,launchReef,st
 import {arcadeView,mountArcade} from '../public/arcade.js';
 
 test('Skyline Sprint jumps, collects coins, loses lives and ends',()=>{
- const g=newRunner();g.status='running';assert.ok(jumpRunner(g));assert.equal(jumpRunner(g),false);stepRunner(g,.1,()=>0);assert.ok(g.y<g.ground);for(let i=0;i<20;i++)stepRunner(g,.05,()=>0);assert.equal(g.y,g.ground);
+ const g=newRunner();g.status='running';assert.ok(jumpRunner(g));assert.ok(jumpRunner(g));assert.equal(jumpRunner(g),false);stepRunner(g,.1,()=>0);assert.ok(g.y<g.ground);for(let i=0;i<20;i++)stepRunner(g,.05,()=>0);assert.equal(g.y,g.ground);
  g.obstacles=[{x:126,y:401,w:40,h:54}];g.invulnerable=0;stepRunner(g,.001,()=>0);assert.equal(g.lives,2);stepRunner(g,.001,()=>0);assert.equal(g.lives,2);g.invulnerable=0;g.lives=1;stepRunner(g,.001,()=>0);assert.equal(g.status,'lost');const distance=g.distance;stepRunner(g,1);assert.equal(g.distance,distance);
  const c=newRunner();c.status='running';c.coins=[{x:140,y:420,r:13}];stepRunner(c,.001,()=>0);assert.equal(c.coinsCollected,1);stepRunner(c,.001,()=>0);assert.ok(c.score>=25);
 });
@@ -24,4 +24,11 @@ test('game UI starts, pauses, restarts and cleans up animation and keys',()=>{
  assert.match(arcadeView().toLowerCase(),/skyline sprint/);assert.doesNotMatch(arcadeView(),/Merge 2048|Pocket Snake|Minefield/);
  for(const id of ['skyline','orbit','reef']){root.innerHTML=arcadeView(id);const ctl=mountArcade({root,id,userId:'test',win:w});assert.equal(root.querySelector('#gameOverlay').hidden,false);root.querySelector('[data-action=start]').click();assert.equal(root.querySelector('#gameOverlay').hidden,true);assert.equal(root.querySelector('[data-action=pause]').disabled,false);root.querySelector('[data-action=pause]').click();assert.match(root.querySelector('#overlayTitle').textContent,/Paused/);assert.ok(cancelled>0);root.querySelector('[data-action=start]').click();root.querySelector('[data-action=restart]').click();assert.match(root.querySelector('#overlayTitle').textContent,/Ready/);ctl.destroy();}
  assert.equal(w.localStorage.getItem('everything-arcade-v2-skyline-test'),'0');dom.window.close();
+});
+
+test('new arcade abilities reward play and reset cleanly',()=>{
+ const runner=newRunner();runner.status='running';runner.lives=2;runner.coinsCollected=7;runner.coins=[{x:140,y:420,r:13}];stepRunner(runner,.001,()=>0);assert.equal(runner.lives,3);assert.equal(runner.coinsCollected,8);
+ assert.ok(jumpRunner(runner));assert.ok(jumpRunner(runner));assert.equal(jumpRunner(runner),false);for(let i=0;i<30;i++)stepRunner(runner,.05,()=>0);assert.equal(runner.jumps,0);
+ const orbit=newOrbit();orbit.status='running';orbit.wave=2;stepOrbit(orbit,.01);assert.equal(orbit.bullets.length,2);orbit.combo=3;orbit.comboTimer=.001;stepOrbit(orbit,.01);assert.equal(orbit.combo,0);
+ const reef=newReef();reef.status='running';reef.launched=true;reef.pickups=[{x:reef.paddle,y:463}];stepReef(reef,.01);assert.ok(reef.wideTimer>11);reef.ball={x:reef.paddle+90,y:458,vx:0,vy:150,r:9};stepReef(reef,.01);assert.ok(reef.ball.vy<0);
 });

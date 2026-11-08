@@ -44,3 +44,8 @@ test('written recall reveals the answer and records only the learner’s self-as
   assert.equal(revealRecall(game,''),true);assert.equal(markRecall(game,true),true);assert.equal(game.complete,true);assert.equal(game.correct,1);assert.equal(markRecall(game,true),false);
   assert.ok(createRecall([['A','B']],random));assert.equal(createRecall([],random),null);
 });
+
+test('study streaks grow and reset without changing correct counts',()=>{
+ const cards=[['one','1'],['two','2'],['three','3']];
+ const g=createQuiz(cards,()=>.5);answerQuiz(g,g.questions[0].id);assert.equal(g.streak,1);advanceQuiz(g);answerQuiz(g,g.questions[1].id);assert.equal(g.streak,2);assert.equal(g.bestStreak,2);advanceQuiz(g);answerQuiz(g,g.questions[2].choices.find(c=>c.id!==g.questions[2].id).id);assert.equal(g.streak,0);assert.equal(g.bestStreak,2);assert.equal(g.correct,2);
+});
