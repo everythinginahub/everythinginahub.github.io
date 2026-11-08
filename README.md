@@ -34,9 +34,9 @@ The ten starter books now open **locally hosted Project Gutenberg text editions*
 
 The Internet Archive scan remains available as an optional, separate edition, as well as a link to the original item. Pasting an Archive item ID or URL still opens its embedded viewer, with a direct link as fallback; custom items do not have locally hosted copies. Internet Archive controls its reader, content, availability, borrowing requirements and privacy practices. Custom content and external search are not reviewed by Everything Hub and may be unsuitable for children. Some scans may require an Archive account or fail to embed.
 
-## KindleHub AI
+## AI chat
 
-The KindleHub AI launcher opens the separately operated KindleHub assistant at `https://kindlehub.pro/chat` in a new tab. KindleHub's published security configuration disallows framing, so the assistant is not embedded or integrated with Everything Hub accounts or data. KindleHub controls its own privacy, access, providers and usage limits.
+The AI chat app embeds the independently operated [Free AI Chat Space by Zacheus10](https://huggingface.co/spaces/Zacheus10/free-ai-chat) on Hugging Face after the user chooses to load it. The Space describes its model as Qwen3-4B-Instruct, not Gemini. It sends messages to that third-party service, has free GPU limits and queues, and can change, become unavailable or require sign-in. It is not moderated by Everything Hub and is not suitable for unsupervised children. Do not send sensitive information; verify important answers. The old `#kindle-ai` link still opens this page. Gemini's own consumer chat does not provide a supported embed for this site.
 
 ## Existing school and learning tools
 
