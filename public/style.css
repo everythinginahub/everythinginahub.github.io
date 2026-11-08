@@ -295,3 +295,59 @@ body{background:var(--hub-paper)}.brand{font-size:19px;letter-spacing:-.7px}.bra
 @media(max-width:700px){.unified-hero{min-height:0;padding:27px}.unified-hero-art{width:120px;height:130px}.unified-hero-art b{width:100px;height:100px;left:10px;font-size:62px;border-radius:26px}.unified-hero-art span,.unified-hero-art i{font-size:24px}.game-type-grid{grid-template-columns:1fr;margin-bottom:36px}.game-type{padding:20px}.embed-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.embedded-play-heading{align-items:start;flex-direction:column}.embedded-frame{height:75vh;min-height:600px}.library-games-heading{padding:24px}}
 @media(max-width:420px){.unified-hero{gap:8px}.unified-hero h1{letter-spacing:-1.6px}.unified-hero-art{width:70px;height:100px}.unified-hero-art b{width:68px;height:68px;left:0;font-size:43px;border-radius:20px}.unified-hero-art span{right:-3px}.unified-hero-art i{bottom:6px}.game-type{gap:14px}.type-icon{width:45px;height:45px}.library-games-heading>span{font-size:45px}.embed-card-copy{padding:12px}.embed-card-copy strong{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.game-type,.embed-card{transition:none}.game-type:hover,.embed-card:hover{transform:none}}
+
+/* A quieter, consistent workspace: flat surfaces, useful labels and fewer decorative effects. */
+:root{--ink:#243532;--muted:#5d6d68;--line:#d8dfda;--bg:#f4f5f1;--green:#245d50;--dark:#204d43}
+body{background:#f4f5f1;color:#243532}
+#landing.entry-screen{background:#e8ece5;color:#243532}
+.entry-card{background:#fff;border:1px solid #d5ddd6;border-radius:10px;box-shadow:0 12px 35px #293e3010}
+.entry-card h1{font-size:clamp(30px,4vw,40px);letter-spacing:-1px}
+.entry-kicker,.eyebrow,.game-eyebrow{letter-spacing:.06em}
+.app-shell.os-home{background:#263f3b}
+.app-shell.os-home:before{background:#263f3b}
+.app-shell.os-home:after{display:none}
+.os-home .topbar{border-bottom:1px solid #ffffff24}
+.os-home #app{padding-top:32px}
+.launcher-heading h1{font-size:clamp(30px,3.6vw,40px);letter-spacing:-.8px}
+.launcher-heading>div>p:last-child{color:#d2dfd8}
+.launcher-search{border-radius:7px;border:1px solid #cbd7d0;background:#fff;box-shadow:none}
+.os-widget,.os-widget.widget-todo,.os-widget.widget-timetable,.os-widget.home-hero-summary{min-height:140px;border:1px solid #cbd6cd;border-radius:9px;background:#f4f5ef;color:#2d453b;box-shadow:none}
+.os-widget.os-clock{background:#e6ebe3;color:#243d37}.os-widget.os-clock span,.os-widget.os-clock small{color:#526d60}
+.os-widget.os-clock strong{font-size:38px}.os-widget.os-habits,.os-widget.os-timetable{background:#f4f5ef;color:#2d453b}.os-widget.os-habits span,.os-widget.os-timetable span{color:#587768}
+.os-app-grid.home-directory .hub-tile,.os-app-grid.home-directory .hub-tile.dashboard-action{border-radius:8px}
+.os-app-grid.home-directory .hub-tile-icon,.os-app-grid.home-directory .hub-tile:nth-child(n) .hub-tile-icon{background:#e9eee7;color:#315e51;border-radius:12px;box-shadow:none}
+.os-app-grid.home-directory .hub-tile:nth-child(4n+2) .hub-tile-icon{background:#eadfce;color:#8b563d}
+.os-app-grid.home-directory .hub-tile:nth-child(4n+3) .hub-tile-icon{background:#d7e2dc;color:#345f54}
+.os-app-grid.home-directory .hub-tile:nth-child(4n) .hub-tile-icon{background:#e9e6d2;color:#746437}
+.os-dock{background:#e8eee6;border:1px solid #ffffff70;border-radius:12px;box-shadow:none}
+.os-dock a span{border-radius:8px}
+.app-shell:not(.os-home){background:#f4f5f1}
+.app-shell:not(.os-home) .topbar{border-color:#d9e1da}
+.btn,.btn.dark,.btn.outline{border-radius:6px;box-shadow:none}.btn.dark{background:#245d50;color:#fff}.btn.dark:hover{background:#1d4e43}
+.content-card,.card,.stat,.subject-card,.task,.resource-card,.deck-card,.game-set-card,.reward-card,.video-card,.school-panel,.school-note,.school-day,.school-empty,.streak-panel,.game-stage,.game-result,.practice-setup,.practice-question,.practice-review{border-radius:8px;box-shadow:none}
+.games-hero,.video-hero,.shop-hero{background:#e9eee7;border:1px solid #d9e2d9;border-radius:8px;padding:26px;box-shadow:none}
+.game-stage{border:1px solid #dbe2dc}.game-progress-bar span{background:#397765}.game-result{background:#eef3ec}
+.match-tile,.quiz-choice,.quiz-choice.correct{box-shadow:none}.match-tile.selected{box-shadow:0 0 0 2px #629b8550}
+.unified-hero{min-height:0;display:block;padding:0 0 24px;background:transparent;border-bottom:1px solid #cbd7cf;border-radius:0;color:#233b35}
+.unified-hero .game-eyebrow{color:#507569}.unified-hero h1{font-size:clamp(30px,3vw,42px);line-height:1.13;letter-spacing:-1px;margin:8px 0 10px}.unified-hero p:last-child{color:#63766d}
+.game-type-grid{gap:12px;margin:22px 0 44px}.game-type{border:1px solid #d5dfd6;border-radius:8px;background:#fff;color:#243b34;box-shadow:none;padding:22px}.game-type:hover{border-color:#8aa99a;transform:none;box-shadow:none}.type-icon,.study-type .type-icon{background:#eaf1e9;color:#356c5c;border-radius:8px}.game-type strong{color:#256455}.game-type small{color:#627c70}
+.adventure-card{border:1px solid #d8e2d9;border-radius:8px;box-shadow:none}.adventure-card:hover{transform:none;box-shadow:none;border-color:#97b6a5}.adventure-card-copy{padding:17px}.adventure-card-copy h2{font-size:19px}.adventure-card-copy p{min-height:0}
+.library-games-heading{background:transparent;border-bottom:1px solid #d3ded5;border-radius:0;padding:18px 0 20px;margin:14px 0 18px}.library-games-heading h1,.embedded-play-heading h1{font-size:clamp(28px,3vw,38px);letter-spacing:-1px}.library-games-heading>span{font-size:42px;color:#588371}
+.external-note{border:1px solid #dde3db;border-radius:7px;background:#f0f2ec;color:#566b60}.external-note a{color:#286a58}
+.library-games-tools input{border-color:#cddbd0;border-radius:7px}.embed-filters button{border-radius:6px;border-color:#d0dcd2;color:#50675d}.embed-filters button.active{background:#245d50;border-color:#245d50;color:white}
+.embed-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.embed-card{border:1px solid #dae3da;border-radius:8px;box-shadow:none}.embed-card:hover{transform:none;box-shadow:none;border-color:#8eac9c}.embed-card-art{height:auto;aspect-ratio:16/9;display:block;overflow:hidden;background:#dce6de}.embed-card-art img{width:100%;height:100%;display:block;object-fit:cover}.embed-card-art i{left:10px;top:10px;background:#fffef4e8;color:#334b40;border-radius:3px;z-index:1}
+.embed-card-copy{padding:15px}.embed-card-copy strong{color:#243c34}.embed-card-copy small{color:#286c5c}
+.game-intro-art{display:block;object-fit:cover;aspect-ratio:16/9;width:96px;height:auto;flex:none;border-radius:5px}.game-intro-grid>div{background:#fff;border:1px solid #dbe3dc;border-radius:8px}
+.game-mode-card{border-radius:8px;border-color:#dbe3dc;padding:18px}.study-game-cover{display:block;width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;border-radius:4px;margin:0 0 18px}.game-mode-card h2{font-size:20px}
+.live-modes article:nth-child(3),.live-modes article:nth-child(4){background:#fff;border:1px solid #dbe3dc;border-radius:8px}.live-classic-cover{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;border-radius:4px;margin-bottom:14px}.mode-cover-treasure{background-image:url('assets/game-thumbnails/treasure-tussle.svg')}.mode-cover-rocket{background-image:url('assets/game-thumbnails/rocket-rally.svg')}.mode-cover{height:auto;aspect-ratio:16/9}.mode-cover span{color:#fff;background:#24483de8}.live-modes article.mode-treasure,.live-modes article.mode-rocket{border-color:#dbe3dc;border-radius:8px}
+.game-banner-treasure,.game-banner-rocket{background-image:none;background-color:#345e50;color:#fff;text-shadow:none;border-radius:8px}
+@media(max-width:900px){.embed-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.os-home #app{padding-top:24px}.os-widget,.os-widget.widget-todo,.os-widget.widget-timetable,.os-widget.home-hero-summary{min-height:128px}.embed-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.game-type-grid{grid-template-columns:1fr;margin-bottom:32px}.unified-hero{padding:0 0 20px}.game-intro-art{width:96px}.game-mode-card{padding:16px}}
+@media(max-width:420px){.os-widget.os-clock strong{font-size:32px}.game-intro-art{width:84px}.embed-card-copy{padding:12px}.embed-card-copy>span{font-size:11px}.embed-card-art i{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.embed-card,.adventure-card,.game-type{transition:none}}
+/* Keep live play and study screens in the same quieter palette. */
+.live-hero{background:#e8efe8;color:#263e36;border:1px solid #d8e2d8;border-radius:8px;padding:26px}.live-hero h1{color:#263e36}.live-hero p:not(.eyebrow){color:#60756b}.live-hero .eyebrow{color:#4f7969}.live-hero-symbol{background:#d5e3d8;color:#3e7462;border-radius:8px}
+.live-panel,.live-modes article{border-color:#dbe3dc;border-radius:8px;box-shadow:none}.mode-pick,.live-modes article>span{color:#2c6c59}.game-page-heading h1,.game-play-heading h1{color:#263c35}.practice-inline{background:#edf2eb;border-color:#d9e3d8;color:#315e4d}.practice-inline small{color:#627b6c}.text-link{color:#276b5a}
+.flashcard-face{background:#edf2eb;border-color:#d6e1d5;color:#274439}.card-list-item.current,.card-list-item:hover{background:#e8f0e8;color:#245d50}.study-progress strong{color:#286b5a}.practice-setup-icon{background:#e5efe7;color:#326c5b}.practice-option:has(input:checked){background:#edf4ec;border-color:#6d9e83;box-shadow:none}.bar span{background:#4f8971}
+@media(max-width:420px){.game-feature-heading>span{display:none}}
+.books-hero{background:transparent;border-bottom:1px solid #d5dfd7;border-radius:0;padding:0 0 24px}.books-hero h1{font-size:clamp(30px,3vw,40px);letter-spacing:-1px}.books-hero p{max-width:600px}.books-hero-link{border-radius:6px}.book-filters button{border-radius:6px;border-color:#d5ded5;color:#586e62}.book-filters button[aria-pressed=true]{background:#245d50;border-color:#245d50}.book-side-card{background:#e8efe7;border:1px solid #d9e3d8;color:#284a3d;border-radius:8px}.book-side-card>p:not(.eyebrow),.books-info p{color:#607569}.book-side-card input{border-color:#cddacf}.book-side-icon{color:#33745e;border-radius:6px}.archive-search,.book-category{color:#39755f}.book-card{border-color:#dbe3db;border-radius:8px}.book-card:hover{border-color:#9bb8a6}.book-cover-art{opacity:.12}

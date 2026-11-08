@@ -252,7 +252,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261112-1');assert.equal(q('.sidebar'),null);
+  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261113-1');assert.equal(q('.sidebar'),null);
   assert.equal(q('.top-avatar').textContent,'◇');
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
