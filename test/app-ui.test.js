@@ -17,6 +17,7 @@ import { shopView } from '../public/reward-views.js';
 import { parseCardLines } from '../public/card-import.js';
 import { mountLive } from '../public/live-games.js';
 import { mountCommunityChat } from '../public/community-chat.js';
+import { listsView, habitsView, bookmarksView, mountEveryday, localDay } from '../public/everyday.js';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
 import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '../public/ebooks.js';
 const html=await readFile('public/index.html','utf8');
@@ -47,7 +48,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -58,15 +59,14 @@ const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('
 test('logged-out visitors see landing page and cannot access guest workspace',async()=>{
   const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});await run();
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
-  assert.match(w.document.querySelector('#landing').textContent,/Your school day,\s*in one place/i);
+  assert.match(w.document.querySelector('#landing').textContent,/One place for\s*your many things/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
 });
-test('signup requires subjects and sends subject selection with confirmation redirect',async()=>{
+test('signup does not require school subjects and sends a confirmation redirect',async()=>{
   const {client,log}=mockClient();const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   q('[data-open-auth="register"]').click();q('[name="name"]').value='Alex';q('[name="email"]').value='alex@example.com';q('[name="password"]').value='longpassword';
-  q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('#authError').textContent,/select at least one/i);assert.equal(log.signup,null);
-  q('input[name="subjects"][value="Biology"]').checked=true;q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.equal(log.signup.options.emailRedirectTo,'https://example.test/public/login.html');assert.deepEqual(Array.from(log.signup.options.data.subjects),['Biology']);assert.match(q('#modal').textContent,/Check your email/);assert.equal(q('.app-shell').hidden,true);dom.window.close();
+  assert.equal(q('input[name="subjects"]'),null);q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(log.signup.options.emailRedirectTo,'https://example.test/public/login.html');assert.deepEqual(Array.from(log.signup.options.data.subjects),[]);assert.match(q('#modal').textContent,/Check your email/);assert.equal(q('.app-shell').hidden,true);dom.window.close();
 });
 test('confirmation callback signs out the temporary session and opens login',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client,{url:'https://example.test/public/?auth=confirmed#access_token=token&type=signup'});await run();
@@ -250,7 +250,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261107-19');
+  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261108-1');
   assert.equal(q('.top-avatar').textContent,'◇');assert.match(q('#topCoins').textContent,/0 coins/);
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
@@ -285,7 +285,7 @@ test('signed-in users can open community chat without a live game and navigate a
 
 test('school hub preserves revision links and adds synced notes and a weekly timetable',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  for(const path of ['#revision','#chat','#planner','#notes','#timetable','#tools'])assert.ok(q(`.hub-tile[href="${path}"]`),path);
+  for(const path of ['#revision','#chat','#planner','#notes','#timetable','#tools'])assert.ok(q(`a[href="${path}"]`),path);
   go(w,'#revision');assert.ok(q('a[href="#flashcards"]'));assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#videos"]'));
   go(w,'#notes');q('#schoolNoteForm [name=title]').value='<img src=x>';q('#schoolNoteForm [name=body]').value='First line\nSecond line';q('#schoolNoteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
   assert.equal(q('.school-note img'),null);assert.match(q('.school-note').textContent,/<img src=x>/);assert.equal(log.saved.progress.schoolNotes[0].body,'First line\nSecond line');assert.equal(log.saved.progress.completed.biology,true);
@@ -305,7 +305,7 @@ test('school tools calculate safely and timer resets on navigation',async()=>{
 
 test('chat and school tools work independently of selecting revision subjects',async()=>{
   const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.ok(q('.hub-tile[href="#chat"]'));go(w,'#chat');assert.ok(q('#communityInput'));go(w,'#tools');assert.ok(q('#focusDisplay'));go(w,'#flashcards');assert.ok(q('#subjectsForm'));dom.window.close();
+  assert.ok(q('a[href="#chat"]'));go(w,'#chat');assert.ok(q('#communityInput'));go(w,'#tools');assert.ok(q('#focusDisplay'));go(w,'#flashcards');assert.ok(q('#subjectsForm'));dom.window.close();
 });
 
 test('eBooks shelf searches, filters, and opens trusted Archive readers separately from revision',async()=>{
@@ -343,18 +343,24 @@ test('book load failure is visible and can be retried',async()=>{
 });
 
 
-test('school-day landing and navigation put organisation before revision',async()=>{
+test('everything hub puts everyday spaces first while preserving school tools',async()=>{
   const visitor=setup(null,{configured:false});await visitor.run();const landing=visitor.w.document.querySelector('#landing');
-  for(const word of ['Timetable','Homework','Reading','Chat','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
-  assert.match(landing.querySelector('.brand').textContent,/School Hub/);assert.match(landing.querySelector('.preview-heading').textContent,/Inside School Hub/);assert.equal(landing.querySelectorAll('.preview-list a,.preview-list button').length,0);visitor.dom.window.close();
+  for(const word of ['Tasks','lists','habits','books','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
+  assert.match(landing.querySelector('.brand').textContent,/Everything Hub/);assert.equal(landing.querySelectorAll('.preview-list a,.preview-list button').length,0);visitor.dom.window.close();
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  const nav=[...w.document.querySelectorAll('.nav > a[data-nav]')].map(a=>a.dataset.nav);assert.ok(nav.indexOf('planner')<nav.indexOf('revision'));assert.ok(nav.indexOf('timetable')<nav.indexOf('revision'));
-  const apps=[...w.document.querySelectorAll('.dashboard-tiles .hub-tile')].map(a=>a.getAttribute('href'));assert.ok(apps.indexOf('#timetable')<apps.indexOf('#revision'));assert.equal(q('.school-hero-link').getAttribute('href'),'#planner');
-  assert.match(q('.widget-timetable').textContent,/Add lessons to your timetable/);assert.equal(q('.widget-timetable').getAttribute('href'),'#timetable');dom.window.close();
+  for(const path of ['#lists','#habits','#bookmarks','#planner','#notes','#revision','#tools','#ebooks'])assert.ok(q(`.home-directory a[href="${path}"]`));
+  assert.equal(q('.widget-timetable').getAttribute('href'),'#timetable');go(w,'#explore');q('#directorySearch').value='packing';q('#directorySearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('[data-directory-item]')].filter(x=>!x.hidden).length,1);assert.equal(q('[data-directory-item]:not([hidden])').getAttribute('href'),'#lists');dom.window.close();
 });
 
 test('dashboard shows only today’s lessons in time order and escapes lesson data',async()=>{
   const today=(new Date().getDay()+6)%7;const progress={...defaultProgress,schoolLessons:[{title:'Later lesson',day:today,time:'15:00'}, {title:'<img src=x onerror=alert(1)>',day:today,time:'09:00'}, {title:'Another day',day:(today+1)%7,time:'08:00'}]};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const widget=w.document.querySelector('.widget-timetable');
-  assert.match(w.document.querySelector('.home-hero-summary').textContent,/2 lessons/);assert.match(widget.textContent,/2 lessons today/);assert.match(widget.textContent,/<img src=x onerror=alert\(1\)>/);assert.match(widget.textContent,/09:00/);assert.doesNotMatch(widget.textContent,/Another day|Later lesson/);assert.equal(widget.querySelector('img'),null);dom.window.close();
+  assert.match(widget.textContent,/2 lessons today/);assert.match(widget.textContent,/<img src=x onerror=alert\(1\)>/);assert.match(widget.textContent,/09:00/);assert.doesNotMatch(widget.textContent,/Another day|Later lesson/);assert.equal(widget.querySelector('img'),null);dom.window.close();
+});
+
+test('everyday spaces save alongside existing progress without requiring subjects',async()=>{
+ const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}}, progress={...defaultProgress,subjects:[],schoolNotes:[{title:'Old note',body:'Keep me'}]};const {client,log}=mockClient({session:noSubjects,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);const submit=form=>form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+ go(w,'#lists');q('#everyListName').value='Groceries';submit(q('#everyListForm'));q('[name="item"]').value='Milk';submit(q('[data-every-list-form]'));await wait();assert.equal(log.saved.progress.everydayLists[0].items[0].text,'Milk');assert.equal(log.saved.progress.schoolNotes[0].title,'Old note');
+ go(w,'#habits');q('#everyHabitName').value='Read';submit(q('#everyHabitForm'));q('[data-every-habit]').click();await wait();assert.deepEqual(Array.from(log.saved.progress.everydayHabits[0].days),[localDay()]);
+ go(w,'#bookmarks');q('[name="name"]').value='Library';q('[name="url"]').value='https://example.com/';submit(q('#everyBookmarkForm'));await wait();assert.equal(log.saved.progress.everydayBookmarks[0].url,'https://example.com/');go(w,'#home');assert.match(q('.home-hero-summary').textContent,/1 of 1 habits checked/);go(w,'#flashcards');assert.ok(q('#subjectsForm'));dom.window.close();
 });
