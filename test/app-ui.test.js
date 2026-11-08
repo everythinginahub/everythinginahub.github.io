@@ -20,6 +20,7 @@ import { mountCommunityChat } from '../public/community-chat.js';
 import { mountTimetableImport } from '../public/timetable-import.js';
 import { arcadeView, mountArcade } from '../public/arcade.js';
 import { listsView, habitsView, bookmarksView, mountEveryday, localDay } from '../public/everyday.js';
+import { mountNotes } from '../public/notes.js';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
 import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '../public/ebooks.js';
 const html=await readFile('public/index.html','utf8');
@@ -50,7 +51,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -289,11 +290,11 @@ test('school hub preserves revision links and adds synced notes and a weekly tim
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   for(const path of ['#revision','#chat','#planner','#notes','#timetable','#tools'])assert.ok(q(`a[href="${path}"]`),path);
   go(w,'#revision');assert.ok(q('a[href="#flashcards"]'));assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#videos"]'));
-  go(w,'#notes');q('#schoolNoteForm [name=title]').value='<img src=x>';q('#schoolNoteForm [name=body]').value='First line\nSecond line';q('#schoolNoteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  go(w,'#notes');q('#noteNew').click();q('[data-note-form=compose] [name=title]').value='<img src=x>';q('[data-note-form=compose] [name=body]').value='First line\nSecond line';q('[data-note-form=compose]').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
   assert.equal(q('.school-note img'),null);assert.match(q('.school-note').textContent,/<img src=x>/);assert.equal(log.saved.progress.schoolNotes[0].body,'First line\nSecond line');assert.equal(log.saved.progress.completed.biology,true);
-  q('[data-school-note-edit]').click();q('#schoolNoteForm [name=body]').value='Updated';q('#schoolNoteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Updated');
+  q('[data-note-edit]').click();q('[data-note-form=edit] [name=body]').value='Updated';q('[data-note-form=edit]').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Updated');
   go(w,'#timetable');q('#schoolLessonForm [name=title]').value='Maths';q('#schoolLessonForm [name=day]').value='1';q('#schoolLessonForm [name=time]').value='09:15';q('#schoolLessonForm [name=room]').value='A12';q('#schoolLessonForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('.school-week').textContent,/Tuesday[\s\S]*09:15[\s\S]*Maths[\s\S]*A12/);assert.equal(log.saved.progress.schoolLessons[0].day,1);
-  go(w,'#notes');assert.match(q('.school-note').textContent,/Updated/);q('[data-school-note-delete]').click();await wait();assert.equal(log.saved.progress.schoolNotes.length,0);assert.equal(log.saved.progress.schoolLessons.length,1);
+  go(w,'#notes');assert.match(q('.school-note').textContent,/Updated/);q('[data-note-trash]').click();await wait();assert.equal(log.saved.progress.schoolNotes[0].trashed,true);q('[data-notes-view=trash]').click();q('[data-note-permanent]').click();await wait();assert.equal(log.saved.progress.schoolNotes.length,0);assert.equal(log.saved.progress.schoolLessons.length,1);
   go(w,'#timetable');q('[data-school-lesson-delete]').click();await wait();assert.equal(log.saved.progress.schoolLessons.length,0);dom.window.close();
 });
 
@@ -440,4 +441,8 @@ test('Geometry Dash replaces the editor without deleting existing account data',
 
 test('featured games route opens the selected local game and cleans up on navigation',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#arcade');assert.ok(q('a[href="#arcade/spotlight/radius-raid"]'));go(w,'#arcade/spotlight/radius-raid');assert.equal(q('#spotlightFrame').getAttribute('src'),'games/radius-raid/index.html');go(w,'#arcade');assert.equal(q('#spotlightFrame'),null);go(w,'#arcade/play/sudoku');assert.ok(q('.embedded-frame iframe'));}finally{dom.window.close();}
+});
+
+test('an open note flushes before navigation and sign out without losing unrelated progress',async()=>{
+ const progress={...defaultProgress,schoolNotes:[{title:'Existing',body:'Old'}],schoolLessons:[{title:'Maths',day:0,time:'09:00'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#notes');q('[data-note-edit="0"]').click();q('[data-note-form=edit] [name=body]').value='Saved when leaving';go(w,'#home');await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Saved when leaving');assert.equal(log.saved.progress.schoolLessons[0].title,'Maths');go(w,'#notes');q('#noteNew').click();q('[data-note-form=compose] [name=body]').value='Saved before logout';q('#topAccount').click();q('#logout').click();await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Saved before logout');assert.equal(log.signOut,1);}finally{dom.window.close();}
 });
