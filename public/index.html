@@ -2,31 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f6f5f0"><meta name="description" content="A personal hub for lists, tasks, habits, notes, books, games and useful tools.">
+  <meta name="theme-color" content="#f6f4ef"><meta name="description" content="A personal hub for lists, tasks, habits, notes, books, games and useful tools.">
   <title>Everything Hub — Apps for everyday life</title>
-  <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261113-1"><link rel="stylesheet" href="style.css?v=20261114-10">
+  <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261114-11"><link rel="stylesheet" href="style.css?v=20261114-10"><link rel="stylesheet" href="site-design.css?v=20261114-11">
 </head>
 <body>
 <a class="skip-link" href="#app">Skip to content</a>
 <div id="landing" class="entry-screen">
   <main class="landing-main entry-main" tabindex="-1">
-    <div class="entry-card">
-      <a class="brand" href="./" aria-label="Everything Hub home"><img class="brand-mark" src="logo.svg?v=20261113-1" alt="" width="48" height="48"><span>Everything<span> Hub</span></span></a>
-      <p class="entry-kicker">YOUR PERSONAL WORKSPACE</p>
-      <h1>Welcome to<br>Everything Hub.</h1>
-      <p>Your apps, books, games and revision, all in one place. Sign in to open your home screen.</p>
-      <div class="entry-actions"><button class="btn dark" data-open-auth="login" disabled>Sign in →</button><button class="entry-register" data-open-auth="register" disabled>Create an account</button></div>
-      <p class="entry-note">Your lists, habits, notes and timetable are saved with your account.</p>
+    <div class="entry-layout">
+      <section class="entry-intro">
+        <a class="brand" href="./" aria-label="Everything Hub home"><img class="brand-mark" src="logo.svg?v=20261114-11" alt="" width="48" height="48"><span>Everything<span> Hub</span></span></a>
+        <p class="entry-kicker">A LITTLE SPACE FOR EVERYTHING</p>
+        <h1>Welcome to<br>Everything Hub.</h1>
+        <p>Notes, lists, books and revision — together in one useful place.</p>
+        <div class="entry-index" aria-label="What’s inside"><div><span>01</span><strong>Get organised</strong><small>Lists, tasks, notes &amp; habits</small></div><div><span>02</span><strong>Learn something</strong><small>Books, flashcards &amp; revision</small></div><div><span>03</span><strong>Take a break</strong><small>Games &amp; everyday tools</small></div></div>
+      </section>
+      <section class="entry-card" aria-labelledby="entryTitle">
+        <p class="entry-kicker">YOUR ACCOUNT</p><h2 id="entryTitle">Make yourself at home.</h2>
+        <p>Sign in to pick up where you left off, or create an account to get started.</p>
+        <div class="entry-actions"><button class="btn dark" data-open-auth="login" disabled>Sign in <span aria-hidden="true">→</span></button><button class="entry-register" data-open-auth="register" disabled>Create an account</button></div>
+        <p class="entry-note">Your lists, habits, notes and timetable are saved with your account.</p>
+      </section>
     </div>
   </main>
 </div>
 <div class="app-shell" hidden>
-  <div class="main-wrap"><header class="topbar"><div class="breadcrumb"><a href="#home" class="app-home-link" aria-label="Back to home screen">⌂ <span>Home</span></a><span class="breadcrumb-divider" aria-hidden="true">/</span><strong id="crumb">Home</strong></div><div class="top-actions"><span class="top-date" id="date"></span><button class="help-button" id="helpButton" aria-label="Help">?</button><button class="top-avatar" id="topAccount" aria-label="Account">G</button></div></header>
+  <div class="main-wrap"><header class="topbar"><div class="topbar-start"><a href="#home" class="top-brand" aria-label="Everything Hub home"><img src="logo.svg?v=20261114-11" alt="" width="27" height="27"><span>Everything Hub</span></a><div class="breadcrumb"><a href="#home" class="app-home-link" aria-label="Back to home screen"><span>Home</span></a><span class="breadcrumb-divider" aria-hidden="true">/</span><strong id="crumb">Home</strong></div></div><div class="top-actions"><span class="top-date" id="date"></span><button class="help-button" id="helpButton" aria-label="Help">?</button><button class="top-avatar" id="topAccount" aria-label="Account">G</button></div></header>
     <main id="app" tabindex="-1"></main>
   </div>
 </div>
 <dialog id="modal"><div id="modalContent"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div><div id="gameAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-<script type="module" src="app.js?v=20261114-10"></script>
-<script type="module" src="motion.js?v=20261113-1"></script>
+<script type="module" src="app.js?v=20261114-11"></script>
 </body></html>
