@@ -1,4 +1,4 @@
-import {designerView, mountDesigner} from './level-designer.js?v=20261114-5';
+import {designerView, mountDesigner} from './level-designer.js?v=20261114-6';
 import {libraryView, embedView, mountLibrary} from './embedded-games.js?v=20261113-1';
 import {newRunner,newOrbit,newReef,jumpRunner,launchReef,stepGame,WIDTH,HEIGHT} from './arcade-engine.js?v=20261113-1';
 import {drawArcade} from './arcade-render.js?v=20261113-1';
