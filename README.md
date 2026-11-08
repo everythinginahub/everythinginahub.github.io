@@ -36,7 +36,7 @@ The Internet Archive scan remains available as an optional, separate edition, as
 
 ## Existing school and learning tools
 
-- **Tasks** uses the existing study planner and preserves its tasks; add and edit titles and dates, filter by status, mark tasks complete or delete them.
+- **Tasks** uses the existing study planner and preserves its tasks. Add or edit a title and optional date, star important tasks, filter the list, mark tasks complete or delete them. Stars are saved with the same account progress as the rest of the task. The list-first design is inspired by Google Tasks; it does not connect to or sync with Google Tasks.
 - **Notes** supports up to 30 notes (80-character title and 1,000-character body), with editing, searching and deletion. **Timetable** supports up to 60 editable weekly lessons with a day, local start time and optional room.
 - **Everyday tools** includes a 1–90 minute focus timer, a basic arithmetic calculator with brackets, a score-to-percentage calculator, word counter, metric unit converter and calendar-day countdown. The focus timer is session-only, resets on leaving the page and does not send notifications. Percentages are not grade predictions.
 
