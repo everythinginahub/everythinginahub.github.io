@@ -12,6 +12,12 @@ A free-to-host personal workspace on GitHub Pages, with Supabase accounts and pr
 
 Lists, habits, links, tasks, notes and timetable share the existing account progress JSON and its **100,000-byte overall limit**. Sync is last-write-wins across devices, and a sync error leaves a pending local copy to resolve in the account menu. They are not shared with other users, but are not end-to-end encrypted and may be accessible to the service operator; avoid sensitive information. Browser testing used a mock account backend, not a live cross-device Supabase session. Public signup still needs a suitable SMTP sender as described below.
 
+## Home screen and Games app
+
+The signed-in home screen has a local clock, task, habit and timetable widgets, an app grid and a quick-access dock. Explore and the regular navigation remain available. The design takes inspiration from the general tablet-launcher idea, using original styling rather than KindleHub assets.
+
+**Games** is a separate single-player app, available without choosing revision subjects. **Merge 2048** combines equal tiles with arrow keys, swipes or on-screen buttons; undo reverses the last move. **Pocket Snake** uses arrow keys or on-screen buttons, with pause/resume; it pauses when the tab is hidden. **Minefield** guarantees a safe first reveal, uses right-click or the flag-mode toggle to mark mines, and can be played with a keyboard. All three have restart and win/loss states. Current boards are discarded when leaving a game. Merge and Snake best scores are stored in local browser storage per signed-in account on that device, not synced; clearing browser data removes them. They do not award study coins or modify account progress. The existing flashcard-based **Study games** and live modes are still at `#games`.
+
 ## eBooks
 
 The ten starter books now open **locally hosted Project Gutenberg text editions** by default rather than relying on Internet Archive's iframe. Reading controls include page navigation, search, a progress indicator, font, size and theme settings. Position and settings are stored on the current device, per signed-in account, not synced. The complete texts and their Project Gutenberg licence notices are retained; source and attribution are listed in `public/books/README.md`. Historical editions can contain outdated language or ideas. An Internet connection is still needed to load a text from the site unless the browser has cached it; this is not an offline app.
