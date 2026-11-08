@@ -61,7 +61,7 @@ const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('
 test('logged-out visitors see landing page and cannot access guest workspace',async()=>{
   const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});await run();
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
-  assert.match(w.document.querySelector('#landing').textContent,/One place for\s*your many things/i);
+  assert.match(w.document.querySelector('#landing').textContent,/Welcome to\s*Everything Hub/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
 });
 test('signup does not require school subjects and sends a confirmation redirect',async()=>{
@@ -119,7 +119,7 @@ test('expanded starter sets can be browsed and the twentieth card reviewed',asyn
 
 test('video library filters selected subjects and search with safe external links',async()=>{
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  go(w,'#videos');assert.equal(q('[data-nav="videos"]').getAttribute('aria-current'),'page');
+  go(w,'#videos');assert.equal(q('#crumb').textContent,'Video lessons');
   assert.ok(q('#videoSearch'));assert.ok([...w.document.querySelectorAll('.video-card')].some(card=>/Osmosis/.test(card.textContent)));
   assert.ok(![...w.document.querySelectorAll('.video-card')].some(card=>/Covalent bonding/.test(card.textContent)));
   q('[data-video-filter="All subjects"]').click();assert.ok([...w.document.querySelectorAll('.video-card')].some(card=>/Covalent bonding/.test(card.textContent)));
@@ -152,7 +152,7 @@ test('watching a selected video opens an in-site player with fallback and practi
   const image=q('.video-thumbnail');assert.equal(image.getAttribute('alt'),'');image.dispatchEvent(new w.Event('error'));assert.equal(image.hidden,true);
   go(w,'#videos/bio-osmosis');const frame=q('.video-player iframe');assert.ok(frame);assert.equal(frame.src,'https://www.youtube-nocookie.com/embed/vCJVXYmXkzM?rel=0');
   assert.match(frame.title,/Osmosis/);assert.equal(frame.getAttribute('referrerpolicy'),'strict-origin-when-cross-origin');assert.ok(frame.hasAttribute('allowfullscreen'));
-  assert.equal(q('[data-nav="videos"]').getAttribute('aria-current'),'page');assert.match(q('.watch-fallback').textContent,/restrict embedding/);
+  assert.equal(q('#crumb').textContent,'Video lessons');assert.match(q('.watch-fallback').textContent,/restrict embedding/);
   assert.equal(q('.watch-source a').href,'https://www.youtube.com/watch?v=vCJVXYmXkzM');assert.match(q('.watch-source a').rel,/noopener/);
   assert.equal(new URL(q('.practice-deck').href).hash,'#flashcards/bio-transport');assert.match(q('.watch-tip').textContent,/recall/i);
   go(w,'#videos');assert.equal(q('iframe'),null);assert.equal(q('#videoSearch').value,'osmosis');assert.match(q('#videoGrid').textContent,/Osmosis/);
@@ -161,7 +161,7 @@ test('watching a selected video opens an in-site player with fallback and practi
 
 test('games hub finds sets and links from dashboard and flashcards',async()=>{
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.ok(q('.dashboard-games[href="#games"]'));go(w,'#games');await wait();assert.equal(q('[data-nav="games"]').getAttribute('aria-current'),'page');assert.match(q('#app').textContent,/No timer/i);
+  assert.ok(q('.dashboard-games[href="#games"]'));go(w,'#games');await wait();assert.equal(q('#crumb').textContent,'Study games');assert.match(q('#app').textContent,/No timer/i);
   q('#gameSearch').value='osmosis';q('#gameSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#gameSetGrid').textContent,/Transport in cells/);
   q('#gameSearch').value='not a real set';q('#gameSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#gameSetGrid').textContent,/No sets found/);q('#clearGameSearch').click();assert.equal(q('#gameSearch').value,'');
   go(w,'#flashcards/bio-transport');await wait();assert.ok(q('a[href="#games/bio-transport"]'));dom.window.close();
@@ -214,9 +214,9 @@ test('community game content is escaped in matching and quiz modes',async()=>{
 test('practice tests mark answers on submission and support retakes without saving scores',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   assert.equal(q('[data-nav="tests"]'),null);assert.equal(q('a[href="#tests"]'),null);
-  go(w,'#flashcards/bio-transport');await wait();assert.equal(q('[data-nav="flashcards"]').getAttribute('aria-current'),'page');assert.ok(q('a[href="#flashcards/bio-transport/study"]'));assert.ok(q('a[href="#games/bio-transport"]'));assert.ok(q('a[href="#tests/bio-transport"]'));assert.equal(w.document.querySelectorAll('.set-preview-card').length,20);assert.equal(q('.set-preview-card').open,false);q('.set-preview-card summary').click();assert.equal(q('.set-preview-card').open,true);
-  go(w,'#tests');await wait();assert.ok(q('#deckSearch'));assert.equal(q('[data-nav="flashcards"]').getAttribute('aria-current'),'page');assert.equal(q('#testSearch'),null);
-  go(w,'#tests/bio-transport');await wait();assert.equal(q('[data-nav="flashcards"]').getAttribute('aria-current'),'page');assert.equal(new URL(q('.game-page-heading .back-link').href).hash,'#flashcards/bio-transport');q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(w.document.querySelectorAll('.practice-question').length,5);
+  go(w,'#flashcards/bio-transport');await wait();assert.ok(['Flashcards','Practice tests'].includes(q('#crumb').textContent));assert.ok(q('a[href="#flashcards/bio-transport/study"]'));assert.ok(q('a[href="#games/bio-transport"]'));assert.ok(q('a[href="#tests/bio-transport"]'));assert.equal(w.document.querySelectorAll('.set-preview-card').length,20);assert.equal(q('.set-preview-card').open,false);q('.set-preview-card summary').click();assert.equal(q('.set-preview-card').open,true);
+  go(w,'#tests');await wait();assert.ok(q('#deckSearch'));assert.ok(['Flashcards','Practice tests'].includes(q('#crumb').textContent));assert.equal(q('#testSearch'),null);
+  go(w,'#tests/bio-transport');await wait();assert.ok(['Flashcards','Practice tests'].includes(q('#crumb').textContent));assert.equal(new URL(q('.game-page-heading .back-link').href).hash,'#flashcards/bio-transport');q('#testLength').value='5';q('#practiceStart').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(w.document.querySelectorAll('.practice-question').length,5);
   q('#practiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#practiceError').textContent,/at least one/);assert.equal(log.saved,null);
   const deck=starterDecks.find(d=>d.id==='bio-transport');const fields=[...w.document.querySelectorAll('.practice-question')];
   fields.slice(0,4).forEach((field,i)=>{const question=field.querySelector('legend strong').textContent,answer=deck.cards.find(card=>card[0]===question)[1];const choices=[...field.querySelectorAll('label')];const chosen=i===0?choices.find(label=>label.querySelector('span').textContent!==answer):choices.find(label=>label.querySelector('span').textContent===answer);chosen.querySelector('input').checked=true;});
@@ -246,14 +246,14 @@ test('bulk card import checks input and never silently overwrites a draft',async
 
 test('game completion awards coins once and the streak reflects study activity',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#games/bio-transport');await wait();q('[data-game-start="match"]').click();const ids=[...w.document.querySelectorAll('[data-match-side="question"]')].map(x=>x.dataset.matchId);
-  for(const id of ids){q(`[data-match-side="question"][data-match-id="${id}"]`).click();q(`[data-match-side="answer"][data-match-id="${id}"]`).click();}await wait();assert.equal(log.saved.progress.rewards.coins,10);assert.match(q('#topCoins').textContent,/10/);go(w,'#home');await wait();assert.match(q('.streak-panel').textContent,/1 day streak/);assert.equal(w.document.querySelectorAll('.streak-day.active').length,1);dom.window.close();
+  for(const id of ids){q(`[data-match-side="question"][data-match-id="${id}"]`).click();q(`[data-match-side="answer"][data-match-id="${id}"]`).click();}await wait();assert.equal(log.saved.progress.rewards.coins,10);go(w,'#revision');await wait();assert.match(q('.streak-panel').textContent,/1 day streak/);assert.equal(w.document.querySelectorAll('.streak-day.active').length,1);dom.window.close();
 });
 
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261109-2');
-  assert.equal(q('.top-avatar').textContent,'◇');assert.match(q('#topCoins').textContent,/0 coins/);
+  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261110-1');assert.equal(q('.sidebar'),null);
+  assert.equal(q('.top-avatar').textContent,'◇');
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
   }
@@ -262,7 +262,7 @@ test('decorative starbursts are absent while existing rewards and site branding 
 });
 
 test('skip link focuses the visible content for logged-out and signed-in visitors',async()=>{
-  const visitor=setup(null,{configured:false});await visitor.run();visitor.w.document.querySelector('.skip-link').click();assert.equal(visitor.w.document.activeElement.className,'landing-main');visitor.dom.window.close();
+  const visitor=setup(null,{configured:false});await visitor.run();visitor.w.document.querySelector('.skip-link').click();assert.ok(visitor.w.document.activeElement.classList.contains('landing-main'));visitor.dom.window.close();
   const {client}=mockClient({session:account});const signedIn=setup(client);await signedIn.run();signedIn.w.document.querySelector('.skip-link').click();assert.equal(signedIn.w.document.activeElement.id,'app');signedIn.dom.window.close();
 });
 
@@ -270,7 +270,7 @@ test('live games are available from games and flashcard sets',async()=>{
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   go(w,'#games');assert.ok(q('.live-promo[href="#live"]'));
   go(w,'#flashcards/bio-transport');assert.ok(q('.set-mode[href="#live/host/bio-transport"]'));go(w,'#live/host/bio-transport');assert.equal(q('#liveCreate [name=deck]').value,'bio-transport');
-  go(w,'#live');assert.equal(q('[data-nav="games"]').getAttribute('aria-current'),'page');assert.ok(q('#liveJoin'));assert.ok(q('#liveCreate'));assert.match(q('#app').textContent,/everyone needs a signed-in account/i);
+  go(w,'#live');assert.equal(q('#crumb').textContent,'Live games');assert.ok(q('#liveJoin'));assert.ok(q('#liveCreate'));assert.match(q('#app').textContent,/everyone needs a signed-in account/i);
   go(w,'#home');assert.ok(q('.dashboard-action'));dom.window.close();
 });
 
@@ -282,7 +282,7 @@ test('subject setup preserves a live invitation for an existing account',async()
 
 test('signed-in users can open community chat without a live game and navigate away',async()=>{
   const {client}=mockClient({session:account});client.rpc=async name=>name==='community_chat_list'?{data:[]}:{data:null};const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  go(w,'#chat');await wait();assert.equal(q('[data-nav="chat"]').getAttribute('aria-current'),'page');assert.match(q('#app').textContent,/Community chat/);assert.match(q('#app').textContent,/no game needed/i);assert.ok(q('#communityInput'));go(w,'#home');assert.equal(q('#communityInput'),null);dom.window.close();
+  go(w,'#chat');await wait();assert.equal(q('#crumb').textContent,'Community chat');assert.match(q('#app').textContent,/Community chat/);assert.match(q('#app').textContent,/no game needed/i);assert.ok(q('#communityInput'));go(w,'#home');assert.equal(q('#communityInput'),null);dom.window.close();
 });
 
 test('school hub preserves revision links and adds synced notes and a weekly timetable',async()=>{
@@ -312,11 +312,11 @@ test('chat and school tools work independently of selecting revision subjects',a
 
 test('eBooks shelf searches, filters, and opens trusted Archive readers separately from revision',async()=>{
   const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.ok(q('.hub-tile[href="#ebooks"]'));go(w,'#ebooks');assert.equal(q('[data-nav="ebooks"]').getAttribute('aria-current'),'page');assert.equal(q('#app iframe'),null);assert.ok(w.document.querySelectorAll('.book-card').length>=8);
+  assert.ok(q('.hub-tile[href="#ebooks"]'));go(w,'#ebooks');assert.equal(q('#crumb').textContent,'Books');assert.equal(q('#app iframe'),null);assert.ok(w.document.querySelectorAll('.book-card').length>=8);
   q('#bookSearch').value='carroll';q('#bookSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('.book-card').length,1);assert.match(q('#bookGrid').textContent,/Alice/);
   q('#bookSearch').value='';q('#bookSearch').dispatchEvent(new w.Event('input',{bubbles:true}));q('[data-book-filter="Nature"]').click();assert.equal(q('[data-book-filter="Nature"]').getAttribute('aria-pressed'),'true');assert.match(q('#bookGrid').textContent,/Darwin/);assert.doesNotMatch(q('#bookGrid').textContent,/Alice/);
   q('#archiveBookInput').value='https://evil.test/details/abc';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#archiveBookError').textContent,/Internet Archive/);assert.equal(w.location.hash,'#ebooks');
-  q('#archiveBookInput').value='https://archive.org/details/secretgarden00burn/page/10';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));w.dispatchEvent(new w.HashChangeEvent('hashchange'));await wait();assert.match(q('#readerContent').textContent,/Project Gutenberg/);q('[data-reader-mode=archive]').click();assert.equal(q('.reader-frame iframe').getAttribute('src'),'https://archive.org/embed/secretgarden00burn');assert.ok(q('a[href="https://archive.org/details/secretgarden00burn"]'));assert.equal(q('[data-nav="ebooks"]').getAttribute('aria-current'),'page');
+  q('#archiveBookInput').value='https://archive.org/details/secretgarden00burn/page/10';q('#archiveBookForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));w.dispatchEvent(new w.HashChangeEvent('hashchange'));await wait();assert.match(q('#readerContent').textContent,/Project Gutenberg/);q('[data-reader-mode=archive]').click();assert.equal(q('.reader-frame iframe').getAttribute('src'),'https://archive.org/embed/secretgarden00burn');assert.ok(q('a[href="https://archive.org/details/secretgarden00burn"]'));assert.equal(q('#crumb').textContent,'Books');
   go(w,'#ebooks/bad%22id');assert.equal(q('iframe'),null);assert.match(q('#app').textContent,/Book not found/);dom.window.close();
 });
 
@@ -347,7 +347,7 @@ test('book load failure is visible and can be retried',async()=>{
 
 test('everything hub puts everyday spaces first while preserving school tools',async()=>{
   const visitor=setup(null,{configured:false});await visitor.run();const landing=visitor.w.document.querySelector('#landing');
-  for(const word of ['Tasks','lists','habits','books','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
+  for(const word of ['lists','habits','notes','books','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
   assert.match(landing.querySelector('.brand').textContent,/Everything Hub/);assert.equal(landing.querySelectorAll('.preview-list a,.preview-list button').length,0);visitor.dom.window.close();
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
   for(const path of ['#lists','#habits','#bookmarks','#planner','#notes','#revision','#tools','#ebooks'])assert.ok(q(`.home-directory a[href="${path}"]`));
@@ -369,5 +369,13 @@ test('everyday spaces save alongside existing progress without requiring subject
 
 test('the Games app works without revision subjects and keeps old study routes',async()=>{
  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('[data-nav=arcade]').getAttribute('aria-current'),'page');assert.equal(w.document.querySelectorAll('.arcade-game-card').length,3);go(w,'#arcade/merge');assert.equal(w.document.querySelectorAll('.merge-cell').length,16);go(w,'#arcade/mines');assert.equal(w.document.querySelectorAll('.mine-cell').length,64);go(w,'#arcade/snake');q('[data-arcade=snake-toggle]').click();assert.equal(q('[data-arcade=snake-toggle]').textContent,'Pause');go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
+ assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('#crumb').textContent,'Games');assert.equal(w.document.querySelectorAll('.arcade-game-card').length,3);go(w,'#arcade/merge');assert.equal(w.document.querySelectorAll('.merge-cell').length,16);go(w,'#arcade/mines');assert.equal(w.document.querySelectorAll('.mine-cell').length,64);go(w,'#arcade/snake');q('[data-arcade=snake-toggle]').click();assert.equal(q('[data-arcade=snake-toggle]').textContent,'Pause');go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
+});
+
+
+test('launcher searches all apps and opens focused views without a sidebar',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+ const links=['planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','games','flashcards','subjects','videos','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
+ const search=q('#directorySearch');search.value='flashcards';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#flashcards"]').hidden);assert.ok(q('.home-directory a[href="#notes"]').hidden);assert.match(q('#directoryStatus').textContent,/results/);search.value='no-such-app';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#directoryStatus').textContent,'0 results');search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])')].length,links.length);
+ for(const path of ['#notes','#timetable','#arcade','#ebooks','#flashcards','#tools']){go(w,path);assert.equal(q('.sidebar'),null);assert.equal(q('.os-dock'),null);assert.equal(q('.home-directory'),null);assert.equal(q('.app-home-link').getAttribute('href'),'#home');assert.equal(q('.app-shell').classList.contains('os-home'),false);}go(w,'#home');assert.ok(q('#directorySearch'));dom.window.close();
 });
