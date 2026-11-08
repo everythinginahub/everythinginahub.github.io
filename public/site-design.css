@@ -261,3 +261,6 @@ dialog::backdrop { background:#24323b80; }
 #app .community-message { border-color:#dce2dc; border-radius:5px; }
 #app .community-message.mine { background:#edf3f0; border-color:#d7e2db; }
 #app .community-message-head strong { color:#355d70; }
+.chat-owner-badge { display:inline-block; flex:none; margin-left:6px; padding:3px 7px; border:1px solid #dec7a4; border-radius:3px; background:#f5ebd8; color:#725029; font-size:10px; font-weight:800; letter-spacing:.03em; line-height:1.2; }
+.chat-author { display:inline-flex; align-items:center; flex-wrap:wrap; min-width:0; gap:4px; }
+.chat-author .chat-owner-badge { margin-left:0; }

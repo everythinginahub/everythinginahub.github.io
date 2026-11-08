@@ -1,5 +1,6 @@
+import { restrictedNickname } from './nickname-policy.js?v=20261114-14';
 import { createQuiz } from './games.js?v=20261113-1';
-import { mountLiveChat } from './live-chat.js?v=20261107-14';
+import { mountLiveChat } from './live-chat.js?v=20261114-14';
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const codePattern = /^[0-9A-F]{10}$/;
 const chestIcon = `<svg viewBox="0 0 64 56" aria-hidden="true" focusable="false"><path d="M7 23V18C7 8 16 3 32 3s25 5 25 15v5" fill="#a85a21" stroke="#79400e" stroke-width="3"/><path d="M8 22h48v26c0 3-3 5-6 5H14c-3 0-6-2-6-5z" fill="#cb752a" stroke="#79400e" stroke-width="3"/><path d="M8 26h48M17 22v30M47 22v30" fill="none" stroke="#ffd469" stroke-width="5"/><rect x="26" y="23" width="12" height="13" rx="2" fill="#ffd469" stroke="#79400e" stroke-width="2"/><circle cx="32" cy="29" r="2" fill="#79400e"/></svg>`;
@@ -70,7 +71,7 @@ export function mountLive({root,client,decks,code,session,preferredDeck='',win=w
   async function join(c,n){const data=await rpc('live_join',{p_code:c,p_nickname:n});if(disposed)return;remember(data.code,n);if(win.location.hash!==`#live/${data.code}`){win.location.hash=`live/${data.code}`;return;}roomId=data.id;root.innerHTML='<p id="liveConnection" class="live-connection" role="status">Connecting…</p>';await poll();if(!disposed&&!fatal&&!timer)timer=win.setInterval(poll,2500);}
   root.addEventListener('submit',async e=>{
     if(!['liveJoin','liveCreate'].includes(e.target.id))return;e.preventDefault();if(busy)return;busy=true;const form=e.target, button=form.querySelector('[type=submit]'), error=form.querySelector('.live-error');button.disabled=true;error.textContent='';
-    try{const data=new win.FormData(form),nickname=String(data.get('nickname')||'').trim();if(nickname.length<2||nickname.length>24)throw new Error('Choose a nickname between 2 and 24 characters.');
+    try{const data=new win.FormData(form),nickname=String(data.get('nickname')||'').trim();if(nickname.length<2||nickname.length>24||restrictedNickname(nickname))throw new Error('Choose a different nickname between 2 and 24 characters; some names and role titles are restricted.');
       if(form.id==='liveJoin'){const c=String(data.get('code')||'').trim().toUpperCase();if(!codePattern.test(c))throw new Error('Enter the 10-character game code.');await join(c,nickname);}
       else {const deck=decks.find(d=>d.id===data.get('deck'));if(!deck)throw new Error('Choose a set.');if(!data.has('share'))throw new Error('Confirm that the questions will be shared.');const questions=liveQuestions(deck.cards,Number(data.get('length')));if(!questions)throw new Error('This set needs at least two different questions and answers.');const result=await rpc('live_create',{p_title:deck.title,p_mode:String(data.get('mode')),p_questions:questions,p_nickname:nickname});if(disposed)return;remember(result.code,nickname);win.location.hash=`live/${result.code}`;}
     }catch(err){if(!disposed)error.textContent=err.message||'Could not connect. Please try again.';}finally{busy=false;if(button.isConnected)button.disabled=false;}

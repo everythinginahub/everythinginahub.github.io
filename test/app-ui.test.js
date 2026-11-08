@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
 import * as utils from '../public/study-utils.js';
+import {restrictedNickname} from '../public/nickname-policy.js';
 import { createAccountBackend, validateConfig } from '../public/account-backend.js';
 import { extraDecks, searchDecks } from '../public/decks.js';
 import { subjects, starterDecks } from '../public/starter-decks.js';
@@ -51,7 +52,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -489,4 +490,9 @@ test('existing accounts choose their chat nickname in profile settings and it pe
  q('#modal').close();go(w,'#home');go(w,'#chat');await wait();assert.match(q('#communityIdentity').textContent,/Study Fox/);
  q('#communityOpenSettings').click();await wait();assert.equal(q('#settingsNickname').value,'Study Fox');q('#settingsNickname').value='admin';q('#nicknameForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#nicknameError').textContent,/nickname/i);assert.equal(log.nickname,'Study Fox');
  }finally{dom.window.close();}
+});
+
+test('sign-up and profile settings reject restricted nickname variants',async()=>{
+ const guest=mockClient();const g=setup(guest.client);try{await g.run();const q=s=>g.w.document.querySelector(s);q('[data-open-auth=register]').click();q('[name=name]').value='S.h.4.y';q('[name=email]').value='alex@example.com';q('[name=password]').value='password123';q('#authForm').dispatchEvent(new g.w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(guest.log.signup,null);assert.match(q('#authError').textContent,/nickname/i);}finally{g.dom.window.close();}
+ const logged=mockClient({session:account});const p=setup(logged.client);try{await p.run();const q=s=>p.w.document.querySelector(s);q('#topAccount').click();q('#openProfileSettings').click();await wait();q('#settingsNickname').value='The Owner';q('#nicknameForm').dispatchEvent(new p.w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(logged.log.nickname,null);assert.match(q('#nicknameError').textContent,/nickname/i);}finally{p.dom.window.close();}
 });

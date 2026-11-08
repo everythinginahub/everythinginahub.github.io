@@ -15,10 +15,10 @@ export function mountLiveChat({root,client,roomId,isHost,win=window}) {
     const existing=new Set([...list.querySelectorAll('[data-message-id]')].map(el=>el.dataset.messageId));
     if(data.messages.length)list.querySelector('.live-chat-empty')?.remove();
     for(const message of data.messages){
-      if(existing.has(String(message.id)))continue;
+      if(existing.has(String(message.id))){const item=[...list.querySelectorAll('[data-message-id]')].find(el=>el.dataset.messageId===String(message.id));const header=item.querySelector('.live-chat-message-head');const author=header.querySelector('strong'),label=message.mine?'You':message.name;if(author.textContent!==label)author.textContent=label;let tag=header.querySelector('.chat-owner-badge');if(message.isOwner===true&&!tag){tag=win.document.createElement('span');tag.className='chat-owner-badge';tag.textContent='Owner';header.querySelector('strong').after(tag);}else if(message.isOwner!==true)tag?.remove();continue;}
       const item=win.document.createElement('div');item.className=`live-chat-message${message.mine?' mine':''}`;item.dataset.messageId=message.id;
       const header=win.document.createElement('div');header.className='live-chat-message-head';
-      const author=win.document.createElement('strong');author.textContent=message.mine?'You':message.name;header.append(author);
+      const author=win.document.createElement('strong');author.textContent=message.mine?'You':message.name;const byline=win.document.createElement('span');byline.className='chat-author';byline.append(author);header.append(byline);if(message.isOwner===true){const tag=win.document.createElement('span');tag.className='chat-owner-badge';tag.textContent='Owner';byline.append(tag);}
       if(isHost||message.mine){const remove=win.document.createElement('button');remove.type='button';remove.className='live-chat-remove';remove.dataset.chatDelete=message.id;remove.setAttribute('aria-label',message.mine?'Delete your message':`Delete message from ${message.name}`);remove.textContent='Delete';header.append(remove);}
       const text=win.document.createElement('p');text.textContent=message.text;item.append(header,text);list.append(item);
     }

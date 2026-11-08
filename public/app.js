@@ -1,3 +1,4 @@
+import { restrictedNickname } from './nickname-policy.js?v=20261114-14';
 import { mountNotes } from './notes.js?v=20261114-10';
 import { mountTimetableImport } from './timetable-import.js?v=20261109-2';
 import { arcadeView, mountArcade } from './arcade.js?v=20261114-12';
@@ -18,8 +19,8 @@ import { practiceChooser, practiceView } from './practice-views.js?v=20261107-6'
 import { rewardsCatalog, normalizeRewards, awardDaily, chooseReward } from './rewards.js?v=20261114-4';
 import { shopView } from './reward-views.js?v=20261114-4';
 import { parseCardLines } from './card-import.js?v=20261107-5';
-import { mountLive } from './live-games.js?v=20261114-8';
-import { mountCommunityChat } from './community-chat.js?v=20261114-13';
+import { mountLive } from './live-games.js?v=20261114-14';
+import { mountCommunityChat } from './community-chat.js?v=20261114-14';
 import { subjectCatalog, cleanSubjects } from './subject-catalog.js?v=20261106-6';
 let communityDecks = [];
 let gameQuery = '', gameSubject = 'My subjects', gameSession = null;
@@ -307,7 +308,7 @@ function account(mode='login') {
 // authority and repeats validation before saving or sending.
 function nicknameError(value){
  const n=String(value||'').trim(),lower=n.toLowerCase(),compact=lower.replace(/[^a-z0-9]/g,'').replace(/[013457]/g,c=>({'0':'o','1':'i','3':'e','4':'a','5':'s','7':'t'}[c]));
- if([...n].length<2||[...n].length>24||/[\x00-\x1f\x7f]/.test(n)||['admin','moderator','staff','revisepro'].includes(lower)||/(https?:\/\/|www[. ]|[a-z0-9-]+[.][a-z]{2,}|@)/i.test(n)||(n.match(/[0-9]/g)||[]).length>=7||/\b(fuck|fucking|shit|bitch|cunt|bastard|nigger|nigga|faggot|retard|whore|porn|nude|nudes|rape|rapist|suicide|kys)\b/i.test(n)||/(fuck|nigger|nigga|faggot|killyourself|sendnudes|sexualassault)/.test(compact))return 'Choose a 2–24 character nickname without personal details, links, reserved names or harmful language.';
+ if(restrictedNickname(n)||[...n].length<2||[...n].length>24||/[\x00-\x1f\x7f]/.test(n)||['admin','moderator','staff','revisepro'].includes(lower)||/(https?:\/\/|www[. ]|[a-z0-9-]+[.][a-z]{2,}|@)/i.test(n)||(n.match(/[0-9]/g)||[]).length>=7||/\b(fuck|fucking|shit|bitch|cunt|bastard|nigger|nigga|faggot|retard|whore|porn|nude|nudes|rape|rapist|suicide|kys)\b/i.test(n)||/(fuck|nigger|nigga|faggot|killyourself|sendnudes|sexualassault)/.test(compact))return 'Choose a 2–24 character nickname without personal details, links, restricted names or harmful language.';
  return '';
 }
 async function openProfileSettings(){
