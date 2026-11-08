@@ -17,6 +17,7 @@ import { shopView } from '../public/reward-views.js';
 import { parseCardLines } from '../public/card-import.js';
 import { mountLive } from '../public/live-games.js';
 import { mountCommunityChat } from '../public/community-chat.js';
+import { arcadeView, mountArcade } from '../public/arcade.js';
 import { listsView, habitsView, bookmarksView, mountEveryday, localDay } from '../public/everyday.js';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
 import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '../public/ebooks.js';
@@ -48,7 +49,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -250,7 +251,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261108-1');
+  assert.equal(q('.sidebar .brand-mark').getAttribute('src'),'logo.svg?v=20261109-1');
   assert.equal(q('.top-avatar').textContent,'◇');assert.match(q('#topCoins').textContent,/0 coins/);
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
@@ -363,4 +364,9 @@ test('everyday spaces save alongside existing progress without requiring subject
  go(w,'#lists');q('#everyListName').value='Groceries';submit(q('#everyListForm'));q('[name="item"]').value='Milk';submit(q('[data-every-list-form]'));await wait();assert.equal(log.saved.progress.everydayLists[0].items[0].text,'Milk');assert.equal(log.saved.progress.schoolNotes[0].title,'Old note');
  go(w,'#habits');q('#everyHabitName').value='Read';submit(q('#everyHabitForm'));q('[data-every-habit]').click();await wait();assert.deepEqual(Array.from(log.saved.progress.everydayHabits[0].days),[localDay()]);
  go(w,'#bookmarks');q('[name="name"]').value='Library';q('[name="url"]').value='https://example.com/';submit(q('#everyBookmarkForm'));await wait();assert.equal(log.saved.progress.everydayBookmarks[0].url,'https://example.com/');go(w,'#home');assert.match(q('.home-hero-summary').textContent,/1 of 1 habits checked/);go(w,'#flashcards');assert.ok(q('#subjectsForm'));dom.window.close();
+});
+
+test('the Games app works without revision subjects and keeps old study routes',async()=>{
+ const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+ assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('[data-nav=arcade]').getAttribute('aria-current'),'page');assert.equal(w.document.querySelectorAll('.arcade-game-card').length,3);go(w,'#arcade/merge');assert.equal(w.document.querySelectorAll('.merge-cell').length,16);go(w,'#arcade/mines');assert.equal(w.document.querySelectorAll('.mine-cell').length,64);go(w,'#arcade/snake');q('[data-arcade=snake-toggle]').click();assert.equal(q('[data-arcade=snake-toggle]').textContent,'Pause');go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
 });
