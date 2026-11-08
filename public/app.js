@@ -1,7 +1,7 @@
 import { mountTimetableImport } from './timetable-import.js?v=20261109-2';
-import { arcadeView, mountArcade } from './arcade.js?v=20261112-1';
+import { arcadeView, mountArcade } from './arcade.js?v=20261113-1';
 import { listsView, habitsView, bookmarksView, mountEveryday, localDay } from './everyday.js?v=20261108-1';
-import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from './ebooks.js?v=20261108-1';
+import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from './ebooks.js?v=20261113-1';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from './school-tools.js?v=20261109-2';
 import { localDate, currentStreak, sortedTasks, taskDateLabel, recentStudyDays } from './study-utils.js?v=20261107-5';
 import { supabaseConfig } from './config.js?v=20261106-4';
@@ -10,14 +10,14 @@ import { createClient } from './supabase-client.js?v=20261106-4';
 import { extraDecks, searchDecks } from './decks.js?v=20261107-1';
 import { subjects, starterDecks } from './starter-decks.js?v=20261107-17';
 import { videos, filterVideos, youtubeThumbnail, youtubeEmbed, youtubeVideoId, videoPracticeDecks } from './videos.js?v=20261107-3';
-import { uniqueGameCards, createMatch, selectMatch, createQuiz, answerQuiz, advanceQuiz, createRecall, revealRecall, markRecall } from './games.js?v=20261112-1';
-import { gamesHub, gameSetCards, gameChooser, gameView } from './game-views.js?v=20261112-1';
+import { uniqueGameCards, createMatch, selectMatch, createQuiz, answerQuiz, advanceQuiz, createRecall, revealRecall, markRecall } from './games.js?v=20261113-1';
+import { gamesHub, gameSetCards, gameChooser, gameView } from './game-views.js?v=20261113-1';
 import { createPractice, submitPractice } from './practice.js?v=20261107-5';
 import { practiceChooser, practiceView } from './practice-views.js?v=20261107-6';
 import { rewardsCatalog, normalizeRewards, awardDaily, chooseReward } from './rewards.js?v=20261107-7';
 import { shopView } from './reward-views.js?v=20261107-7';
 import { parseCardLines } from './card-import.js?v=20261107-5';
-import { mountLive } from './live-games.js?v=20261107-14';
+import { mountLive } from './live-games.js?v=20261113-1';
 import { mountCommunityChat } from './community-chat.js?v=20261107-14';
 import { subjectCatalog, cleanSubjects } from './subject-catalog.js?v=20261106-6';
 let communityDecks = [];
@@ -103,7 +103,7 @@ function explorePage(){return `<div class="everyday-head"><p class="everyday-kic
 function dashboard(){
  const pending=sortedTasks(state.tasks).filter(({task})=>!task.done),next=pending[0]?.task,habits=Array.isArray(state.everydayHabits)?state.everydayHabits:[],today=localDay(),doneHabits=habits.filter(h=>Array.isArray(h.days)&&h.days.includes(today)).length;
  const dayIndex=(new Date().getDay()+6)%7,todayLessons=(Array.isArray(state.schoolLessons)?state.schoolLessons:[]).filter(item=>Number(item.day)===dayIndex).sort((a,b)=>String(a.time||'').localeCompare(String(b.time||''))),firstLesson=todayLessons[0],firstName=user?escapeHTML(user.name.split(' ')[0]):'there';
- return `<div class="everything-home os-home-screen"><div class="launcher-heading"><div><p class="os-date" id="homeDate"></p><h1>Hello, ${firstName}.</h1><p>Everything you need, in one place.</p></div><label class="launcher-search" for="directorySearch"><span aria-hidden="true">⌕</span><span class="sr-only">Search apps</span><input id="directorySearch" type="search" placeholder="Search apps" autocomplete="off"></label></div>
+ return `<div class="everything-home os-home-screen"><div class="launcher-heading"><div><p class="os-date" id="homeDate"></p><h1>Hello, ${firstName}.</h1><p>Your apps and today at a glance.</p></div><label class="launcher-search" for="directorySearch"><span aria-hidden="true">⌕</span><span class="sr-only">Search apps</span><input id="directorySearch" type="search" placeholder="Search apps" autocomplete="off"></label></div>
  <div class="os-widget-grid"><div class="os-widget os-clock"><span>YOUR LOCAL TIME</span><strong id="homeClock">--:--</strong><small id="homeClockDate"></small></div><a class="os-widget os-tasks widget-todo" href="#planner"><span>TASKS</span><strong>${pending.length?`${pending.length} ${pending.length===1?'task':'tasks'} to do`:'All clear'}</strong><small>${next?escapeHTML(next.title):'Add something to your list'}</small><b aria-hidden="true">↗</b></a><a class="os-widget os-habits home-hero-summary" href="#habits"><span>HABITS TODAY</span><strong>${habits.length?`${doneHabits} / ${habits.length}`:'Start small'}</strong><small>${habits.length?`${doneHabits} of ${habits.length} habits checked`:'Make time for a new routine'}</small><b aria-hidden="true">↗</b></a><a class="os-widget os-timetable widget-timetable" href="#timetable"><span>TIMETABLE</span><strong>${todayLessons.length?`${todayLessons.length} ${todayLessons.length===1?'lesson':'lessons'} today`:'Nothing planned'}</strong><small>${firstLesson?`${escapeHTML(firstLesson.time)} · ${escapeHTML(firstLesson.title)}`:'See your week'}</small><b aria-hidden="true">↗</b></a></div>
  <div class="os-section-heading"><h2>All apps</h2><p id="directoryStatus" role="status" aria-live="polite">${directory.length} apps</p></div><div class="home-directory os-app-grid">${directory.map(item=>directoryLink(item,item[0]==='revision'?'dashboard-action':item[0]==='arcade'?'dashboard-games':item[0]==='videos'?'dashboard-video':'')).join('')}</div>
  <nav class="os-dock" aria-label="Quick access"><a href="#planner" aria-label="Tasks"><span>✓</span><small>Tasks</small></a><a href="#notes" aria-label="Notes"><span>▤</span><small>Notes</small></a><a href="#ebooks" aria-label="Books"><span>▥</span><small>Books</small></a><a href="#arcade" aria-label="Games"><span>◈</span><small>Games</small></a><a href="#timetable" aria-label="Timetable"><span>▦</span><small>Timetable</small></a></nav></div>`;
