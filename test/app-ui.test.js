@@ -375,7 +375,7 @@ test('the Games app works without revision subjects and keeps old study routes',
 
 test('launcher searches all apps and opens focused views without a sidebar',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- const links=['planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
+ const links=['kindle-ai','planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
  const search=q('#directorySearch');search.value='study games';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#arcade"]').hidden);search.value='flashcards';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#flashcards"]').hidden);assert.ok(q('.home-directory a[href="#notes"]').hidden);assert.match(q('#directoryStatus').textContent,/results/);search.value='no-such-app';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#directoryStatus').textContent,'0 results');search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])')].length,links.length);
  for(const path of ['#notes','#timetable','#arcade','#ebooks','#flashcards','#tools']){go(w,path);assert.equal(q('.sidebar'),null);assert.equal(q('.os-dock'),null);assert.equal(q('.home-directory'),null);assert.equal(q('.app-home-link').getAttribute('href'),'#home');assert.equal(q('.app-shell').classList.contains('os-home'),false);}go(w,'#home');assert.ok(q('#directorySearch'));dom.window.close();
 });
@@ -407,4 +407,10 @@ test('Tasks list adds, stars, filters, completes and edits tasks while preservin
 test('Tasks handles empty views, cancel, and escaping of task content',async()=>{
  const progress={...defaultProgress,tasks:[{title:'<img src=x onerror=alert(1)>',date:'',done:false}]};const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#planner');assert.equal(q('.tasks-row img'),null);assert.match(q('.tasks-row strong').textContent,/<img/);
  q('[data-task-filter="starred"]').click();assert.equal(q('#taskFilterEmpty').hidden,false);q('#taskAddButton').click();q('#taskTitle').value='Draft';q('#planCancel').click();assert.equal(q('#planForm').hidden,true);assert.equal(w.document.activeElement.id,'taskAddButton');q('#taskAddButton').click();assert.equal(q('#taskTitle').value,'');dom.window.close();
+});
+
+test('KindleHub AI is searchable and opens the external assistant safely',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+ const search=q('#directorySearch');search.value='kindlehub ai';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('.home-directory [data-directory-item]:not([hidden])').getAttribute('href'),'#kindle-ai');
+ go(w,'#kindle-ai');assert.equal(q('#crumb').textContent,'KindleHub AI');assert.equal(q('.app-home-link').getAttribute('href'),'#home');const link=q('.kindle-ai-link');assert.equal(link.href,'https://kindlehub.pro/chat');assert.equal(link.target,'_blank');assert.match(link.rel,/noopener/);assert.match(q('#app').textContent,/separate service/i);assert.equal(q('iframe'),null);dom.window.close();
 });
