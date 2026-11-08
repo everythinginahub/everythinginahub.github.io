@@ -32,3 +32,8 @@ test('new arcade abilities reward play and reset cleanly',()=>{
  const orbit=newOrbit();orbit.status='running';orbit.wave=2;stepOrbit(orbit,.01);assert.equal(orbit.bullets.length,2);orbit.combo=3;orbit.comboTimer=.001;stepOrbit(orbit,.01);assert.equal(orbit.combo,0);
  const reef=newReef();reef.status='running';reef.launched=true;reef.pickups=[{x:reef.paddle,y:463}];stepReef(reef,.01);assert.ok(reef.wideTimer>11);reef.ball={x:reef.paddle+90,y:458,vx:0,vy:150,r:9};stepReef(reef,.01);assert.ok(reef.ball.vy<0);
 });
+
+test('original game rewards only a finished round, not pause or restart',()=>{
+ const dom=new JSDOM('<main></main>',{url:'https://example.test'}),w=dom.window,root=w.document.querySelector('main');w.HTMLCanvasElement.prototype.getContext=()=>null;let next=null,rewards=[];w.requestAnimationFrame=fn=>(next=fn,1);w.cancelAnimationFrame=()=>{next=null;};root.innerHTML=arcadeView('skyline');const ctl=mountArcade({root,id:'skyline',userId:'test',win:w,onReward:kind=>rewards.push(kind)});const q=s=>root.querySelector(s);
+ q('[data-action=start]').click();q('[data-action=pause]').click();assert.deepEqual(rewards,[]);q('[data-action=start]').click();q('[data-action=restart]').click();assert.deepEqual(rewards,[]);q('[data-action=start]').click();for(let i=0;i<4000&&next;i++){const frame=next;next=null;frame(i*50);}assert.match(q('#overlayTitle').textContent,/Game over/);assert.deepEqual(rewards,['arcade']);ctl.destroy();assert.deepEqual(rewards,['arcade']);dom.window.close();
+});

@@ -1,14 +1,17 @@
 // Cosmetic, non-monetary rewards live with the learner's existing private
 // progress. This is not a secure currency or a payment system.
 export const rewardsCatalog = [
-  { id:'leaf', name:'Fresh leaf', symbol:'❧', price:0, color:'leaf', description:'A calm start for your study space.' },
+  { id:'leaf', name:'Fresh leaf', symbol:'❧', price:0, color:'leaf', description:'A fresh start for your space.' },
   { id:'sun', name:'Little sunshine', symbol:'●', price:20, color:'sun', description:'A brighter way to show up.' },
-  { id:'moon', name:'Night owl', symbol:'☾', price:40, color:'moon', description:'For the quiet study sessions.' },
+  { id:'moon', name:'Night owl', symbol:'☾', price:40, color:'moon', description:'For night owls and dreamers.' },
   { id:'spark', name:'Diamond', symbol:'◇', price:60, color:'spark', description:'Celebrate a moment of focus.' },
   { id:'bloom', name:'Bloom', symbol:'♧', price:90, color:'bloom', description:'A reminder that progress grows.' },
-  { id:'star', name:'North star', symbol:'★', price:120, color:'star', description:'Keep finding your way forward.' }
+  { id:'star', name:'North star', symbol:'★', price:120, color:'star', description:'Keep finding your way forward.' },
+  { id:'wave', name:'Ocean wave', symbol:'≈', price:30, color:'wave', description:'A little bit of ocean for your day.' },
+  { id:'cloud', name:'Cloud nine', symbol:'☁', price:50, color:'cloud', description:'Keep your head in the clouds.' },
+  { id:'comet', name:'Comet', symbol:'☄', price:80, color:'comet', description:'A bright spark wherever you go.' }
 ];
-export const dailyRewardValues = Object.freeze({ card:5, game:10, test:15 });
+export const dailyRewardValues = Object.freeze({ card:5, game:10, test:15, task:5, habit:5, list:5, reading:5, arcade:10 });
 export function normalizeRewards(value) {
   const raw = value && typeof value === 'object' ? value : {};
   const coins = Number.isSafeInteger(raw.coins) && raw.coins >= 0 ? Math.min(raw.coins, 1000000000) : 0;
