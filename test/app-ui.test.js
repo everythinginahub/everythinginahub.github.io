@@ -252,7 +252,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261110-1');assert.equal(q('.sidebar'),null);
+  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261111-1');assert.equal(q('.sidebar'),null);
   assert.equal(q('.top-avatar').textContent,'◇');
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
@@ -369,7 +369,7 @@ test('everyday spaces save alongside existing progress without requiring subject
 
 test('the Games app works without revision subjects and keeps old study routes',async()=>{
  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('#crumb').textContent,'Games');assert.equal(w.document.querySelectorAll('.arcade-game-card').length,3);go(w,'#arcade/merge');assert.equal(w.document.querySelectorAll('.merge-cell').length,16);go(w,'#arcade/mines');assert.equal(w.document.querySelectorAll('.mine-cell').length,64);go(w,'#arcade/snake');q('[data-arcade=snake-toggle]').click();assert.equal(q('[data-arcade=snake-toggle]').textContent,'Pause');go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
+ assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('#crumb').textContent,'Games');assert.equal(w.document.querySelectorAll('.arcade-game-card').length,3);w.HTMLCanvasElement.prototype.getContext=()=>null;w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};go(w,'#arcade/skyline');assert.ok(q('#gameCanvas'));q('[data-action=start]').click();assert.equal(q('#gameOverlay').hidden,true);go(w,'#arcade/orbit');assert.ok(q('#gameCanvas'));go(w,'#arcade/reef');assert.ok(q('[data-action=launch]'));go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
 });
 
 
