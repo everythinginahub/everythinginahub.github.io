@@ -161,7 +161,7 @@ test('watching a selected video opens an in-site player with fallback and practi
 
 test('games hub finds sets and links from dashboard and flashcards',async()=>{
   const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.ok(q('.dashboard-games[href="#games"]'));go(w,'#games');await wait();assert.equal(q('#crumb').textContent,'Study games');assert.match(q('#app').textContent,/No timer/i);
+  assert.ok(q('.dashboard-games[href="#arcade"]'));go(w,'#games');await wait();assert.equal(q('#crumb').textContent,'Study games');assert.match(q('#app').textContent,/No timer/i);
   q('#gameSearch').value='osmosis';q('#gameSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#gameSetGrid').textContent,/Transport in cells/);
   q('#gameSearch').value='not a real set';q('#gameSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#gameSetGrid').textContent,/No sets found/);q('#clearGameSearch').click();assert.equal(q('#gameSearch').value,'');
   go(w,'#flashcards/bio-transport');await wait();assert.ok(q('a[href="#games/bio-transport"]'));dom.window.close();
@@ -252,7 +252,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261111-1');assert.equal(q('.sidebar'),null);
+  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261112-1');assert.equal(q('.sidebar'),null);
   assert.equal(q('.top-avatar').textContent,'◇');
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
@@ -375,7 +375,20 @@ test('the Games app works without revision subjects and keeps old study routes',
 
 test('launcher searches all apps and opens focused views without a sidebar',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- const links=['planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','games','flashcards','subjects','videos','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
- const search=q('#directorySearch');search.value='flashcards';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#flashcards"]').hidden);assert.ok(q('.home-directory a[href="#notes"]').hidden);assert.match(q('#directoryStatus').textContent,/results/);search.value='no-such-app';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#directoryStatus').textContent,'0 results');search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])')].length,links.length);
+ const links=['planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
+ const search=q('#directorySearch');search.value='study games';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#arcade"]').hidden);search.value='flashcards';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#flashcards"]').hidden);assert.ok(q('.home-directory a[href="#notes"]').hidden);assert.match(q('#directoryStatus').textContent,/results/);search.value='no-such-app';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#directoryStatus').textContent,'0 results');search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])')].length,links.length);
  for(const path of ['#notes','#timetable','#arcade','#ebooks','#flashcards','#tools']){go(w,path);assert.equal(q('.sidebar'),null);assert.equal(q('.os-dock'),null);assert.equal(q('.home-directory'),null);assert.equal(q('.app-home-link').getAttribute('href'),'#home');assert.equal(q('.app-shell').classList.contains('os-home'),false);}go(w,'#home');assert.ok(q('#directorySearch'));dom.window.close();
+});
+
+test('combined Games app opens the collection and preserves study links',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+ go(w,'#arcade');assert.ok(q('a[href="#arcade/library"]'));assert.ok(q('a[href="#games"]'));assert.equal(w.document.querySelectorAll('.arcade-game-card').length,3);
+ go(w,'#arcade/library');assert.ok(q('#embedSearch'));assert.equal(q('iframe'),null);q('#embedSearch').value='sudoku';q('#embedSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#embedGrid').textContent,/Sudoku/);
+ go(w,'#arcade/play/sudoku');assert.equal(q('iframe').getAttribute('title'),'Sudoku — game by sausi-7');assert.ok(q('a[target="_blank"]'));go(w,'#games/bio-transport');assert.ok(q('[data-game-start="quiz"]'));dom.window.close();
+});
+
+test('retrying missed quiz cards creates a focused round without changing the deck',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);go(w,'#games/bio-transport');q('[data-game-start="quiz"]').click();const deck=starterDecks.find(d=>d.id==='bio-transport');
+ for(let i=0;i<10;i++){const question=q('#gameQuestion').textContent;const answer=deck.cards.find(card=>card[0]===question)[1];const choices=[...w.document.querySelectorAll('[data-quiz-answer]')];(i<2?choices.find(b=>b.children[1].textContent!==answer):choices.find(b=>b.children[1].textContent===answer)).click();q('#nextQuestion').click();}
+ assert.match(q('.game-best-streak').textContent,/Best streak/);assert.equal(w.document.querySelectorAll('.game-review-item').length,2);q('[data-game-retry-missed]').click();assert.match(q('.game-progress').textContent,/QUESTION 1 OF 2/);assert.equal(deck.cards.length,20);dom.window.close();
 });
