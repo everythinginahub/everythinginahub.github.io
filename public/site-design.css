@@ -246,3 +246,18 @@ dialog::backdrop { background:#24323b80; }
 .school-tool-grid>.school-panel[hidden],#toolEmpty[hidden],#unloadAiChat[hidden] { display:none!important; }
 #unloadAiChat { margin-top:14px; }
 .embed-reset { border:0; background:transparent; color:#315f77; padding:8px 0; font-size:12px; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+/* Community identity is an account setting, not an editable message field. */
+.community-identity { margin:0 0 4px; color:#405e65; font-size:13px; font-weight:650; }
+.community-settings-link { display:inline-block; margin:0 0 16px; padding:0; border:0; background:transparent; color:#315f77; font-size:12px; font-weight:700; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+.nickname-help { color:#667674; font-size:12px; line-height:1.5; }
+#nicknameStatus { font-size:12px; }
+#retryNickname[hidden] { display:none!important; }
+#modal .error { color:#a13739; }
+#app .community-hero { background:#edece4; border:1px solid #dedfd7; border-radius:5px; color:#273640; }
+#app .community-hero p:not(.eyebrow) { color:#5e7070; }
+#app .community-hero-icon { background:#e0e8e3; color:#496b77; border-radius:5px; }
+#app .community-panel,#app .community-rules { border-color:#dce1d9; border-radius:5px; box-shadow:none; background:#fffefa; }
+#app .community-messages { background:#f6f6f1; border-color:#dce1da; border-radius:5px; }
+#app .community-message { border-color:#dce2dc; border-radius:5px; }
+#app .community-message.mine { background:#edf3f0; border-color:#d7e2db; }
+#app .community-message-head strong { color:#355d70; }
