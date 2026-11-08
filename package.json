@@ -9,13 +9,16 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
-    "build:client": "esbuild scripts/supabase-entry.js --bundle --format=esm --minify --outfile=public/supabase-client.js --legal-comments=inline"
+    "build:client": "esbuild scripts/supabase-entry.js --bundle --format=esm --minify --outfile=public/supabase-client.js --legal-comments=inline",
+    "build:ocr": "node scripts/copy-ocr-assets.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0"
   },
   "devDependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
     "esbuild": "^0.28.2",
-    "jsdom": "^31.0.0"
+    "jsdom": "^31.0.0",
+    "tesseract.js": "^6.0.1"
   }
 }
