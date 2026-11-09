@@ -415,12 +415,11 @@ test('Tasks handles empty views, cancel, and escaping of task content',async()=>
  q('[data-task-filter="starred"]').click();assert.equal(q('#taskFilterEmpty').hidden,false);q('#taskAddButton').click();q('#taskTitle').value='Draft';q('#planCancel').click();assert.equal(q('#planForm').hidden,true);assert.equal(w.document.activeElement.id,'taskAddButton');q('#taskAddButton').click();assert.equal(q('#taskTitle').value,'');dom.window.close();
 });
 
-test('AI chat is searchable and loads its third-party embed only on request',async()=>{
- const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
+test('AI chat is searchable and never uses an embed',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
  const search=q('#directorySearch');search.value='ai chat';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('.home-directory [data-directory-item]:not([hidden])').getAttribute('href'),'#ai');
- go(w,'#ai');assert.equal(q('#crumb').textContent,'AI chat');assert.equal(q('.app-home-link').getAttribute('href'),'#home');assert.match(q('#app').textContent,/third-party service/i);assert.match(q('#app').textContent,/not Gemini/i);assert.match(q('#app').textContent,/unsupervised children/i);assert.equal(q('iframe'),null);assert.equal(q('.ai-panel-top a').target,'_blank');
- q('#loadAiChat').click();const frame=q('#aiEmbed iframe');assert.ok(frame);assert.equal(frame.src,'https://zacheus10-free-ai-chat.hf.space/');assert.equal(frame.getAttribute('sandbox'),'allow-scripts allow-forms allow-same-origin');assert.equal(frame.getAttribute('referrerpolicy'),'no-referrer');assert.equal(frame.title,'Free AI Chat on Hugging Face');
- go(w,'#home');assert.equal(q('iframe'),null);go(w,'#kindle-ai');assert.ok(q('#loadAiChat'));assert.equal(q('iframe'),null);dom.window.close();
+ go(w,'#ai');assert.equal(q('#crumb').textContent,'AI chat');assert.match(q('#app').textContent,/Gemini/);assert.match(q('#app').textContent,/10 questions/);assert.match(q('#app').textContent,/unsupervised children/i);assert.equal(q('iframe'),null);assert.equal(q('#aiEmbed'),null);
+ go(w,'#kindle-ai');assert.ok(q('#aiApiForm'));assert.equal(q('iframe'),null);}finally{dom.window.close();}
 });
 
 test('everyday rewards work without subjects and cannot be repeated by undoing',async()=>{
@@ -478,9 +477,7 @@ test('book shelf can sort titles and authors without modifying the collection',(
 test('tool search keeps the timer and other tool forms mounted',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#tools');const q=s=>w.document.querySelector(s);q('#focusMinutes').value='5';q('#focusStart').click();const search=q('#toolSearch');search.value='temperature';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#focusDisplay').closest('.school-panel').hidden,true);assert.equal(q('#temperatureForm').closest('.school-panel').hidden,false);search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#focusDisplay').closest('.school-panel').hidden,false);assert.equal(q('#focusStart').textContent,'Pause');}finally{dom.window.close();}
 });
-test('AI chat can be disconnected without leaving the app',async()=>{
- const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#ai');const q=s=>w.document.querySelector(s);q('#loadAiChat').click();assert.ok(q('#aiEmbed iframe'));assert.equal(q('#unloadAiChat').hidden,false);q('#unloadAiChat').click();assert.equal(q('#aiEmbed iframe'),null);assert.ok(q('#loadAiChat'));}finally{dom.window.close();}
-});
+
 test('game collection clears search and category together',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();go(w,'#arcade/library');const q=s=>w.document.querySelector(s);q('[data-embed-filter="puzzle"]').click();q('#embedSearch').value='no such game';q('#embedSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#embedCount').textContent,/^0 /);q('#embedReset').click();assert.equal(q('#embedSearch').value,'');assert.equal(q('[data-embed-filter="all"]').getAttribute('aria-pressed'),'true');assert.ok(w.document.querySelectorAll('.embed-card').length>0);}finally{dom.window.close();}
 });
