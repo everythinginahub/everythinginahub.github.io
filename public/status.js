@@ -1,4 +1,4 @@
-import {startSiteAnalytics} from './site-analytics.js?v=20261106-2';
+import {startSiteAnalytics} from './site-analytics.js?v=20261106-3';
 import {supabaseConfig} from './config.js?v=20261106-4';
 import {validateConfig} from './account-backend.js?v=20261114-13';
 import {createClient} from './supabase-client.js?v=20261106-4';
@@ -25,7 +25,7 @@ export function mountStatus(doc,client,win=window){
  const closeDialog=()=>{get('codeDialog').close();get('codeValue').value='';};
  form.addEventListener('submit',submit);show.addEventListener('click',showCode);copy.addEventListener('click',copyCode);close.addEventListener('click',closeDialog);get('codeDialog').addEventListener('close',()=>{get('codeValue').value='';});lock.addEventListener('click',clear);
  const refresh=()=>{if(unlocked&&!doc.hidden)read();};
- const tracker=startSiteAnalytics(client,win,{onResult(ok){if(!alive)return;get('trackingMessage').textContent=ok?'':'This visit could not be recorded. Counts may be incomplete; check your connection or browser privacy settings.';if(ok){if(unlocked)refresh();else pendingTrackedRefresh=true;}}});
+ const tracker=startSiteAnalytics(client,win,{countViews:false,onResult(ok){if(!alive)return;get('trackingMessage').textContent=ok?'':'Online presence could not be updated. Counts may be incomplete; check your connection or browser privacy settings.';if(ok){if(unlocked)refresh();else pendingTrackedRefresh=true;}}});
  doc.addEventListener('visibilitychange',refresh);get('refreshStatus').addEventListener('click',refresh);
  const {data:subscription}=client.auth.onAuthStateChange(event=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')win.setTimeout(()=>{if(event==='SIGNED_OUT'){owner=false;show.hidden=true;if(unlocked&&!code)clear();}checkOwner();},0);});
  client.auth.getSession().then(checkOwner).catch(()=>{message.textContent='Could not check your account. You can still try an access code.';});

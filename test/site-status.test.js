@@ -30,7 +30,7 @@ test('status presence is counted and fresh metrics win when initial read races i
   const doc=dom.window.document,client=mockClient(true);let releaseInitialRead,reads=0,pings=0;
   client.rpc=async(name,args)=>{
    if(name==='site_status_is_owner')return {data:true};
-   if(name==='site_status_ping'){pings++;assert.equal(args.p_view,true);return {data:null};}
+   if(name==='site_status_ping'){pings++;assert.equal(args.p_view,false);return {data:null};}
    if(name==='site_status_read'){reads++;if(reads===1)return await new Promise(resolve=>{releaseInitialRead=()=>resolve({data:{...sample,all_views:0,signed_views:0,signed_online:0}});});return {data:sample};}
    return {data:null};
   };
@@ -42,7 +42,7 @@ test('refresh on returning to dashboard and manually; a rejected ping is shown',
  const html=await readFile('public/status.html','utf8');const dom=new JSDOM(html,{url:'https://example.test/status/',pretendToBeVisual:true});try{
   const doc=dom.window.document,client=mockClient(true);let reads=0;const original=client.rpc;
   client.rpc=async(name,args)=>{if(name==='site_status_ping')return {error:{message:'offline'}};if(name==='site_status_read')reads++;return original(name,args);};
-  const ctl=mountStatus(doc,client,dom.window);await tick();assert.match(doc.getElementById('trackingMessage').textContent,/could not be recorded/);assert.equal(reads,1);
+  const ctl=mountStatus(doc,client,dom.window);await tick();assert.match(doc.getElementById('trackingMessage').textContent,/presence could not be updated/);assert.equal(reads,1);
   doc.dispatchEvent(new dom.window.Event('visibilitychange'));await tick();assert.equal(reads,2);
   doc.getElementById('refreshStatus').click();await tick();assert.equal(reads,3);ctl.destroy();
  }finally{dom.window.close();}
@@ -52,4 +52,26 @@ test('first visit is recorded when a tab initially opens hidden and later become
  const dom=new JSDOM('<!doctype html>',{url:'https://example.test/',pretendToBeVisual:true});try{
   let hidden=true;Object.defineProperty(dom.window.document,'hidden',{get:()=>hidden});const client=mockClient(),tracker=startSiteAnalytics(client,dom.window);await tick();assert.equal(client.calls.filter(([name])=>name==='site_status_ping').length,0);hidden=false;dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));await tick();assert.equal(client.calls.filter(([name])=>name==='site_status_ping')[0][1].p_view,true);tracker.destroy();
  }finally{dom.window.close();}
+});
+
+test('restoring auth, repeated SIGNED_IN events and returning to the same route do not add views',async()=>{
+ const dom=new JSDOM('<!doctype html>',{url:'https://example.test/public/#home',pretendToBeVisual:true});try{
+  const client=mockClient();let notify;client.auth.onAuthStateChange=cb=>{notify=cb;return {data:{subscription:{unsubscribe(){}}}};};
+  const tracker=startSiteAnalytics(client,dom.window);notify('INITIAL_SESSION');await tick();notify('SIGNED_IN');notify('SIGNED_IN');await tick();dom.window.location.hash='';await tick();
+  let pings=client.calls.filter(([n])=>n==='site_status_ping').map(([,args])=>args.p_view);assert.equal(pings.filter(Boolean).length,1);assert.ok(pings.filter(v=>!v).length>=2);
+  dom.window.location.hash='#notes';await tick();pings=client.calls.filter(([n])=>n==='site_status_ping').map(([,args])=>args.p_view);assert.equal(pings.filter(Boolean).length,2);tracker.destroy();
+ }finally{dom.window.close();}
+});
+
+test('each main-site reload records one view but status reloads only report presence',async()=>{
+ for(const path of ['https://example.test/status/','https://example.test/public/status.html']){
+  const html=await readFile('public/status.html','utf8');for(let i=0;i<3;i++){
+   const dom=new JSDOM(html,{url:path,pretendToBeVisual:true});try{const client=mockClient(true),ctl=mountStatus(dom.window.document,client,dom.window);await tick();dom.window.document.getElementById('refreshStatus').click();dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));await tick();const pings=client.calls.filter(([name])=>name==='site_status_ping');assert.ok(pings.length>=1);assert.ok(pings.every(([,args])=>args.p_view===false));ctl.destroy();}finally{dom.window.close();}
+  }
+ }
+ for(let i=0;i<3;i++){const dom=new JSDOM('<!doctype html>',{url:'https://example.test/public/',pretendToBeVisual:true});try{const client=mockClient(),tracker=startSiteAnalytics(client,dom.window);await tick();const views=client.calls.filter(([name,args])=>name==='site_status_ping'&&args.p_view);assert.equal(views.length,1);tracker.destroy();}finally{dom.window.close();}}
+});
+
+test('an ambiguous failed view is not retried as another view',async()=>{
+ const dom=new JSDOM('<!doctype html>',{url:'https://example.test/public/',pretendToBeVisual:true});try{const client=mockClient(),pings=[];client.rpc=async(name,args)=>{if(name==='site_status_ping'){pings.push(args.p_view);return pings.length===1?{error:{message:'network error'}}:{data:null};}return {data:null};};const tracker=startSiteAnalytics(client,dom.window);await tick();dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));await tick();assert.deepEqual(pings,[true,false]);tracker.destroy();}finally{dom.window.close();}
 });

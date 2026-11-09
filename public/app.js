@@ -1,4 +1,4 @@
-import { startSiteAnalytics } from './site-analytics.js?v=20261106-2';
+import { startSiteAnalytics } from './site-analytics.js?v=20261106-3';
 import { aiChatWorkspace, mountAiChat } from './ai-chat.js?v=20261114-22';
 import { isHabitDue } from './habit-utils.js?v=20261114-15';
 import { restrictedNickname } from './nickname-policy.js?v=20261114-14';
