@@ -24,3 +24,32 @@ test('public status pages do not load Clarity or embed a share code',async()=>{
  for(const path of ['public/status.html','status/index.html']){const html=await readFile(path,'utf8');assert.doesNotMatch(html,/clarity\.ms|zb3y8jd6m6/);assert.match(html,/id="showCode" hidden/);assert.match(html,/id="accessCode" type="password"/);}
  const sql=await readFile('supabase/site_status.sql','utf8');assert.match(sql,/enable row level security/);assert.match(sql,/public\.chat_is_owner\(auth\.uid\(\)\)/);assert.match(sql,/grant execute on function public\.site_status_code\(\) to authenticated/);
 });
+
+test('status presence is counted and fresh metrics win when initial read races its ping',async()=>{
+ const html=await readFile('public/status.html','utf8');const dom=new JSDOM(html,{url:'https://example.test/status/',pretendToBeVisual:true});try{
+  const doc=dom.window.document,client=mockClient(true);let releaseInitialRead,reads=0,pings=0;
+  client.rpc=async(name,args)=>{
+   if(name==='site_status_is_owner')return {data:true};
+   if(name==='site_status_ping'){pings++;assert.equal(args.p_view,true);return {data:null};}
+   if(name==='site_status_read'){reads++;if(reads===1)return await new Promise(resolve=>{releaseInitialRead=()=>resolve({data:{...sample,all_views:0,signed_views:0,signed_online:0}});});return {data:sample};}
+   return {data:null};
+  };
+  const ctl=mountStatus(doc,client,dom.window);await tick();assert.equal(pings,1);assert.equal(reads,1);releaseInitialRead();await tick();assert.equal(reads,2);assert.equal(doc.getElementById('signedOnline').textContent,'1');assert.equal(doc.getElementById('allViews').textContent,'12');assert.match(doc.getElementById('updatedAt').textContent,/Updated/);ctl.destroy();
+ }finally{dom.window.close();}
+});
+
+test('refresh on returning to dashboard and manually; a rejected ping is shown',async()=>{
+ const html=await readFile('public/status.html','utf8');const dom=new JSDOM(html,{url:'https://example.test/status/',pretendToBeVisual:true});try{
+  const doc=dom.window.document,client=mockClient(true);let reads=0;const original=client.rpc;
+  client.rpc=async(name,args)=>{if(name==='site_status_ping')return {error:{message:'offline'}};if(name==='site_status_read')reads++;return original(name,args);};
+  const ctl=mountStatus(doc,client,dom.window);await tick();assert.match(doc.getElementById('trackingMessage').textContent,/could not be recorded/);assert.equal(reads,1);
+  doc.dispatchEvent(new dom.window.Event('visibilitychange'));await tick();assert.equal(reads,2);
+  doc.getElementById('refreshStatus').click();await tick();assert.equal(reads,3);ctl.destroy();
+ }finally{dom.window.close();}
+});
+
+test('first visit is recorded when a tab initially opens hidden and later becomes visible',async()=>{
+ const dom=new JSDOM('<!doctype html>',{url:'https://example.test/',pretendToBeVisual:true});try{
+  let hidden=true;Object.defineProperty(dom.window.document,'hidden',{get:()=>hidden});const client=mockClient(),tracker=startSiteAnalytics(client,dom.window);await tick();assert.equal(client.calls.filter(([name])=>name==='site_status_ping').length,0);hidden=false;dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));await tick();assert.equal(client.calls.filter(([name])=>name==='site_status_ping')[0][1].p_view,true);tracker.destroy();
+ }finally{dom.window.close();}
+});
