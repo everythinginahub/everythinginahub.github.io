@@ -32,11 +32,10 @@ const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
 const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.com',user_metadata:{name:'Alex',subjects:['Biology','Mathematics']}};
 const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
 function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
-  const log={saved:null,created:null,signup:null,oauth:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
+  const log={saved:null,created:null,signup:null,login:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
   const client={rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
     getSession:async()=>({data:{session:session?{user:session}:null}}),
-    signInWithPassword:async()=>({data:{user:account}}),
-    signInWithOAuth:async input=>(log.oauth=input,{data:{url:'https://provider.test/'}}),
+    signInWithPassword:async input=>(log.login=input,{data:{user:account}}),
     signUp:async input=>(log.signup=input,{data:{session:null,user:account}}),
     resend:async input=>(log.resend=input,{data:{}}),
     signOut:async()=>{log.signOut++;return {data:{}};}
@@ -506,22 +505,21 @@ test('profile passes the exact Shay nickname to server authority and shows rejec
 });
 
 
-test('OAuth choices follow public provider configuration and preserve password login',async()=>{
- const {client,log}=mockClient();const {dom,w,run}=setup(client);try{
-  let requested='';w.fetch=async(url,options)=>{requested=String(url);assert.equal(options.headers.apikey,'sb_publishable_test');return {ok:true,json:async()=>({external:{google:true,azure:false}})};};
-  await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();await wait();assert.match(requested,/\/auth\/v1\/settings$/);assert.equal(q('[data-oauth=google]').disabled,false);assert.equal(q('[data-oauth=azure]').disabled,true);assert.ok(q('#authForm [name=email]'));q('[data-oauth=google]').click();await wait();assert.equal(log.oauth.provider,'google');assert.equal(log.oauth.options.redirectTo,'https://example.test/public/');
+test('signup asks for a longer password and masks account details from Clarity',async()=>{
+  const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+  q('[data-open-auth="register"]').click();assert.equal(q('[data-oauth]'),null);assert.equal(q('#authForm').getAttribute('data-clarity-mask'),'true');assert.equal(q('[name=password]').minLength,12);
+  q('[name=name]').value='Alex';q('[name=email]').value='alex@example.com';q('[name=password]').value='too-short';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.signup,null);assert.match(q('#authError').textContent,/12 characters/);
+  q('[name=password]').value='correct horse battery';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.signup.password,'correct horse battery');assert.match(q('#modal').textContent,/delivery is currently limited/i);
+  }finally{dom.window.close();}
+});
+
+test('existing accounts can still sign in with shorter passwords',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();assert.equal(q('[data-oauth]'),null);assert.equal(q('#authForm').getAttribute('data-clarity-mask'),'true');assert.equal(q('[name=password]').hasAttribute('minlength'),false);
+ q('[name=email]').value='alex@example.com';q('[name=password]').value='short1';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.login.password,'short1');assert.equal(q('.app-shell').hidden,false);q('#topAccount').click();assert.ok(q('[data-clarity-mask="true"]'));
  }finally{dom.window.close();}
 });
 
-test('Microsoft sign-in requests email; unavailable providers do not appear usable',async()=>{
- const {client,log}=mockClient();const {dom,w,run}=setup(client);try{
-  w.fetch=async()=>({ok:true,json:async()=>({external:{google:false,azure:true}})});await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="register"]').click();await wait();assert.equal(q('[data-oauth=google]').disabled,true);assert.equal(q('[data-oauth=azure]').disabled,false);q('[data-oauth=azure]').click();await wait();assert.equal(log.oauth.provider,'azure');assert.equal(log.oauth.options.scopes,'email');
- }finally{dom.window.close();}
-});
-
-test('both provider buttons remain disabled when unconfigured or provider check fails',async()=>{
- const {client}=mockClient();const {dom,w,run}=setup(client);try{
-  w.fetch=async()=>({ok:true,json:async()=>({external:{google:false,azure:false}})});await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();await wait();assert.equal(q('[data-oauth=google]').disabled,true);assert.equal(q('[data-oauth=azure]').disabled,true);assert.match(q('#oauthStatus').textContent,/not configured/);
-  q('.close').click();w.fetch=async()=>{throw new Error('offline');};q('[data-open-auth="login"]').click();await wait();assert.match(q('#oauthStatus').textContent,/Could not check/);assert.equal(q('[data-oauth=google]').disabled,true);
+test('login errors do not expose backend details',async()=>{
+ const {client}=mockClient();client.auth.signInWithPassword=async()=>({error:new Error('sensitive backend details')});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('[name=email]').value='alex@example.com';q('[name=password]').value='password';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('#authError').textContent,/Could not sign in/);assert.doesNotMatch(q('#authError').textContent,/sensitive backend details/);
  }finally{dom.window.close();}
 });

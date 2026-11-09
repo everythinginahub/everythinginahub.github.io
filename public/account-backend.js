@@ -20,10 +20,6 @@ export function createAccountBackend(client) {
   return {
     async session() { return check(await client.auth.getSession()).session?.user || null; },
     async signIn(email, password) { return check(await client.auth.signInWithPassword({ email, password })).user; },
-    async signInWithProvider(provider, redirectTo) {
-      if (!['google','azure'].includes(provider)) throw new Error('Unsupported sign-in provider.');
-      return check(await client.auth.signInWithOAuth({provider,options:{redirectTo,...(provider==='azure'?{scopes:'email'}:{})}}));
-    },
     async signUp(name, email, password, redirectTo, subjects = []) {
       return check(await client.auth.signUp({ email, password, options: { data: { name, nickname: name, subjects }, emailRedirectTo: redirectTo } }));
     },

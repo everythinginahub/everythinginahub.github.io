@@ -59,20 +59,3 @@ test('nickname changes use account-scoped RPCs and signup records the chosen nic
  const calls=[];const api=createAccountBackend({auth:{signUp:async data=>(calls.push(data),{data:{session:null}})},rpc:async(name,args)=>(calls.push({name,args}),{data:name==='community_nickname_get'?'Reader':'New Reader'})});
  await api.signUp('Reader','a@b.co','password','https://example.com/');assert.equal(calls[0].options.data.nickname,'Reader');assert.equal(await api.getNickname(),'Reader');assert.equal(await api.setNickname('New Reader'),'New Reader');assert.deepEqual(calls.at(-1),{name:'community_nickname_set',args:{p_nickname:'New Reader'}});
 });
-
-test('social sign-in accepts only supported providers and requests Microsoft email scope',async()=>{
- const calls=[];const api=createAccountBackend({auth:{signInWithOAuth:async input=>(calls.push(input),{data:{url:'https://provider.example/'}})}});
- await api.signInWithProvider('google','https://example.test/public/');
- await api.signInWithProvider('azure','https://example.test/public/');
- assert.deepEqual(calls[0],{provider:'google',options:{redirectTo:'https://example.test/public/'}});
- assert.deepEqual(calls[1],{provider:'azure',options:{redirectTo:'https://example.test/public/',scopes:'email'}});
- await assert.rejects(api.signInWithProvider('other','https://example.test/'),/Unsupported/);
-});
-
-test('bundled Supabase client creates Google and Microsoft authorization URLs',async()=>{
- const {createClient}=await import('../public/supabase-client.js');const client=createClient('https://example.supabase.co','sb_publishable_test',{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}),api=createAccountBackend(client);
- const google=new URL((await api.signInWithProvider('google','https://example.test/public/')).url);
- const microsoft=new URL((await api.signInWithProvider('azure','https://example.test/public/')).url);
- assert.equal(google.origin,'https://example.supabase.co');assert.equal(google.pathname,'/auth/v1/authorize');assert.equal(google.searchParams.get('provider'),'google');assert.equal(google.searchParams.get('redirect_to'),'https://example.test/public/');
- assert.equal(microsoft.searchParams.get('provider'),'azure');assert.equal(microsoft.searchParams.get('scopes'),'email');assert.equal(microsoft.searchParams.get('redirect_to'),'https://example.test/public/');
-});
