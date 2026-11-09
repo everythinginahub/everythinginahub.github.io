@@ -7,6 +7,11 @@ async function readLimited(request){
  for(;;){const {done,value}=await reader.read();if(done)break;total+=value.byteLength;if(total>20000){await reader.cancel();throw Error('large');}parts.push(value);}
  const all=new Uint8Array(total);let offset=0;for(const part of parts){all.set(part,offset);offset+=part.length;}return JSON.parse(new TextDecoder().decode(all));
 }
+// Only fixed, non-sensitive diagnostics are returned to clients. Never forward provider bodies.
+export function providerError(status){
+ const messages={400:'Google rejected the AI request (400). The site owner needs to check the model settings.',401:'Google rejected the Gemini API key (401). The site owner needs to check the key.',403:'Google denied access (403). The site owner needs to check the key, API restrictions and project access.',404:'The Gemini model is unavailable for this project (404). The site owner needs to check model access.',429:'The shared AI quota is unavailable right now (429). Please try again later.'};
+ const error=new Error(messages[status]||'Google AI is temporarily unavailable. Please try again later.');error.name='ProviderError';error.status=status===429?429:503;return error;
+}
 export function createHandler({authenticate,reserve,generate,configured=true}){
  return async request=>{
   if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
@@ -24,7 +29,7 @@ export function createHandler({authenticate,reserve,generate,configured=true}){
    return json(200,{answer:answer.slice(0,20000),remaining:10-used});
   }catch(error){
    // Never expose upstream responses, credentials or user prompts in logs or errors.
-   if(error?.name==='ProviderLimit')return json(429,{error:'The shared AI quota is unavailable right now. This attempt counts towards your daily allowance.'});
+   if(error?.name==='ProviderError')return json(error.status,{error:error.message+' This attempt counts towards your daily allowance.'});
    return json(503,{error:'AI chat is unavailable right now. If your request reached the AI, the attempt counts towards your daily allowance.'});
   }
  };

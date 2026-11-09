@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { createHandler } from './handler.js';
+import { createHandler, providerError } from './handler.js';
 
 const url = Deno.env.get('SUPABASE_URL') || '';
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -25,8 +25,7 @@ Deno.serve(createHandler({
    body: JSON.stringify({contents:[{role:'user',parts:[{text:message}]}],generationConfig:{maxOutputTokens:1024,temperature:0.7,thinkingConfig:{thinkingBudget:0}}}),
    signal: AbortSignal.timeout(45000)
   });
-  if (response.status===429) { const error = new Error('Provider limit'); error.name='ProviderLimit'; throw error; }
-  if (!response.ok) throw new Error('Provider unavailable');
+  if (!response.ok) throw providerError(response.status);
   const result=await response.json();
   return result.candidates?.[0]?.content?.parts?.map((part: {text?:string})=>part.text||'').join('') || '';
  }
