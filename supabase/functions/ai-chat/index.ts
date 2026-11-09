@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { createHandler, providerError } from './handler.js';
+import { createHandler } from './handler.js';
+import { createGeminiGenerator } from './gemini.js';
 
 const url = Deno.env.get('SUPABASE_URL') || '';
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -19,14 +20,5 @@ Deno.serve(createHandler({
   if (error) throw new Error('Quota unavailable');
   return data;
  },
- async generate(message: string) {
-  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent', {
-   method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':geminiKey},
-   body: JSON.stringify({contents:[{role:'user',parts:[{text:message}]}],generationConfig:{maxOutputTokens:1024,temperature:0.7,thinkingConfig:{thinkingBudget:0}}}),
-   signal: AbortSignal.timeout(45000)
-  });
-  if (!response.ok) throw providerError(response.status);
-  const result=await response.json();
-  return result.candidates?.[0]?.content?.parts?.map((part: {text?:string})=>part.text||'').join('') || '';
- }
+ generate: createGeminiGenerator({key:geminiKey})
 }));
