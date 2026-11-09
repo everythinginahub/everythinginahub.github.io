@@ -130,3 +130,7 @@ The selected player loads only after a learner chooses a lesson; the gallery use
 ### Classroom favourites
 
 The Games home includes selections discovered on [Classroom Resources](https://sites.google.com/view/drive-u-7-home/home). The Random titles use the exact official Two Player Games iframe URLs offered in Classroom Resources' own embeds. Snow Rider and Dune Dash use the same jsDelivr XML loader URLs: the HTML inside each wrapper runs in an opaque sandbox, not in the app's origin. Those loaders and their external assets can change, show ads, fail to load or behave differently in the sandbox (including storage and saved progress). The games need internet and their availability, content, privacy practices and device support are controlled by their hosts, not Everything Hub. Use the Classroom Resources link on the game page if the embed fails. These games do not award study rewards or sync account progress. Images are loaded from the third-party sites; opening the game sends requests to third parties.
+
+### Microsoft Clarity
+
+The main app page loads Microsoft Clarity project `zb3y8jd6m6` on page load, including before sign-in. Clarity is a third-party analytics and session-recording service and may collect usage and page interaction data; its own masking and privacy settings apply. This integration does not implement a consent banner or configure masking. Review Clarity settings, appropriate consent requirements, and protection of sensitive content (including users' notes and messages) before using it with real users, especially children.
