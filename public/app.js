@@ -20,7 +20,7 @@ import { practiceChooser, practiceView } from './practice-views.js?v=20261107-6'
 import { rewardsCatalog, normalizeRewards, awardDaily, chooseReward } from './rewards.js?v=20261114-4';
 import { shopView } from './reward-views.js?v=20261114-4';
 import { parseCardLines } from './card-import.js?v=20261107-5';
-import { mountLive } from './live-games.js?v=20261114-14';
+import { mountLive } from './live-games.js?v=20261114-19';
 import { mountCommunityChat } from './community-chat.js?v=20261114-14';
 import { subjectCatalog, cleanSubjects } from './subject-catalog.js?v=20261106-6';
 let communityDecks = [];
@@ -307,9 +307,9 @@ function account(mode='login') {
 }
 // Signup and settings use the same public-chat rules. The server remains the
 // authority and repeats validation before saving or sending.
-function nicknameError(value){
+function nicknameError(value,allowOwnerCandidate=false){
  const n=String(value||'').trim(),lower=n.toLowerCase(),compact=lower.replace(/[^a-z0-9]/g,'').replace(/[013457]/g,c=>({'0':'o','1':'i','3':'e','4':'a','5':'s','7':'t'}[c]));
- if(restrictedNickname(n)||[...n].length<2||[...n].length>24||/[\x00-\x1f\x7f]/.test(n)||['admin','moderator','staff','revisepro'].includes(lower)||/(https?:\/\/|www[. ]|[a-z0-9-]+[.][a-z]{2,}|@)/i.test(n)||(n.match(/[0-9]/g)||[]).length>=7||/\b(fuck|fucking|shit|bitch|cunt|bastard|nigger|nigga|faggot|retard|whore|porn|nude|nudes|rape|rapist|suicide|kys)\b/i.test(n)||/(fuck|nigger|nigga|faggot|killyourself|sendnudes|sexualassault)/.test(compact))return 'Choose a 2–24 character nickname without personal details, links, restricted names or harmful language.';
+ if((restrictedNickname(n)&&!(allowOwnerCandidate&&lower==='shay'))||[...n].length<2||[...n].length>24||/[\x00-\x1f\x7f]/.test(n)||['admin','moderator','staff','revisepro'].includes(lower)||/(https?:\/\/|www[. ]|[a-z0-9-]+[.][a-z]{2,}|@)/i.test(n)||(n.match(/[0-9]/g)||[]).length>=7||/\b(fuck|fucking|shit|bitch|cunt|bastard|nigger|nigga|faggot|retard|whore|porn|nude|nudes|rape|rapist|suicide|kys)\b/i.test(n)||/(fuck|nigger|nigga|faggot|killyourself|sendnudes|sexualassault)/.test(compact))return 'Choose a 2–24 character nickname without personal details, links, restricted names or harmful language.';
  return '';
 }
 async function openProfileSettings(){
@@ -357,7 +357,7 @@ $('#modal').addEventListener('click',async e=>{
 });
 $('#modal').addEventListener('submit',async e=>{
   if(e.target.id==='nicknameForm'){
-    e.preventDefault();const form=e.target,field=form.elements.namedItem('nickname'),nickname=field.value.trim(),error=$('#nicknameError'),status=$('#nicknameStatus'),button=form.querySelector('[type=submit]');error.textContent=nicknameError(nickname);if(error.textContent)return;button.disabled=true;field.disabled=true;status.textContent='Saving…';
+    e.preventDefault();const form=e.target,field=form.elements.namedItem('nickname'),nickname=field.value.trim(),error=$('#nicknameError'),status=$('#nicknameStatus'),button=form.querySelector('[type=submit]');error.textContent=nicknameError(nickname,true);if(error.textContent)return;button.disabled=true;field.disabled=true;status.textContent='Saving…';
     try{const saved=await backend.setNickname(nickname);if(!form.isConnected)return;field.value=saved;communityController?.setNickname(saved);status.textContent='Nickname saved.';}
     catch(err){if(form.isConnected){error.textContent=err.message||'Could not save your nickname. Please try again.';status.textContent='';}}
     finally{if(form.isConnected){button.disabled=false;field.disabled=false;}}
