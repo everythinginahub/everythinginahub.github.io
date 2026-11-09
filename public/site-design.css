@@ -441,6 +441,3 @@ dialog::backdrop { background:#24323b80; }
 .ai-aside-signoff span { margin-right:6px; color:#bf8f72; font-size:15px; }
 @media(max-width:800px){.ai-layout { grid-template-columns:minmax(0,1fr); }.ai-aside { grid-template-columns:1fr 1fr; }.ai-aside-signoff { grid-column:1/-1; }.ai-api-thread { min-height:290px; }}
 @media(max-width:480px){.ai-page-heading { margin-bottom:20px; }.ai-page-number { display:none; }.ai-api-heading { padding:14px; }.ai-api-thread { min-height:285px; padding:20px 14px; }.ai-api-message { max-width:100%; }#aiApiForm { padding:14px 14px 0; }.ai-api-status { padding:0 14px; }.ai-api-footnote { margin-left:14px; margin-right:14px; }.ai-aside { grid-template-columns:1fr; }.ai-aside-signoff { grid-column:auto; }.ai-suggestions { gap:6px; }.ai-suggestions button { font-size:10px; }}
-
-/* Optional provider sign-in; disabled until the provider is configured. */
-.oauth-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.oauth-options button{min-width:0;min-height:42px;padding:10px 12px;border:1px solid #d6e1d5;background:#fff;color:#244c3b;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.oauth-options button:disabled{opacity:.5;cursor:not-allowed}.oauth-options p{grid-column:1/-1;margin:0;color:#6d8174;font-size:11px;line-height:1.5}@media(max-width:380px){.oauth-options{grid-template-columns:1fr}}
