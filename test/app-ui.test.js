@@ -32,10 +32,11 @@ const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
 const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.com',user_metadata:{name:'Alex',subjects:['Biology','Mathematics']}};
 const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
 function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
-  const log={saved:null,created:null,signup:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
+  const log={saved:null,created:null,signup:null,oauth:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
   const client={rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
     getSession:async()=>({data:{session:session?{user:session}:null}}),
     signInWithPassword:async()=>({data:{user:account}}),
+    signInWithOAuth:async input=>(log.oauth=input,{data:{url:'https://provider.test/'}}),
     signUp:async input=>(log.signup=input,{data:{session:null,user:account}}),
     resend:async input=>(log.resend=input,{data:{}}),
     signOut:async()=>{log.signOut++;return {data:{}};}
@@ -502,4 +503,25 @@ test('timetable teachers can be edited without losing other lesson data',async()
 
 test('profile passes the exact Shay nickname to server authority and shows rejection',async()=>{
  const {client,log}=mockClient({session:account});const original=client.rpc;let attempts=0;client.rpc=async(name,args)=>{if(name==='community_nickname_set'&&args.p_nickname==='Shay'){attempts++;return {error:{message:'This nickname is reserved.'}};}return original(name,args);};const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('#topAccount').click();q('#openProfileSettings').click();await wait();q('#settingsNickname').value='Shay';q('#nicknameForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(attempts,1);assert.equal(log.nickname,null);assert.match(q('#nicknameError').textContent,/reserved/i);q('#settingsNickname').value='Sh4y';q('#nicknameForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(attempts,1);assert.match(q('#nicknameError').textContent,/nickname/i);}finally{dom.window.close();}
+});
+
+
+test('OAuth choices follow public provider configuration and preserve password login',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{
+  let requested='';w.fetch=async(url,options)=>{requested=String(url);assert.equal(options.headers.apikey,'sb_publishable_test');return {ok:true,json:async()=>({external:{google:true,azure:false}})};};
+  await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();await wait();assert.match(requested,/\/auth\/v1\/settings$/);assert.equal(q('[data-oauth=google]').disabled,false);assert.equal(q('[data-oauth=azure]').disabled,true);assert.ok(q('#authForm [name=email]'));q('[data-oauth=google]').click();await wait();assert.equal(log.oauth.provider,'google');assert.equal(log.oauth.options.redirectTo,'https://example.test/public/');
+ }finally{dom.window.close();}
+});
+
+test('Microsoft sign-in requests email; unavailable providers do not appear usable',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{
+  w.fetch=async()=>({ok:true,json:async()=>({external:{google:false,azure:true}})});await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="register"]').click();await wait();assert.equal(q('[data-oauth=google]').disabled,true);assert.equal(q('[data-oauth=azure]').disabled,false);q('[data-oauth=azure]').click();await wait();assert.equal(log.oauth.provider,'azure');assert.equal(log.oauth.options.scopes,'email');
+ }finally{dom.window.close();}
+});
+
+test('both provider buttons remain disabled when unconfigured or provider check fails',async()=>{
+ const {client}=mockClient();const {dom,w,run}=setup(client);try{
+  w.fetch=async()=>({ok:true,json:async()=>({external:{google:false,azure:false}})});await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();await wait();assert.equal(q('[data-oauth=google]').disabled,true);assert.equal(q('[data-oauth=azure]').disabled,true);assert.match(q('#oauthStatus').textContent,/not configured/);
+  q('.close').click();w.fetch=async()=>{throw new Error('offline');};q('[data-open-auth="login"]').click();await wait();assert.match(q('#oauthStatus').textContent,/Could not check/);assert.equal(q('[data-oauth=google]').disabled,true);
+ }finally{dom.window.close();}
 });

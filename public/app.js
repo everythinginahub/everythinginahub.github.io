@@ -10,7 +10,7 @@ import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from './school-tools.js?v=20261114-18';
 import { localDate, currentStreak, sortedTasks, taskDateLabel, recentStudyDays } from './study-utils.js?v=20261107-5';
 import { supabaseConfig } from './config.js?v=20261106-4';
-import { createAccountBackend, validateConfig } from './account-backend.js?v=20261114-13';
+import { createAccountBackend, validateConfig } from './account-backend.js?v=20261106-5';
 import { createClient } from './supabase-client.js?v=20261106-4';
 import { extraDecks, searchDecks } from './decks.js?v=20261107-1';
 import { subjects, starterDecks } from './starter-decks.js?v=20261107-17';
@@ -305,7 +305,13 @@ function account(mode='login') {
     modal({title:'Your account',body:`<p>Signed in as ${escapeHTML(user.name)} (${escapeHTML(user.email)}).</p>${pending ? `<p class="error">There are changes on this device that have not synced. Choose which copy to keep. Uploading replaces your cloud progress; using cloud progress discards local changes.</p><button class="btn dark" id="useLocal">Upload local progress</button><button class="btn outline" id="useCloud">Use cloud progress</button>` : '<p>Your account progress is saved to Supabase when you make changes. Your lists, notes, habits and other progress share the same account.</p>'}<p id="accountError" class="error" role="alert"></p><button class="btn dark" id="openProfileSettings">Settings</button> <button class="btn outline" id="logout">Sign out</button>`});
     return;
   }
-  modal({title:mode==='login'?'Welcome back':'Create your account',body:`<p>${backend?'Sign in to sync your hub across devices. You can choose subjects later if you use revision.':'Account setup is not complete yet. Please try again later.'}</p>${backend?`<form id="authForm" data-mode="${mode}">${mode==='register'?'<label class="field">Nickname<input name="name" required minlength="2" maxlength="24" autocomplete="nickname" placeholder="Choose a nickname"></label><p class="nickname-help">Your nickname is visible in community chat. Avoid personal information.</p>':''}<label class="field">Email<input name="email" type="email" required autocomplete="email"></label><label class="field">Password<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="${mode==='login'?'current-password':'new-password'}"></label><p class="error" id="authError" role="alert"></p><button class="btn dark" type="submit">${mode==='login'?'Sign in':'Create account'}</button>${mode==='login'?'<button class="switch resend-confirmation" type="button" id="resendConfirmation">Resend confirmation email</button>':''}</form><p>${mode==='login'?'New here?':'Already have an account?'} <button class="switch" data-auth-mode="${mode==='login'?'register':'login'}">${mode==='login'?'Create an account':'Sign in'}</button></p>`:'<p>The site owner can follow the Supabase setup guide in the project README.</p>'}`});
+  modal({title:mode==='login'?'Welcome back':'Create your account',body:`<p>${backend?'Sign in to sync your hub across devices. You can choose subjects later if you use revision.':'Account setup is not complete yet. Please try again later.'}</p>${backend?`<div class="oauth-options" id="oauthOptions"><button type="button" data-oauth="google" disabled>Continue with Google</button><button type="button" data-oauth="azure" disabled>Continue with Microsoft</button><p id="oauthStatus" role="status">Checking sign-in options…</p></div><form id="authForm" data-mode="${mode}">${mode==='register'?'<label class="field">Nickname<input name="name" required minlength="2" maxlength="24" autocomplete="nickname" placeholder="Choose a nickname"></label><p class="nickname-help">Your nickname is visible in community chat. Avoid personal information.</p>':''}<label class="field">Email<input name="email" type="email" required autocomplete="email"></label><label class="field">Password<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="${mode==='login'?'current-password':'new-password'}"></label><p class="error" id="authError" role="alert"></p><button class="btn dark" type="submit">${mode==='login'?'Sign in':'Create account'}</button>${mode==='login'?'<button class="switch resend-confirmation" type="button" id="resendConfirmation">Resend confirmation email</button>':''}</form><p>${mode==='login'?'New here?':'Already have an account?'} <button class="switch" data-auth-mode="${mode==='login'?'register':'login'}">${mode==='login'?'Create an account':'Sign in'}</button></p>`:'<p>The site owner can follow the Supabase setup guide in the project README.</p>'}`});
+  if(backend)loadOAuthOptions($('#oauthOptions'));
+}
+async function loadOAuthOptions(container){
+  if(!container)return;const status=container.querySelector('#oauthStatus');
+  try{const response=await fetch(`${config.url}/auth/v1/settings`,{headers:{apikey:config.key}});if(!response.ok)throw new Error('Unavailable');const settings=await response.json();if(!container.isConnected)return;const enabled=settings?.external||{};container.querySelectorAll('[data-oauth]').forEach(button=>{button.disabled=enabled[button.dataset.oauth]!==true;});status.textContent=container.querySelector('[data-oauth]:not(:disabled)')?'Choose a provider, or use email below.':'Google and Microsoft sign-in are not configured yet. Use email below.';}
+  catch{if(container.isConnected)status.textContent='Could not check Google and Microsoft sign-in. Try again later or use email below.';}
 }
 // Signup and settings use the same public-chat rules. The server remains the
 // authority and repeats validation before saving or sending.
@@ -333,6 +339,13 @@ $('#modal').addEventListener('click',async e=>{
   if(e.target.id==='openProfileSettings'){openProfileSettings();return;}
   if(e.target.id==='retryNickname'){loadProfileSettings();return;}
   if(e.target.dataset.authMode){$('#modal').close();account(e.target.dataset.authMode);}
+  if(e.target.dataset.oauth){
+    const button=e.target,container=button.closest('#oauthOptions'),provider=button.dataset.oauth;if(button.disabled||!container)return;const status=container.querySelector('#oauthStatus');
+    const available=[...container.querySelectorAll('[data-oauth]:not(:disabled)')];container.querySelectorAll('[data-oauth]').forEach(item=>item.disabled=true);status.textContent='Opening secure sign-in…';
+    try{await backend.signInWithProvider(provider,new URL('./',location.href).href);}
+    catch{if(container.isConnected){status.textContent='Could not start sign-in. Try again or use email below.';available.forEach(item=>item.disabled=false);}}
+    return;
+  }
   if(e.target.id==='resendConfirmation'){
     const email=$('#authForm [name="email"]');const message=$('#authError');
     if(!email.checkValidity()){message.textContent='Enter a valid email address first.';email.focus();return;}
