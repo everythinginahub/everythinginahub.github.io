@@ -264,3 +264,82 @@ dialog::backdrop { background:#24323b80; }
 .chat-owner-badge { display:inline-block; flex:none; margin-left:6px; padding:3px 7px; border:1px solid #dec7a4; border-radius:3px; background:#f5ebd8; color:#725029; font-size:10px; font-weight:800; letter-spacing:.03em; line-height:1.2; }
 .chat-author { display:inline-flex; align-items:center; flex-wrap:wrap; min-width:0; gap:4px; }
 .chat-author .chat-owner-badge { margin-left:0; }
+
+/* Habits: calm, compact routines with room for a little history. */
+.habits-workspace { color:#293d45; }
+.habits-header { display:flex; justify-content:space-between; align-items:end; gap:24px; padding-bottom:24px; border-bottom:1px solid #cfd6ce; }
+.habits-header h1 { margin:5px 0 8px; font-size:clamp(34px,4vw,44px); }
+.habits-header>div>p:last-child,.habit-section-heading p:not(.habits-kicker),.habit-create>div>p:last-child { color:#667774; line-height:1.55; margin:0; }
+.habits-kicker { margin:0; color:#85634f; font-size:10px; font-weight:750; letter-spacing:.09em; }
+.habits-overview { min-width:150px; padding:15px 19px; background:#edf1eb; border-left:3px solid #829a94; }
+.habits-overview>span { color:#72847f; font-size:10px; font-weight:750; letter-spacing:.08em; }
+.habits-overview strong { display:block; margin:4px 0; font-size:25px; }
+.habits-overview strong small { font-size:14px; color:#889993; }
+.habits-overview p { font-size:11px; }
+.habit-create { display:grid; grid-template-columns:minmax(180px,.75fr) minmax(0,1.25fr); gap:24px; margin:22px 0 40px; padding:22px; background:#fffefa; border:1px solid #dce0d9; border-radius:5px; }
+.habit-create h2,.habit-section-heading h2 { margin:6px 0; color:#293e48; font-size:21px; }
+.habit-create>div>p:last-child { font-size:12px; }
+#everyHabitForm>label { display:block; margin-bottom:6px; color:#516762; font-weight:700; font-size:12px; }
+.habit-create-line { display:flex; gap:8px; }
+.habit-create-line input,.habit-form-fields :is(input:not([type=checkbox]),select) { min-width:0; width:100%; padding:10px 12px; border:1px solid #cbd4ce; border-radius:4px; background:#fff; color:#293f48; font:inherit; }
+.habit-create-line .btn { flex:none; white-space:nowrap; }
+#habitOptions { margin-top:12px; }
+#habitOptions summary,.habit-calendar summary { cursor:pointer; color:#3c6677; font-size:12px; font-weight:700; }
+.habit-form-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:16px; }
+.habit-form-fields .field { margin:0; font-size:12px; }
+.habit-form-fields .field input,.habit-form-fields .field select { margin-top:6px; }
+.habit-form-fields .field span { color:#84918b; font-weight:400; }
+.habit-form-fields fieldset { grid-column:1/-1; border:0; padding:0; margin:0; }
+.habit-form-fields legend { color:#536961; font-size:12px; font-weight:700; margin-bottom:8px; }
+.habit-form-fields fieldset>div { display:flex; flex-wrap:wrap; gap:8px 13px; }
+.habit-form-fields fieldset label { font-size:12px; color:#526761; }
+.habit-form-fields input[type=checkbox] { accent-color:#416e7a; }
+.habit-form-fields .habit-help { grid-column:1/-1; margin:0; color:#6b7b76; font-size:11px; line-height:1.5; }
+#habitWeekdays[hidden],#habitWeeklyGoal[hidden],#habitCancel[hidden] { display:none!important; }
+#habitCancel { margin-top:12px; border:0; background:none; color:#496d79; text-decoration:underline; padding:0; font-size:12px; font-weight:700; }
+#habitFormError { color:#a13739; font-size:12px; }
+.habit-section-heading { display:flex; justify-content:space-between; align-items:end; gap:15px; }
+.habit-section-heading p:not(.habits-kicker) { font-size:13px; }
+.habit-section-heading>span { flex:none; color:#7b8b85; font-size:12px; }
+.habit-toolbar { display:flex; flex-wrap:wrap; gap:4px; margin:22px 0 12px; border-bottom:1px solid #d7ddd6; }
+.habit-toolbar button { border:0; border-bottom:2px solid transparent; background:transparent; color:#6b7e79; padding:10px 14px; font-size:12px; font-weight:700; }
+.habit-toolbar button[aria-pressed=true] { border-color:#456f7e; color:#325b6e; }
+.habit-notice { min-height:1em; margin:0 0 10px; color:#52786e; font-size:12px; }
+.habit-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.habit-card { --habit-tint:#e3edf0; --habit-accent:#496c7b; min-width:0; padding:20px; background:#fffefa; border:1px solid #dce0d9; border-top:3px solid var(--habit-accent); border-radius:5px; }
+.habit-color-sage { --habit-tint:#e3eee4; --habit-accent:#638775; }.habit-color-sand { --habit-tint:#f5edda; --habit-accent:#a08360; }.habit-color-rose { --habit-tint:#f4e7e6; --habit-accent:#a27a77; }.habit-color-lilac { --habit-tint:#ebe9f1; --habit-accent:#80778e; }
+.habit-card-head { display:flex; justify-content:space-between; align-items:start; gap:12px; }
+.habit-card-title { display:flex; align-items:center; gap:11px; min-width:0; }
+.habit-card h2 { margin:0; color:#2d424a; font-size:17px; overflow-wrap:anywhere; }
+.habit-card-title p { margin:4px 0 0; color:#70817b; font-size:11px; }
+.habit-icon { display:grid; place-items:center; flex:none; width:39px; height:39px; background:var(--habit-tint); color:var(--habit-accent); border-radius:4px; font-size:19px; }
+.habit-menu { position:relative; flex:none; }
+.habit-menu summary { cursor:pointer; list-style:none; padding:5px; color:#78908c; font-weight:800; letter-spacing:2px; }
+.habit-menu summary::-webkit-details-marker { display:none; }
+.habit-menu>div { position:absolute; right:0; z-index:2; width:150px; padding:5px; background:#fffefa; border:1px solid #d5ded6; border-radius:4px; box-shadow:0 4px 14px #26343a20; }
+.habit-menu button { display:block; width:100%; padding:8px; border:0; background:none; color:#3e5d62; text-align:left; font-size:12px; }
+.habit-menu button:hover { background:#f0f3ee; }
+.habit-description { margin:15px 0 0; color:#5f726c; font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.habit-progress-label { display:flex; justify-content:space-between; gap:10px; margin:20px 0 7px; color:#788b83; font-size:11px; }
+.habit-progress-label strong { color:#557668; }
+.habit-progress-track { height:5px; background:#e8eee8; border-radius:5px; overflow:hidden; }.habit-progress-track span { display:block; height:100%; background:var(--habit-accent); }
+.habit-card .habit-week { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin:20px 0 15px; }
+.habit-card .habit-week>div { display:grid; justify-items:center; }
+.habit-card .habit-week span { width:28px; height:28px; border-radius:4px; background:#f1f3ed; color:#8d9a91; }
+.habit-card .habit-week span.marked { background:var(--habit-tint); color:var(--habit-accent); }
+.habit-stats { display:flex; gap:18px; flex-wrap:wrap; padding:12px 0; border-top:1px solid #e7eae4; color:#72827c; font-size:11px; }.habit-stats strong { color:#36545e; font-size:13px; }
+.habit-card-footer { display:flex; align-items:center; gap:12px; padding-top:4px; }.habit-card-footer>span { color:#70827c; font-size:11px; line-height:1.4; }
+.habit-check { min-width:110px; }
+.habit-calendar { margin-top:18px; padding-top:14px; border-top:1px solid #e7eae4; }
+.habit-calendar-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:16px 0 10px; }
+.habit-calendar-head strong { font-size:13px; }.habit-calendar-head button { border:1px solid #d5ded6; background:#fffefa; border-radius:4px; padding:5px 10px; color:#416878; }
+.habit-calendar-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; text-align:center; }
+.habit-calendar-weekday { padding:5px 0; font-size:10px; color:#88978d; font-weight:700; }
+.habit-day { min-height:36px; padding:4px; border:1px solid transparent; border-radius:4px; background:#f3f5f0; color:#4d625d; font-size:12px; }
+.habit-day.is-marked { background:var(--habit-tint); color:var(--habit-accent); font-weight:800; }.habit-day.is-today { border-color:#6f9399; }.habit-day:disabled { opacity:.38; }
+.habit-calendar-help,.habits-footnote { color:#788a81; font-size:11px; line-height:1.55; }
+.habits-empty { grid-column:1/-1; padding:28px; border:1px dashed #cfd8ce; background:#fffefa; border-radius:5px; color:#60746a; }.habits-empty strong { color:#3a555a; }.habits-empty p { margin:8px 0 0; font-size:12px; }
+.habit-reminders { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 20px; margin-top:28px; padding:18px 20px; border:1px solid #dce0d9; border-radius:5px; background:#f0f2eb; }.habit-reminders strong { font-size:13px; }.habit-reminders p { margin:5px 0 0; color:#6f8178; font-size:11px; line-height:1.5; }.habit-reminders button { border:1px solid #c1d0ca; border-radius:4px; padding:9px 12px; background:#fffefa; color:#43656d; font-size:12px; font-weight:700; }.habit-reminders #habitReminderStatus { flex-basis:100%; }
+.habits-footnote { margin-top:20px; }
+@media(max-width:700px){.habit-create { grid-template-columns:1fr; }.habit-list { grid-template-columns:1fr; }}
+@media(max-width:480px){.habits-header { align-items:start; }.habits-overview { min-width:112px; padding:12px; }.habit-create { padding:17px; gap:16px; }.habit-card { padding:17px; }.habit-form-fields { grid-template-columns:1fr; }.habit-form-fields fieldset,.habit-form-fields .habit-help { grid-column:auto; }.habit-section-heading { align-items:start; }.habit-card-footer { flex-wrap:wrap; }.habit-day { min-height:34px; }}
