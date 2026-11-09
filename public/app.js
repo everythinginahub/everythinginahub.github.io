@@ -1,3 +1,4 @@
+import { startSiteAnalytics } from './site-analytics.js?v=20261106-1';
 import { aiChatWorkspace, mountAiChat } from './ai-chat.js?v=20261114-22';
 import { isHabitDue } from './habit-utils.js?v=20261114-15';
 import { restrictedNickname } from './nickname-policy.js?v=20261114-14';
@@ -41,6 +42,7 @@ const confirmationHadToken = new URLSearchParams(location.hash.slice(1)).has('ac
 const config = validateConfig(supabaseConfig);
 const client = config.configured ? createClient(config.url, config.key) : null;
 const backend = client ? createAccountBackend(client) : null;
+startSiteAnalytics(client);
 let notesController = null, liveController = null, communityController = null, schoolController = null, ebookController = null, everydayController = null, arcadeController = null, timetableImportController = null, aiController = null;
 let syncReady = false, cloudProgress = null, syncQueue = Promise.resolve();
 const userKey = id => `revisepro-state-user-${id}`;
