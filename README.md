@@ -40,7 +40,7 @@ The Internet Archive scan remains available as an optional, separate edition, as
 
 The **Apps** button is available throughout the workspace; use it to search for an app, pin favourites, or return to a recent app. On a keyboard, Alt+A opens the switcher. Pins and recent apps are stored separately for each signed-in account on this device, not synced to other devices. Opening another app still leaves the current page, so session-only tools such as the focus timer reset as usual.
 
-Tasks, saved links, revision resources and everyday tools can be searched in place. The book shelf supports title and author sorting, and the game collection has a control to clear both its search and category. The AI chat embed can be disconnected without leaving its page. These controls don't change saved account progress.
+Tasks, saved links, revision resources and everyday tools can be searched in place. The book shelf supports title and author sorting, and the game collection has a control to clear both its search and category. The optional original AI chat embed can be disconnected without leaving its page. These controls don't change saved account progress.
 
 ## Community chat nicknames
 
@@ -48,7 +48,7 @@ New accounts choose a 2–24 character nickname at signup; it is visible to ever
 
 ## AI chat
 
-The AI chat app embeds the independently operated [Free AI Chat Space by Zacheus10](https://huggingface.co/spaces/Zacheus10/free-ai-chat) on Hugging Face after the user chooses to load it. The Space describes its model as Qwen3-4B-Instruct, not Gemini. It sends messages to that third-party service, has free GPU limits and queues, and can change, become unavailable or require sign-in. It is not moderated by Everything Hub and is not suitable for unsupervised children. Do not send sensitive information; verify important answers. The old `#kindle-ai` link still opens this page. Gemini's own consumer chat does not provide a supported embed for this site.
+The AI chat sends questions directly from the browser to the `/generate` API of the independently operated [Free AI Chat Space by Zacheus10](https://huggingface.co/spaces/Zacheus10/free-ai-chat) using a self-hosted Gradio JavaScript client. A fresh client session is created per open app instance and is discarded on leaving, signing out or choosing New session. Conversation display is kept only in memory and is not saved in account progress; each question is sent independently, without previous messages. The provider receives each question and its own privacy and retention policies apply. The original Space can still be opened separately or loaded as an optional embed. No Hugging Face accounts or API keys are generated. Separate browser sessions do not guarantee separate quotas or avoid the provider’s free GPU limits, queues, authentication or availability restrictions. The Space describes its model as Qwen3-4B-Instruct, not Gemini. The service is not moderated by Everything Hub and is not suitable for unsupervised children. Do not send sensitive information; verify important answers. The old `#kindle-ai` link still opens this page. Gemini’s own consumer chat does not provide a supported embed for this site. The API integration has been tested with mocks, not a live Space request, because the test environment cannot access Hugging Face. The bundled client is rebuilt with `npm run build:gradio` and its license files are in `public/licenses/`.
 
 ## Existing school and learning tools
 
