@@ -541,3 +541,12 @@ test('five new apps are available without subjects and shared app links can be c
   go(w,'#date-calculator');q('#copyAppLink').click();await wait();assert.equal(copied,'https://example.test/public/#date-calculator');assert.match(q('#toast').textContent,/copied/i);
  }finally{dom.window.close();}
 });
+
+test('home shortcuts follow pinned and recently opened apps without syncing',async()=>{
+ const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);try{
+  await run();const q=s=>w.document.querySelector(s);assert.match(q('#homeQuickAccess').textContent,/Pin your favourite/);q('#editQuickApps').click();assert.equal(q('#appSwitcher').open,true);q('[data-switcher-pin="notes"]').click();assert.ok(q('#homeQuickAccess a[href="#notes"]'));assert.equal(log.saved,null);q('#closeAppSwitcher').click();
+  go(w,'#planner');go(w,'#home');assert.match(q('#homeQuickAccess').textContent,/Recently opened/);assert.ok(q('#homeQuickAccess a[href="#planner"]'));assert.equal(w.document.querySelectorAll('#homeQuickAccess a[href="#notes"]').length,1);
+  q('#directorySearch').value='notes';q('#directorySearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#homeQuickAccess').hidden,true);q('#directorySearch').value='';q('#directorySearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#homeQuickAccess').hidden,false);
+  q('#editQuickApps').click();q('[data-switcher-pin="notes"]').click();assert.equal(q('#homeQuickAccess a[href="#notes"]'),null);assert.equal(log.saved,null);
+ }finally{dom.window.close();}
+});
