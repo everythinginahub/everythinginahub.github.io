@@ -9,7 +9,7 @@ const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 
 test('popular picks link to safe game pages and preserve existing routes',()=>{
  assert.equal(classroomGames.length,6);assert.equal(new Set(classroomGames.map(g=>g.slug)).size,6);
- const home=arcadeView();assert.match(home,/Classroom favourites/);assert.match(home,/#arcade\/library/);assert.match(home,/#arcade\/skyline/);
+ const home=arcadeView();assert.match(home,/Classroom favourites/);assert.doesNotMatch(home,/#arcade\/(?:library|skyline|geometry-dash|spotlight)/);assert.match(home,/#games/);for(const game of classroomGames)assert.match(home,new RegExp(`#arcade/classroom/${game.slug}`));assert.match(home,/embed code could not be verified/);
  assert.doesNotMatch(classroomView('../../evil'),/<iframe/);
  for(const game of classroomGames){const dom=new JSDOM(`<main>${arcadeView('classroom',game.slug)}</main>`,{url:'https://example.test/'});try{const doc=dom.window.document,frame=doc.querySelector('iframe');assert.equal(frame.title,`${game.name} game`);assert.ok(doc.querySelector('a[href^="https://sites.google.com/view/drive-u-7-home/"]'));assert.match(doc.body.textContent,/third.part|third part/i);assert.equal(frame.getAttribute('referrerpolicy'),'no-referrer');if(game.xml){assert.equal(frame.getAttribute('sandbox'),'allow-scripts allow-pointer-lock');assert.equal(frame.hasAttribute('src'),false);}else{assert.equal(frame.getAttribute('src'),game.embed);assert.match(game.embed,/^https:\/\/www\.twoplayergames\.org\/embed\//);}}finally{dom.window.close();}}
 });
