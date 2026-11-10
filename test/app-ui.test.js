@@ -371,7 +371,7 @@ test('everyday spaces save alongside existing progress without requiring subject
 
 test('the Games app works without revision subjects and keeps old study routes',async()=>{
  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('#crumb').textContent,'Games');assert.equal(w.document.querySelectorAll('.featured-card').length,6);w.HTMLCanvasElement.prototype.getContext=()=>null;w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};go(w,'#arcade/skyline');assert.ok(q('#gameCanvas'));q('[data-action=start]').click();assert.equal(q('#gameOverlay').hidden,true);go(w,'#arcade/orbit');assert.ok(q('#gameCanvas'));go(w,'#arcade/reef');assert.ok(q('[data-action=launch]'));go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
+ assert.ok(q('.os-dock a[href="#arcade"]'));assert.ok(q('.home-directory a[href="#arcade"]'));assert.ok(q('#homeClock').textContent.includes(':'));go(w,'#arcade');assert.equal(q('#crumb').textContent,'Games');assert.equal(w.document.querySelectorAll('.featured-card').length,25);w.HTMLCanvasElement.prototype.getContext=()=>null;w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};go(w,'#arcade/skyline');assert.ok(q('#gameCanvas'));q('[data-action=start]').click();assert.equal(q('#gameOverlay').hidden,true);go(w,'#arcade/orbit');assert.ok(q('#gameCanvas'));go(w,'#arcade/reef');assert.ok(q('[data-action=launch]'));go(w,'#games');assert.ok(q('#subjectsForm'));go(w,'#home');assert.equal(q('.app-shell').classList.contains('os-home'),true);dom.window.close();
 });
 
 
@@ -386,7 +386,7 @@ test('launcher searches all apps and opens focused views without a sidebar',asyn
 
 test('combined Games app opens the collection and preserves study links',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- go(w,'#arcade');assert.equal(q('a[href="#arcade/library"]'),null);assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#arcade/classroom/snow-rider"]'));assert.equal(w.document.querySelectorAll('.featured-card').length,6);
+ go(w,'#arcade');assert.equal(q('a[href="#arcade/library"]'),null);assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#arcade/classroom/snow-rider"]'));assert.equal(w.document.querySelectorAll('.featured-card').length,25);
  go(w,'#arcade/library');assert.ok(q('#embedSearch'));assert.equal(q('iframe'),null);q('#embedSearch').value='sudoku';q('#embedSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#embedGrid').textContent,/Sudoku/);
  go(w,'#arcade/play/sudoku');assert.equal(q('iframe').getAttribute('title'),'Sudoku — game by sausi-7');assert.ok(q('a[target="_blank"]'));go(w,'#games/bio-transport');assert.ok(q('[data-game-start="quiz"]'));dom.window.close();
 });

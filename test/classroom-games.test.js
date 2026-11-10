@@ -8,8 +8,8 @@ const gadget='<?xml version="1.0"?><Module><Content type="html"><![CDATA[<!DOCTY
 const tick=()=>new Promise(resolve=>setTimeout(resolve,0));
 
 test('popular picks link to safe game pages and preserve existing routes',()=>{
- assert.equal(classroomGames.length,6);assert.equal(new Set(classroomGames.map(g=>g.slug)).size,6);
- const home=arcadeView();assert.match(home,/Classroom favourites/);assert.doesNotMatch(home,/#arcade\/(?:library|skyline|geometry-dash|spotlight)/);assert.match(home,/#games/);for(const game of classroomGames)assert.match(home,new RegExp(`#arcade/classroom/${game.slug}`));assert.match(home,/embed code could not be verified/);
+ assert.equal(classroomGames.length,25);assert.equal(new Set(classroomGames.map(g=>g.slug)).size,classroomGames.length);
+ const home=arcadeView();assert.match(home,/Classroom favourites/);assert.doesNotMatch(home,/#arcade\/(?:library|skyline|geometry-dash|spotlight)/);assert.match(home,/#games/);for(const game of classroomGames)assert.match(home,new RegExp(`#arcade/classroom/${game.slug}`));assert.match(home,/not all are available/);
  assert.doesNotMatch(classroomView('../../evil'),/<iframe/);
  for(const game of classroomGames){const dom=new JSDOM(`<main>${arcadeView('classroom',game.slug)}</main>`,{url:'https://example.test/'});try{const doc=dom.window.document,frame=doc.querySelector('iframe');assert.equal(frame.title,`${game.name} game`);assert.ok(doc.querySelector('a[href^="https://sites.google.com/view/drive-u-7-home/"]'));assert.match(doc.body.textContent,/third.part|third part/i);assert.equal(frame.getAttribute('referrerpolicy'),'no-referrer');if(game.xml){assert.equal(frame.getAttribute('sandbox'),'allow-scripts allow-pointer-lock');assert.equal(frame.hasAttribute('src'),false);}else{assert.equal(frame.getAttribute('src'),game.embed);assert.match(game.embed,/^https:\/\/www\.twoplayergames\.org\/embed\//);}}finally{dom.window.close();}}
 });
@@ -26,4 +26,25 @@ test('XML failure explains fallback; destroyed pending loads cannot mutate the p
 
 test('official embeds restart and fullscreen fallbacks are usable',()=>{
  const dom=new JSDOM(`<main>${classroomView('basket-random')}</main>`);try{const root=dom.window.document.querySelector('main'),ctl=mountClassroom(root,'basket-random',dom.window);root.querySelector('#classroomReload').click();assert.equal(root.querySelector('iframe').getAttribute('src'),'https://www.twoplayergames.org/embed/basket-random');root.querySelector('#classroomFullscreen').click();assert.match(root.querySelector('#classroomStatus').textContent,/unavailable/);ctl.destroy();}finally{dom.window.close();}
+});
+
+
+test('new home-page games retain their recovered source URLs and isolated players',async()=>{
+ const expected={
+  'survival-race':'https://cdn.jsdelivr.net/gh/events-files-manager/stles@1b4a1fc/1.xml',
+  'jump-or-fall':'https://cdn.jsdelivr.net/gh/classroomusers/77u6666@8142074/2.xml',
+  'level-67':'https://cdn.jsdelivr.net/npm/nxd-xm-1@1.0.1/s6.xml',
+  'football-bros':'https://cdn.jsdelivr.net/gh/z799gs/550o8@main/Build/1.xml',
+  'paper-io-2':'https://cdn.jsdelivr.net/gh/centerclassroom/mc55@main/paper-io-2.xml',
+  'ragdoll-freefall':'https://cdn.jsdelivr.net/npm/nxd-xm-1@1.0.2/r8.xml'
+ };
+ for(const [slug,source] of Object.entries(expected)){
+  const game=classroomGames.find(g=>g.slug===slug);assert.equal(game.xml,source);
+  const dom=new JSDOM(`<main>${classroomView(slug)}</main>`);try{
+   const root=dom.window.document.querySelector('main');dom.window.fetch=async(url,options)=>{assert.equal(url,source);assert.equal(options.credentials,'omit');return {ok:true,text:async()=>gadget};};
+   const controller=mountClassroom(root,slug,dom.window);await tick();
+   assert.match(root.querySelector('iframe').srcdoc,/<body>Test/);assert.equal(root.querySelector('iframe').getAttribute('sandbox'),'allow-scripts allow-pointer-lock');
+   controller.destroy();
+  }finally{dom.window.close();}
+ }
 });
