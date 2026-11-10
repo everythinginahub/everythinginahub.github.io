@@ -1,5 +1,5 @@
--- Staged only: a trusted service must authenticate code issuance, authorize
--- password resets, rate-limit attempts, and integrate these routines safely.
+-- A trusted service must authenticate code issuance, authorize password resets
+-- and rate-limit attempts. Apply before username_auth.sql.
 -- Never expose raw codes or service credentials to the database client.
 create table if not exists public.account_recovery_codes (
   user_id uuid not null references auth.users(id) on delete cascade,

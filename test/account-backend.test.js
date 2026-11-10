@@ -59,3 +59,9 @@ test('nickname changes use account-scoped RPCs and signup records the chosen nic
  const calls=[];const api=createAccountBackend({auth:{signUp:async data=>(calls.push(data),{data:{session:null}})},rpc:async(name,args)=>(calls.push({name,args}),{data:name==='community_nickname_get'?'Reader':'New Reader'})});
  await api.signUp('Reader','a@b.co','password','https://example.com/');assert.equal(calls[0].options.data.nickname,'Reader');assert.equal(await api.getNickname(),'Reader');assert.equal(await api.setNickname('New Reader'),'New Reader');assert.deepEqual(calls.at(-1),{name:'community_nickname_set',args:{p_nickname:'New Reader'}});
 });
+
+test('bundled client resolves usernames through the function and signs in without exposing a service key',async()=>{
+ const {createClient}=await import('../public/supabase-client.js');const requests=[];const user={id:'test-user',email:'internal@accounts.invalid'};
+ const fakeFetch=async(input,init={})=>{const url=String(input);requests.push({url,headers:new Headers(init.headers),body:init.body});if(url.includes('/functions/v1/username-auth'))return new Response(JSON.stringify({email:user.email}),{status:200,headers:{'content-type':'application/json'}});if(url.includes('/auth/v1/token'))return new Response(JSON.stringify({access_token:'token',refresh_token:'refresh',expires_in:3600,token_type:'bearer',user}),{status:200,headers:{'content-type':'application/json'}});throw Error('Unexpected request');};
+ const client=createClient('https://example.supabase.co','sb_publishable_test',{global:{fetch:fakeFetch},auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});const api=createAccountBackend(client);assert.equal((await api.usernameSignIn('alice','password123')).id,user.id);assert.equal(JSON.parse(requests[0].body).action,'resolve');assert.equal(JSON.parse(requests[1].body).email,user.email);assert.equal(requests[0].headers.get('apikey'),'sb_publishable_test');
+});

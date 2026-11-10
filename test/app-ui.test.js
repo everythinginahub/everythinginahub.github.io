@@ -33,7 +33,7 @@ const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.
 const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
 function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
   const log={saved:null,created:null,signup:null,login:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
-  const client={rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
+  const client={functions:{invoke:async(_slug,{body})=>{log.request=body;if(body.action==='signup'){log.signup=body;return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}if(body.action==='resolve')return {data:{email:'alice@accounts.invalid'}};if(body.action==='recover'){log.recover=body;return {data:{ok:true}};}if(body.action==='codes')return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}},rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
     getSession:async()=>({data:{session:session?{user:session}:null}}),
     signInWithPassword:async input=>(log.login=input,{data:{user:account}}),
     signUp:async input=>(log.signup=input,{data:{session:null,user:account}}),
@@ -68,11 +68,11 @@ test('logged-out visitors see landing page and cannot access guest workspace',as
   assert.match(w.document.querySelector('#landing').textContent,/Welcome to\s*Everything Hub/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
 });
-test('signup does not require school subjects and sends a confirmation redirect',async()=>{
-  const {client,log}=mockClient();const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  q('[data-open-auth="register"]').click();q('[name="name"]').value='Alex';q('[name="email"]').value='alex@example.com';q('[name="password"]').value='longpassword';
-  assert.equal(q('input[name="subjects"]'),null);q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
-  assert.equal(log.signup.options.data.nickname,'Alex');assert.equal(log.signup.options.emailRedirectTo,'https://example.test/public/login.html');assert.deepEqual(Array.from(log.signup.options.data.subjects),[]);assert.match(q('#modal').textContent,/Check your email/);assert.equal(q('.app-shell').hidden,true);dom.window.close();
+test('username signup sends no email and shows recovery codes',async()=>{
+  const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+  q('[data-open-auth="register"]').click();q('[name="username"]').value='Alex';q('[name="password"]').value='password123';
+  q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.signup.username,'Alex');assert.equal(log.signup.password,'password123');assert.equal(log.signup.email,undefined);assert.match(q('#modal').textContent,/Save your recovery codes/);assert.equal(q('.app-shell').hidden,true);q('#recoveryCodesDone').click();assert.equal(q('#authForm').dataset.mode,'login');
+  }finally{dom.window.close();}
 });
 test('confirmation callback signs out the temporary session and opens login',async()=>{
   const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client,{url:'https://example.test/public/?auth=confirmed#access_token=token&type=signup'});await run();
@@ -106,10 +106,8 @@ test('community set content is escaped and other owners cannot see management bu
   go(w,'#flashcards/set-e1234567-1234-4123-8123-123456789abc');assert.equal(q('#app script'),null);assert.equal(q('.set-preview-card b'),null);assert.match(q('.set-preview-card').textContent,/<b>/);assert.equal(q('[data-set-visibility]'),null);assert.equal(q('[data-delete-set]'),null);dom.window.close();
 });
 
-test('confirmation email can be requested again from login',async()=>{
-  const {client,log}=mockClient();const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  q('[data-open-auth="login"]').click();q('#resendConfirmation').click();assert.match(q('#authError').textContent,/valid email/);q('[name="email"]').value='alex@example.com';q('#resendConfirmation').click();await wait();
-  assert.equal(log.resend.type,'signup');assert.equal(log.resend.email,'alex@example.com');assert.equal(log.resend.options.emailRedirectTo,'https://example.test/public/login.html');assert.match(q('#authError').textContent,/check your email/i);dom.window.close();
+test('recovery sends a username, code and new password without email',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('#openRecover').click();q('[name=username]').value='Alex';q('[name=code]').value='abcd';q('[name=password]').value='new-password';q('#recoverForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.recover.action,'recover');assert.equal(log.recover.username,'Alex');assert.match(q('#modal').textContent,/Password updated/);}finally{dom.window.close();}
 });
 
 test('expanded starter sets can be browsed and the twentieth card reviewed',async()=>{
@@ -491,8 +489,7 @@ test('existing accounts choose their chat nickname in profile settings and it pe
  }finally{dom.window.close();}
 });
 
-test('sign-up and profile settings reject restricted nickname variants',async()=>{
- const guest=mockClient();const g=setup(guest.client);try{await g.run();const q=s=>g.w.document.querySelector(s);q('[data-open-auth=register]').click();q('[name=name]').value='S.h.4.y';q('[name=email]').value='alex@example.com';q('[name=password]').value='password123';q('#authForm').dispatchEvent(new g.w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(guest.log.signup,null);assert.match(q('#authError').textContent,/nickname/i);}finally{g.dom.window.close();}
+test('profile settings reject restricted nickname variants',async()=>{
  const logged=mockClient({session:account});const p=setup(logged.client);try{await p.run();const q=s=>p.w.document.querySelector(s);q('#topAccount').click();q('#openProfileSettings').click();await wait();q('#settingsNickname').value='The Owner';q('#nicknameForm').dispatchEvent(new p.w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(logged.log.nickname,null);assert.match(q('#nicknameError').textContent,/nickname/i);}finally{p.dom.window.close();}
 });
 
@@ -505,21 +502,25 @@ test('profile passes the exact Shay nickname to server authority and shows rejec
 });
 
 
-test('signup asks for a longer password and masks account details from Clarity',async()=>{
-  const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
-  q('[data-open-auth="register"]').click();assert.equal(q('[data-oauth]'),null);assert.equal(q('#authForm').getAttribute('data-clarity-mask'),'true');assert.equal(q('[name=password]').minLength,12);
-  q('[name=name]').value='Alex';q('[name=email]').value='alex@example.com';q('[name=password]').value='too-short';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.signup,null);assert.match(q('#authError').textContent,/12 characters/);
-  q('[name=password]').value='correct horse battery';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.signup.password,'correct horse battery');assert.match(q('#modal').textContent,/delivery is currently limited/i);
-  }finally{dom.window.close();}
+test('signup masks credentials and requires at least eight characters in the form',async()=>{
+ const {client}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="register"]').click();assert.equal(q('#authForm').getAttribute('data-clarity-mask'),'true');assert.equal(q('[name=password]').minLength,8);assert.equal(q('[name=email]'),null);}finally{dom.window.close();}
 });
 
 test('existing accounts can still sign in with shorter passwords',async()=>{
  const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();assert.equal(q('[data-oauth]'),null);assert.equal(q('#authForm').getAttribute('data-clarity-mask'),'true');assert.equal(q('[name=password]').hasAttribute('minlength'),false);
- q('[name=email]').value='alex@example.com';q('[name=password]').value='short1';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.login.password,'short1');assert.equal(q('.app-shell').hidden,false);q('#topAccount').click();assert.ok(q('[data-clarity-mask="true"]'));
+ q('[name=username]').value='alex@example.com';q('[name=password]').value='short1';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.login.password,'short1');assert.equal(q('.app-shell').hidden,false);q('#topAccount').click();assert.ok(q('[data-clarity-mask="true"]'));
  }finally{dom.window.close();}
 });
 
 test('login errors do not expose backend details',async()=>{
- const {client}=mockClient();client.auth.signInWithPassword=async()=>({error:new Error('sensitive backend details')});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('[name=email]').value='alex@example.com';q('[name=password]').value='password';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('#authError').textContent,/Could not sign in/);assert.doesNotMatch(q('#authError').textContent,/sensitive backend details/);
+ const {client}=mockClient();client.auth.signInWithPassword=async()=>({error:new Error('sensitive backend details')});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('[name=username]').value='alex@example.com';q('[name=password]').value='password';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.match(q('#authError').textContent,/Could not sign in/);assert.doesNotMatch(q('#authError').textContent,/sensitive backend details/);
  }finally{dom.window.close();}
+});
+
+test('username login resolves the username before password authentication',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('[name=username]').value='Alice';q('[name=password]').value='password123';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.request.action,'resolve');assert.equal(log.request.username,'Alice');assert.equal(log.login.email,'alice@accounts.invalid');assert.equal(q('.app-shell').hidden,false);}finally{dom.window.close();}
+});
+
+test('signed-in account can request replacement recovery codes',async()=>{
+ const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('#topAccount').click();q('#openRecoveryCodes').click();await wait();assert.equal(log.request.action,'codes');assert.match(q('#modal').textContent,/Each code works once/);assert.equal(q('.recovery-codes').closest('[data-clarity-mask]').getAttribute('data-clarity-mask'),'true');}finally{dom.window.close();}
 });
