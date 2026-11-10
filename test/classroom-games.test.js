@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
+import {readFile} from 'node:fs/promises';
 import {classroomGames,classroomView,gameHtml,mountClassroom} from '../public/classroom-games.js';
 import {arcadeView,mountArcade} from '../public/arcade.js';
 
@@ -47,4 +48,21 @@ test('new home-page games retain their recovered source URLs and isolated player
    controller.destroy();
   }finally{dom.window.close();}
  }
+});
+
+
+test('every Classroom game card uses a bundled thumbnail',async()=>{
+ const dom=new JSDOM(`<main>${arcadeView()}</main>`);
+ try {
+  const cards=[...dom.window.document.querySelectorAll('.featured-card')];
+  assert.equal(cards.length,classroomGames.length);
+  for(const [i,card] of cards.entries()){
+   const img=card.querySelector('img');
+   assert.equal(img.getAttribute('src'),classroomGames[i].image);
+   assert.match(img.getAttribute('src'),/^assets\/classroom-thumbnails\/[a-z0-9-]+\.(webp|svg)$/);
+   const file=await readFile('public/'+img.getAttribute('src'));
+   if(img.src.endsWith('.webp')){assert.equal(file.subarray(0,4).toString(),'RIFF');assert.equal(file.subarray(8,12).toString(),'WEBP');}
+   else assert.match(file.toString(),/^<svg /);
+  }
+ } finally {dom.window.close();}
 });

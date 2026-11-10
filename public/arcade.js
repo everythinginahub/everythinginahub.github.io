@@ -1,4 +1,4 @@
-import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-2';
+import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-3';
 import {spotlightView, mountSpotlight} from './featured-games.js?v=20261114-8';
 import {geometryDashView, mountGeometryDash} from './geometry-dash.js?v=20261114-7';
 import {libraryView, embedView, mountLibrary} from './embedded-games.js?v=20261114-12';
