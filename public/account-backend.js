@@ -17,9 +17,14 @@ export function validateConfig(config) {
 }
 export function createAccountBackend(client) {
   const check = result => { if (result.error) throw result.error; return result.data; };
+  const usernameRequest = async body => { const result=await client.functions.invoke('username-auth',{body}); if(result.error){let message='Account service is unavailable. Please try again.';try{const data=await result.error.context?.json();if(data?.error)message=data.error;}catch{}throw new Error(message);}return result.data; };
   return {
     async session() { return check(await client.auth.getSession()).session?.user || null; },
     async signIn(email, password) { return check(await client.auth.signInWithPassword({ email, password })).user; },
+    async usernameSignIn(username, password) { const email=username.includes('@')?username:(await usernameRequest({action:'resolve',username})).email; return check(await client.auth.signInWithPassword({email,password})).user; },
+    async usernameSignUp(username,password) { return usernameRequest({action:'signup',username,password}); },
+    async recoverUsername(username,code,password) { try{return await usernameRequest({action:'recover',username,code,password});}catch(err){throw new Error((err.message||'Recovery failed.')+' If the request failed after starting, the code may have been used; try signing in or use a different code.');} },
+    async createRecoveryCodes() { return usernameRequest({action:'codes'}); },
     async signUp(name, email, password, redirectTo, subjects = []) {
       return check(await client.auth.signUp({ email, password, options: { data: { name, nickname: name, subjects }, emailRedirectTo: redirectTo } }));
     },

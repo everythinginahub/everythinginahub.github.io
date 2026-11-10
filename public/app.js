@@ -10,7 +10,7 @@ import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from './school-tools.js?v=20261114-18';
 import { localDate, currentStreak, sortedTasks, taskDateLabel, recentStudyDays } from './study-utils.js?v=20261107-5';
 import { supabaseConfig } from './config.js?v=20261106-4';
-import { createAccountBackend, validateConfig } from './account-backend.js?v=20261106-6';
+import { createAccountBackend, validateConfig } from './account-backend.js?v=20261106-7';
 import { createClient } from './supabase-client.js?v=20261106-4';
 import { extraDecks, searchDecks } from './decks.js?v=20261107-1';
 import { subjects, starterDecks } from './starter-decks.js?v=20261107-17';
@@ -67,7 +67,7 @@ async function enterAccount(accountUser) {
   // Load first. Never overwrite a cloud row when the network or schema is unavailable.
   const id = accountUser.id;
   const remote = await backend.load(id);
-  user = { id, name: String(accountUser.user_metadata?.name || accountUser.email?.split('@')[0] || 'Learner'), email: accountUser.email || '' };
+  user = { id, name: String(accountUser.email?.toLowerCase()==='parmars@ucs.org.uk' && accountUser.email_confirmed_at ? 'Shay' : (accountUser.user_metadata?.name || accountUser.email?.split('@')[0] || 'Learner')), email: accountUser.email || '' };
   cloudProgress = remote;
   const hasPending = localStorage.getItem(pendingKey(id)) === '1';
   syncReady = !hasPending;
@@ -302,10 +302,19 @@ function modal(content){$('#modalContent').innerHTML=`<div class="modal-inner"><
 function account(mode='login') {
   if(user) {
     const pending = localStorage.getItem(pendingKey(user.id)) === '1';
-    modal({title:'Your account',body:`<p data-clarity-mask="true">Signed in as ${escapeHTML(user.name)} (${escapeHTML(user.email)}).</p>${pending ? `<p class="error">There are changes on this device that have not synced. Choose which copy to keep. Uploading replaces your cloud progress; using cloud progress discards local changes.</p><button class="btn dark" id="useLocal">Upload local progress</button><button class="btn outline" id="useCloud">Use cloud progress</button>` : '<p>Your account progress is saved to Supabase when you make changes. Your lists, notes, habits and other progress share the same account.</p>'}<p id="accountError" class="error" role="alert"></p><button class="btn dark" id="openProfileSettings">Settings</button> <button class="btn outline" id="logout">Sign out</button>`});
+    modal({title:'Your account',body:`<p data-clarity-mask="true">Signed in as ${escapeHTML(user.name)} ${user.email.endsWith('@accounts.invalid')?'':` (${escapeHTML(user.email)})`}.</p>${pending ? `<p class="error">There are changes on this device that have not synced. Choose which copy to keep. Uploading replaces your cloud progress; using cloud progress discards local changes.</p><button class="btn dark" id="useLocal">Upload local progress</button><button class="btn outline" id="useCloud">Use cloud progress</button>` : '<p>Your account progress is saved to Supabase when you make changes. Your lists, notes, habits and other progress share the same account.</p>'}<p id="accountError" class="error" role="alert"></p><button class="btn dark" id="openProfileSettings">Settings</button> <button class="btn outline" id="openRecoveryCodes">Recovery codes</button> <button class="btn outline" id="logout">Sign out</button>`});
     return;
   }
-  modal({title:mode==='login'?'Welcome back':'Create your account',body:`<p>${backend?'Sign in to sync your hub across devices. You can choose subjects later if you use revision.':'Account setup is not complete yet. Please try again later.'}</p>${backend?`<form id="authForm" data-mode="${mode}" data-clarity-mask="true">${mode==='register'?'<label class="field">Nickname<input name="name" required minlength="2" maxlength="24" autocomplete="nickname" placeholder="Choose a nickname"></label><p class="nickname-help">Your nickname is visible in community chat. Avoid personal information.</p>':''}<label class="field">Email<input name="email" type="email" required autocomplete="email"></label><label class="field">Password<input name="password" type="password" ${mode==='register'?'minlength="12"':''} maxlength="128" required autocomplete="${mode==='login'?'current-password':'new-password'}"></label>${mode==='register'?'<p class="nickname-help">Use a unique password of at least 12 characters. A password manager can create and save one for you.</p>':''}<p class="error" id="authError" role="alert"></p><button class="btn dark" type="submit">${mode==='login'?'Sign in':'Create account'}</button>${mode==='login'?'<button class="switch resend-confirmation" type="button" id="resendConfirmation">Resend confirmation email</button>':''}</form><p>${mode==='login'?'New here?':'Already have an account?'} <button class="switch" data-auth-mode="${mode==='login'?'register':'login'}">${mode==='login'?'Create an account':'Sign in'}</button></p>`:'<p>The site owner can follow the Supabase setup guide in the project README.</p>'}`});
+  modal({title:mode==='login'?'Welcome back':'Create your account',body:`<p>${backend?'Sign in to sync your hub across devices.':'Account setup is not complete yet. Please try again later.'}</p>${backend?`<form id="authForm" data-mode="${mode}" data-clarity-mask="true"><label class="field">${mode==='login'?'Username or existing email':'Username'}<input name="username" required maxlength="254" autocomplete="username" placeholder="${mode==='login'?'Your username':'Choose a username'}"></label>${mode==='register'?'<p class="nickname-help">Use 2–24 letters, digits or underscores, starting with a letter. Usernames are unique and visible in community chat. Shay is reserved for the owner.</p>':''}<label class="field">Password<input name="password" type="password" ${mode==='register'?'minlength="8"':''} maxlength="128" required autocomplete="${mode==='login'?'current-password':'new-password'}"></label>${mode==='register'?'<p class="nickname-help">Use a unique password of at least 8 characters. Save the recovery codes shown after signup; without them you may lose access if you forget your password.</p>':''}<p class="error" id="authError" role="alert"></p><button class="btn dark" type="submit">${mode==='login'?'Sign in':'Create account'}</button>${mode==='login'?'<button class="switch" type="button" id="openRecover">Forgot password?</button>':''}</form><p>${mode==='login'?'New here?':'Already have an account?'} <button class="switch" data-auth-mode="${mode==='login'?'register':'login'}">${mode==='login'?'Create an account':'Sign in'}</button></p>`:'<p>The site owner can follow the Supabase setup guide in the project README.</p>'}`});
+}
+
+function showRecoveryCodes(codes){
+ if($('#modal').open)$('#modal').close();
+ modal({title:'Save your recovery codes',body:`<div data-clarity-mask="true"><p>Save these codes somewhere private and safe. Each code works once. They cannot be shown again. If you lose your password and all your codes, you may lose access permanently.</p><pre class="recovery-codes">${codes.map(escapeHTML).join('\n')}</pre></div><button class="btn dark" id="recoveryCodesDone">I have saved my codes</button>`});
+}
+function showRecoveryForm(){
+ if($('#modal').open)$('#modal').close();
+ modal({title:'Recover your account',body:`<p>Use one unused recovery code to choose a new password. Each code works only once.</p><form id="recoverForm" data-clarity-mask="true"><label class="field">Username<input name="username" required autocomplete="username"></label><label class="field">Recovery code<input name="code" required autocomplete="off" spellcheck="false"></label><label class="field">New password<input name="password" type="password" minlength="8" maxlength="128" required autocomplete="new-password"></label><p class="error" id="recoverError" role="alert"></p><button class="btn dark" type="submit">Reset password</button> <button class="switch" type="button" data-auth-mode="login">Back to sign in</button></form>`});
 }
 // Signup and settings use the same public-chat rules. The server remains the
 // authority and repeats validation before saving or sending.
@@ -333,13 +342,11 @@ $('#modal').addEventListener('click',async e=>{
   if(e.target.id==='openProfileSettings'){openProfileSettings();return;}
   if(e.target.id==='retryNickname'){loadProfileSettings();return;}
   if(e.target.dataset.authMode){$('#modal').close();account(e.target.dataset.authMode);}
-  if(e.target.id==='resendConfirmation'){
-    const email=$('#authForm [name="email"]');const message=$('#authError');
-    if(!email.checkValidity()){message.textContent='Enter a valid email address first.';email.focus();return;}
-    e.target.disabled=true;message.textContent='';
-    try { await backend.resendConfirmation(email.value.trim(),new URL('login.html',location.href).href); message.textContent='If this address needs confirmation, check your email for a link.'; }
-    catch(error){message.textContent=error.message||'Could not send the confirmation email.';}
-    finally {e.target.disabled=false;}
+  if(e.target.id==='openRecover'){showRecoveryForm();return;}
+  if(e.target.id==='recoveryCodesDone'){$('#modal').close();if(!user)account('login');return;}
+  if(e.target.id==='openRecoveryCodes'){
+    if(!confirm('Creating new recovery codes makes every previous code unusable. Continue?'))return;
+    e.target.disabled=true;try{const result=await backend.createRecoveryCodes();showRecoveryCodes(result.codes);}catch{if($('#accountError'))$('#accountError').textContent='Could not create recovery codes. Please try again.';e.target.disabled=false;}return;
   }
   if(e.target.id==='logout') {
     e.target.disabled=true;
@@ -365,19 +372,21 @@ $('#modal').addEventListener('submit',async e=>{
     finally{if(form.isConnected){button.disabled=false;field.disabled=false;}}
     return;
   }
+  if(e.target.id==='recoverForm'){
+    e.preventDefault();const form=e.target,input=Object.fromEntries(new FormData(form)),button=form.querySelector('[type=submit]');button.disabled=true;
+    try{await backend.recoverUsername(input.username.trim(),input.code.trim(),input.password);$('#modal').close();account('login');const msg=document.createElement('p');msg.textContent='Password updated. Sign in with your new password.';$('#authForm').prepend(msg);}
+    catch(err){if(form.isConnected){$('#recoverError').textContent=err.message||'Could not recover your account.';button.disabled=false;}}return;
+  }
   if(e.target.id!=='authForm')return;
   e.preventDefault();const form=e.target;const input=Object.fromEntries(new FormData(form));const button=form.querySelector('[type="submit"]');button.disabled=true;
   try {
     if(form.dataset.mode==='register') {
-      const validation=nicknameError(input.name);if(validation){$('#authError').textContent=validation;button.disabled=false;return;}
-      if(input.password.length<12){$('#authError').textContent='Use a unique password of at least 12 characters.';button.disabled=false;return;}
-      const chosen=[];
-      const result=await backend.signUp(input.name.trim(),input.email.trim(),input.password,new URL('login.html',location.href).href,chosen);
-      if(!result.session){$('#modal').close();modal({title:'Check your email',body:'<p>If signup is available for this email, a confirmation link may be sent. Follow it, then return here to sign in. Email delivery is currently limited, so the message may not arrive; check spam or contact the site owner.</p>'});return;}
-      await backend.signOut();$('#authError').textContent='Email verification is not configured correctly. Please contact the site owner.';button.disabled=false;return;
-    } else { await enterAccount(await backend.signIn(input.email.trim(),input.password)); }
+      const result=await backend.usernameSignUp(input.username.trim(),input.password);
+      if(!Array.isArray(result?.codes)||result.codes.length!==5)throw Error('Account created, but the recovery codes could not be displayed. Sign in and create new codes from your account.');
+      showRecoveryCodes(result.codes);return;
+    } else { await enterAccount(await backend.usernameSignIn(input.username.trim(),input.password)); }
     $('#modal').close();toast('Welcome, '+user.name+'!');
-  } catch(err) { $('#authError').textContent=form.dataset.mode==='login' ? 'Could not sign in. Check your details, make sure your email is confirmed, and try again.' : (err.message||'Could not connect to the account service.');button.disabled=false; }
+  } catch(err) { $('#authError').textContent=form.dataset.mode==='login' ? 'Could not sign in. Check your username and password, and try again.' : ((err.message||'Could not connect to the account service.')+' If the request was interrupted, try signing in and create recovery codes from your account.');button.disabled=false; }
 });
 $('#app').addEventListener('click',e=>{
 const lessonEdit=e.target.closest('[data-school-lesson-edit]');if(lessonEdit){const index=Number(lessonEdit.dataset.schoolLessonEdit),lesson=state.schoolLessons?.[index],form=$('#schoolLessonForm');if(lesson&&form){form.elements.index.value=index;form.elements.title.value=lesson.title;form.elements.day.value=lesson.day;form.elements.time.value=lesson.time;form.elements.room.value=lesson.room||'';form.elements.teacher.value=lesson.teacher||'';form.querySelector('[type=submit]').disabled=false;form.querySelector('[type=submit]').textContent='Update lesson →';$('#schoolLessonCancel').hidden=false;form.elements.title.focus();}return;}

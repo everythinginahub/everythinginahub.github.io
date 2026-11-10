@@ -1,5 +1,5 @@
-// Preparation only: codes must be stored as hashes and consumed atomically by
-// a trusted server. These helpers do not implement an account-recovery flow.
+// Codes must be stored as hashes and consumed atomically by a trusted server.
+// These helpers alone do not implement an account-recovery flow.
 const HEX = '0123456789ABCDEF';
 export function generateRecoveryCodes(cryptoProvider, count = 5) {
   if (!cryptoProvider?.getRandomValues || !Number.isInteger(count) || count < 1 || count > 10) throw new Error('Invalid recovery code request.');
