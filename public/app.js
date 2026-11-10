@@ -1,4 +1,4 @@
-import {miniApps, miniAppView, mountMiniApp} from './mini-apps.js?v=20261106-2';
+import {miniApps, miniAppView, mountMiniApp} from './mini-apps.js?v=20261106-3';
 import { youtubeWorkspace, mountYouTubeWorkspace } from './youtube-player.js?v=20261106-1';
 import { startSiteAnalytics } from './site-analytics.js?v=20261106-3';
 import { aiChatWorkspace, mountAiChat } from './ai-chat.js?v=20261114-22';

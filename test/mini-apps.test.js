@@ -46,3 +46,13 @@ test('palette copies chosen hex codes and reports unavailable clipboard',async()
   Object.defineProperty(w.navigator,'clipboard',{configurable:true,value:undefined});root.querySelector('[data-copy-colour="#34556A"]').click();assert.match(root.querySelector('#miniColourStatus').textContent,/Could not copy/);ctl.destroy();
  }finally{dom.window.close();}
 });
+
+test('dice rolls animate staggered visual dice while announcing a single text result',()=>{
+ const dom=new JSDOM(`<main>${miniAppView('dice-roller')}</main>`);try{
+  const w=dom.window,root=w.document.querySelector('main'),q=s=>root.querySelector(s),ctl=mountMiniApp({root,id:'dice-roller',win:w});
+  q('#miniDiceCount').value='10';q('#miniDiceSides').value='100';q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+  const dice=[...q('#miniDiceDisplay').children],values=dice.map(die=>Number(die.textContent));assert.equal(dice.length,10);assert.ok(values.every(value=>Number.isInteger(value)&&value>=1&&value<=100));assert.equal(q('#miniDiceDisplay').getAttribute('aria-hidden'),'true');assert.equal(q('#miniResult').getAttribute('aria-live'),'polite');assert.equal(q('#miniResult').textContent.split('  |')[0],`Rolled: ${values.join(' · ')}`);assert.deepEqual(dice.map(die=>die.style.getPropertyValue('--die-delay')),Array.from({length:10},(_,index)=>`${index*50}ms`));
+  const previous=dice[0];q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.notEqual(q('#miniDiceDisplay').firstElementChild,previous);
+  q('#miniDiceCount').value='11';q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('#miniDiceDisplay').children.length,0);assert.match(q('#miniResult').textContent,/Choose 1–10 dice/);ctl.destroy();
+ }finally{dom.window.close();}
+});
