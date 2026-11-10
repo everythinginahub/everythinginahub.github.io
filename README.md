@@ -36,7 +36,7 @@ The Internet Archive scan remains available as an optional, separate edition, as
 
 ## Getting around and finding things
 
-The **Apps** button is available throughout the workspace; use it to search for an app, pin favourites, or return to a recent app. On a keyboard, Alt+A opens the switcher. Pins and recent apps are stored separately for each signed-in account on this device, not synced to other devices. Opening another app still leaves the current page, so session-only tools such as the focus timer reset as usual.
+The **Apps** button is available throughout the workspace; use it to search for an app, pin favourites, or return to a recent app. On a keyboard, Alt+A opens the switcher. Pins and recent apps also appear on the home screen and are stored separately for each signed-in account on this device, not synced to other devices. Opening another app still leaves the current page, so session-only tools such as the focus timer reset as usual.
 
 Tasks, saved links, revision resources and everyday tools can be searched in place. The book shelf supports title and author sorting, and the game collection has a control to clear both its search and category. These controls don't change saved account progress.
 
@@ -46,7 +46,7 @@ Open **YouTube player** from the app launcher, even without selected subjects. S
 
 ## Everyday apps and navigation
 
-Five standalone apps are available from the launcher: World clock, Dice roller, Colour palette, Date calculator and Loan calculator. These run locally, do not require selected subjects and do not save their inputs. Dice are for casual use. The loan calculator is illustrative, assumes a fixed rate and excludes fees; it is not financial advice. The time-zone clock depends on device settings. Across the workspace, **Copy link** copies the current app route (not the query string); anyone opening it must still sign in and have access to the underlying content. Page titles now identify the current app.
+Five standalone apps are available from the launcher: World clock, Dice roller, Colour palette, Date calculator and Loan calculator. These run locally, do not require selected subjects and do not save their inputs. World clock can switch between 12- and 24-hour time. Dice keeps up to five recent rolls until you leave; it is for casual use. Palette colours can be copied when clipboard access is available. The date calculator starts with today’s local date. The loan calculator is illustrative, assumes a fixed rate and excludes fees; it is not financial advice. The time-zone clock depends on device settings. Across the workspace, **Copy link** copies the current app route (not the query string); anyone opening it must still sign in and have access to the underlying content. Page titles now identify the current app.
 
 ## Community chat nicknames
 

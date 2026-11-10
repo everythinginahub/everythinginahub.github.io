@@ -28,3 +28,21 @@ test('all five apps mount, function and clean up',()=>{
   }finally{dom.window.close();}
  }
 });
+
+test('clock format, recent dice history, and date defaults are convenient and local',()=>{
+ for(const id of ['world-clock','dice-roller','date-calculator']){
+  const dom=new JSDOM(`<main>${miniAppView(id)}</main>`);try{
+   const w=dom.window,root=w.document.querySelector('main'),q=s=>root.querySelector(s),ctl=mountMiniApp({root,id,win:w});
+   if(id==='world-clock'){q('#mini12Hour').checked=true;q('#mini12Hour').dispatchEvent(new w.Event('change',{bubbles:true}));assert.match(q('#miniWorldClock').textContent,/am|pm/i);}
+   if(id==='dice-roller'){for(let i=0;i<7;i++)q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('#miniRollHistory').hidden,false);assert.equal(root.querySelectorAll('#miniRollHistory li').length,5);q('#miniClearHistory').click();assert.equal(q('#miniRollHistory').hidden,true);}
+   if(id==='date-calculator'){assert.match(q('#miniStart').value,/^\d{4}-\d\d-\d\d$/);assert.equal(q('#miniFrom').value,q('#miniTo').value);}
+   ctl.destroy();
+  }finally{dom.window.close();}
+ }
+});
+test('palette copies chosen hex codes and reports unavailable clipboard',async()=>{
+ const dom=new JSDOM(`<main>${miniAppView('colour-palette')}</main>`);try{
+  const w=dom.window,root=w.document.querySelector('main'),ctl=mountMiniApp({root,id:'colour-palette',win:w});let copied='';Object.defineProperty(w.navigator,'clipboard',{configurable:true,value:{writeText:async text=>{copied=text;}}});root.querySelector('[data-copy-colour="#34556A"]').click();await Promise.resolve();assert.equal(copied,'#34556A');assert.match(root.querySelector('#miniColourStatus').textContent,/Copied/);
+  Object.defineProperty(w.navigator,'clipboard',{configurable:true,value:undefined});root.querySelector('[data-copy-colour="#34556A"]').click();assert.match(root.querySelector('#miniColourStatus').textContent,/Could not copy/);ctl.destroy();
+ }finally{dom.window.close();}
+});
