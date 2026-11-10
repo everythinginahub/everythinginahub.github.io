@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
+import {readFileSync} from 'node:fs';
 import {miniApps,miniAppView,mountMiniApp,daysBetween,addDays,loanPayment,shades,rollDice} from '../public/mini-apps.js';
 
 test('date calculator respects leap years, signed days and invalid dates',()=>{
@@ -47,12 +48,15 @@ test('palette copies chosen hex codes and reports unavailable clipboard',async()
  }finally{dom.window.close();}
 });
 
-test('dice rolls animate staggered visual dice while announcing a single text result',()=>{
+test('dice tumble as staggered 3D cubes and announce one accessible result',()=>{
  const dom=new JSDOM(`<main>${miniAppView('dice-roller')}</main>`);try{
-  const w=dom.window,root=w.document.querySelector('main'),q=s=>root.querySelector(s),ctl=mountMiniApp({root,id:'dice-roller',win:w});
+  const w=dom.window,root=w.document.querySelector('main'),q=s=>root.querySelector(s),ctl=mountMiniApp({root,id:'dice-roller',win:w}),faceNames=['front','back','right','left','top','bottom'],poses={front:[0,0],back:[0,180],right:[0,-90],left:[0,90],top:[-90,0],bottom:[90,0]};
   q('#miniDiceCount').value='10';q('#miniDiceSides').value='100';q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
-  const dice=[...q('#miniDiceDisplay').children],values=dice.map(die=>Number(die.textContent));assert.equal(dice.length,10);assert.ok(values.every(value=>Number.isInteger(value)&&value>=1&&value<=100));assert.equal(q('#miniDiceDisplay').getAttribute('aria-hidden'),'true');assert.equal(q('#miniResult').getAttribute('aria-live'),'polite');assert.equal(q('#miniResult').textContent.split('  |')[0],`Rolled: ${values.join(' · ')}`);assert.deepEqual(dice.map(die=>die.style.getPropertyValue('--die-delay')),Array.from({length:10},(_,index)=>`${index*50}ms`));
+  const dice=[...q('#miniDiceDisplay').children],match=q('#miniResult').textContent.match(/^Rolled: (.*?)  \|  Total:/),values=match[1].split(' · ').map(Number);assert.equal(dice.length,10);assert.ok(values.every(value=>Number.isInteger(value)&&value>=1&&value<=100));assert.equal(q('#miniDiceDisplay').getAttribute('aria-hidden'),'true');assert.equal(q('#miniResult').getAttribute('aria-live'),'polite');
+  dice.forEach((die,index)=>{const value=values[index],target=faceNames[(value-1)%6],cube=die.querySelector('.mini-die-cube'),face=die.querySelector(`.mini-die-face-${target}`);assert.equal(die.querySelectorAll('.mini-die-face').length,6);assert.equal(face.querySelector('.mini-die-number').textContent,String(value));assert.equal(die.style.getPropertyValue('--die-delay'),`${index*45}ms`);assert.equal(die.style.getPropertyValue('--die-end-x'),`${poses[target][0]}deg`);assert.equal(die.style.getPropertyValue('--die-end-y'),`${poses[target][1]}deg`);assert.ok(cube);});
   const previous=dice[0];q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.notEqual(q('#miniDiceDisplay').firstElementChild,previous);
-  q('#miniDiceCount').value='11';q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('#miniDiceDisplay').children.length,0);assert.match(q('#miniResult').textContent,/Choose 1–10 dice/);ctl.destroy();
+  q('#miniDiceCount').value='11';q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('#miniDiceDisplay').children.length,0);assert.match(q('#miniResult').textContent,/Choose 1–10 dice/);
+  q('#miniDiceCount').value='1';q('#miniDiceSides').value='6';q('#miniDiceForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));const value6=Number(q('#miniResult').textContent.match(/^Rolled: (\d+)/)[1]),d6Face={1:'front',6:'back',5:'right',2:'left',3:'top',4:'bottom'}[value6];assert.equal(q(`.mini-die-face-${d6Face}`).querySelectorAll('.mini-die-pip').length,value6);
+  const css=readFileSync(new URL('../public/style.css',import.meta.url),'utf8');assert.match(css,/transform-style:preserve-3d/);assert.match(css,/@keyframes mini-die-roll/);assert.match(css,/@media\(prefers-reduced-motion:reduce\).*mini-die-cube/s);ctl.destroy();
  }finally{dom.window.close();}
 });
