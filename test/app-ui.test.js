@@ -1,3 +1,4 @@
+import {youtubeWorkspace,mountYouTubeWorkspace} from '../public/youtube-player.js';
 import {aiChatWorkspace,mountAiChat} from '../public/ai-chat.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,7 +55,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{startSiteAnalytics:()=>({destroy(){}}),aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -377,7 +378,7 @@ test('the Games app works without revision subjects and keeps old study routes',
 
 test('launcher searches all apps and opens focused views without a sidebar',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- const links=['ai','planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
+ const links=['ai','planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','youtube','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
  assert.equal(w.document.querySelectorAll('.home-directory [data-directory-group]').length,4);
  const search=q('#directorySearch');search.value='notes';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('.home-directory [data-directory-group]:not([hidden])').length,1);assert.equal(w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])').length,1);
  search.value='study games';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#arcade"]').hidden);search.value='flashcards';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#flashcards"]').hidden);assert.ok(q('.home-directory a[href="#notes"]').hidden);assert.match(q('#directoryStatus').textContent,/results/);search.value='no-such-app';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#directoryStatus').textContent,'0 results');search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])')].length,links.length);
@@ -523,4 +524,11 @@ test('username login resolves the username before password authentication',async
 
 test('signed-in account can request replacement recovery codes',async()=>{
  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('#topAccount').click();q('#openRecoveryCodes').click();await wait();assert.equal(log.request.action,'codes');assert.match(q('#modal').textContent,/Each code works once/);assert.equal(q('.recovery-codes').closest('[data-clarity-mask]').getAttribute('data-clarity-mask'),'true');}finally{dom.window.close();}
+});
+
+test('YouTube player is accessible without subjects and stops when leaving',async()=>{
+ const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);try{
+  await run();const q=s=>w.document.querySelector(s);assert.ok(q('.home-directory a[href="#youtube"]'));go(w,'#youtube');assert.equal(q('#crumb').textContent,'YouTube player');assert.ok(q('#youtubeSearchForm'));assert.ok(q('#youtubePlayForm'));assert.equal(q('#subjectsForm'),null);
+  q('#youtubeLink').value='https://youtu.be/vCJVXYmXkzM';q('#youtubePlayForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#youtubePlayer iframe').src,/youtube-nocookie\.com\/embed\/vCJVXYmXkzM/);go(w,'#home');assert.equal(q('#youtubePlayer iframe'),null);
+ }finally{dom.window.close();}
 });
