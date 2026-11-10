@@ -443,3 +443,4 @@ dialog::backdrop { background:#24323b80; }
 @media(max-width:480px){.ai-page-heading { margin-bottom:20px; }.ai-page-number { display:none; }.ai-api-heading { padding:14px; }.ai-api-thread { min-height:285px; padding:20px 14px; }.ai-api-message { max-width:100%; }#aiApiForm { padding:14px 14px 0; }.ai-api-status { padding:0 14px; }.ai-api-footnote { margin-left:14px; margin-right:14px; }.ai-aside { grid-template-columns:1fr; }.ai-aside-signoff { grid-column:auto; }.ai-suggestions { gap:6px; }.ai-suggestions button { font-size:10px; }}
 
 .recovery-codes{padding:14px;border:1px solid #dce7dc;border-radius:8px;background:#f4f8f2;color:#244c3b;font:600 12px/1.8 ui-monospace,monospace;overflow:auto;user-select:all}
+@media(max-width:600px){#copyAppLink{font-size:0;padding:6px 8px}#copyAppLink::before{content:'↗';font-size:15px}}
