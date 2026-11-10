@@ -30,8 +30,8 @@ test('featured games use real local screenshots while older games remain text ca
  controller.destroy();dom.window.close();
 });
 
-test('original adventures show gameplay screenshots; study/live modes use icons',async()=>{
+test('original adventures are hidden from Games home; study/live modes use icons',async()=>{
  const originals=arcadeView(),study=gameChooser({id:'test',subject:'Subject',title:'Set'},3),live=liveHub([]);
- for(const slug of ['skyline','orbit','reef']){assert.match(originals,new RegExp(`assets/game-screenshots/${slug}\\.png`));const file=await readFile(`public/assets/game-screenshots/${slug}.png`);assert.equal(file.subarray(0,8).toString('hex'),'89504e470d0a1a0a');}
+ for(const slug of ['skyline','orbit','reef']){assert.doesNotMatch(originals,new RegExp(`assets/game-screenshots/${slug}\\.png`));const file=await readFile(`public/assets/game-screenshots/${slug}.png`);assert.equal(file.subarray(0,8).toString('hex'),'89504e470d0a1a0a');}
  assert.doesNotMatch(study,/assets\/game-thumbnails/);assert.doesNotMatch(live,/assets\/game-thumbnails/);assert.match(study,/study-game-icon/);assert.match(live,/live-mode-icon/);
 });
