@@ -3,6 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 import { readFile, mkdir } from 'node:fs/promises';
 import { extname, resolve, sep } from 'node:path';
+import { securityHeadersForRequest } from './scripts/security-headers.js';
 
 const port = Number(process.env.PORT || 3000);
 const dataDir = resolve(process.env.DATA_DIR || './data');
@@ -19,6 +20,7 @@ const setSession = (res, user, secure) => { const token = randomBytes(32).toStri
 const safeUser = u => ({ name: u.name, email: u.email });
 const mime = { '.html':'text/html; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.css':'text/css; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.mjs':'text/javascript; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png', '.ico':'image/x-icon' };
 createServer(async (req, res) => {
+  for (const [name, value] of Object.entries(securityHeadersForRequest(req))) res.setHeader(name, value);
   try {
     const url = new URL(req.url, 'http://localhost');
     if (url.pathname.startsWith('/api/')) {

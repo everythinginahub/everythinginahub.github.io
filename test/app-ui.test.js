@@ -35,8 +35,9 @@ const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.
 const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
 function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
   const log={saved:null,created:null,signup:null,login:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
-  const client={functions:{invoke:async(_slug,{body})=>{log.request=body;if(body.action==='signup'){log.signup=body;return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}if(body.action==='resolve')return {data:{email:'alice@accounts.invalid'}};if(body.action==='recover'){log.recover=body;return {data:{ok:true}};}if(body.action==='codes')return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}},rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
+  const client={functions:{invoke:async(_slug,{body})=>{log.request=body;if(body.action==='signup'){log.signup=body;return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}if(body.action==='login')return {data:{session:{access_token:'access-token',refresh_token:'refresh-token'}}};if(body.action==='recover'){log.recover=body;return {data:{ok:true}};}if(body.action==='codes')return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}},rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
     getSession:async()=>({data:{session:session?{user:session}:null}}),
+    setSession:async input=>(log.session=input,{data:{user:account}}),
     signInWithPassword:async input=>(log.login=input,{data:{user:account}}),
     signUp:async input=>(log.signup=input,{data:{session:null,user:account}}),
     resend:async input=>(log.resend=input,{data:{}}),
@@ -521,8 +522,8 @@ test('login errors do not expose backend details',async()=>{
  }finally{dom.window.close();}
 });
 
-test('username login resolves the username before password authentication',async()=>{
- const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('[name=username]').value='Alice';q('[name=password]').value='password123';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.request.action,'resolve');assert.equal(log.request.username,'Alice');assert.equal(log.login.email,'alice@accounts.invalid');assert.equal(q('.app-shell').hidden,false);}finally{dom.window.close();}
+test('username login receives only a session and never exposes the account email',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('[data-open-auth="login"]').click();q('[name=username]').value='Alice';q('[name=password]').value='password123';q('#authForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(log.request.action,'login');assert.equal(log.request.username,'Alice');assert.equal(log.request.password,'password123');assert.equal(log.request.email,undefined);assert.deepEqual(log.session,{access_token:'access-token',refresh_token:'refresh-token'});assert.equal(q('.app-shell').hidden,false);}finally{dom.window.close();}
 });
 
 test('signed-in account can request replacement recovery codes',async()=>{

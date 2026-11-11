@@ -1,4 +1,4 @@
-import {startSiteAnalytics} from './site-analytics.js?v=20261106-3';
+import {startSiteAnalytics} from './site-analytics.js?v=20261106-5';
 import {supabaseConfig} from './config.js?v=20261106-4';
 import {validateConfig} from './account-backend.js?v=20261114-13';
 import {createClient} from './supabase-client.js?v=20261106-4';
@@ -12,7 +12,8 @@ export function mountStatus(doc,client,win=window){
   const request=++sequence;let data,error;try{({data,error}=await client.rpc('site_status_read',{p_code:candidate}));}catch{error=true;}if(!alive||request!==sequence)return false;
   if(error||!data){if(unlocked){message.textContent='Could not refresh the dashboard. Please check your connection or access code.';}else message.textContent='Could not open the dashboard. Check the code or your connection.';return false;}
   code=candidate;unlocked=true;locked.hidden=true;dashboard.hidden=false;get('hideDashboard').hidden=false;get('accessCode').value='';message.textContent='';
-  const numbers={allViews:data.all_views,signedViews:data.signed_views,guestViews:Math.max(0,Number(data.all_views)-Number(data.signed_views)),uniqueBrowsers:data.unique_browsers,uniqueAccounts:data.unique_accounts,onlineTotal:Number(data.guest_online)+Number(data.signed_online),guestOnline:data.guest_online,signedOnline:data.signed_online};
+  const total=Number(data.all_views)||0,signed=Number(data.signed_views)||0;
+  const numbers={allViews:total,signedViews:signed,historicalGuestViews:Math.max(0,total-signed),uniqueBrowsers:data.unique_browsers,uniqueAccounts:data.unique_accounts,signedOnline:data.signed_online};
   for(const [id,value] of Object.entries(numbers))get(id).textContent=fmt(value);
   get('updatedAt').textContent=`Updated ${new Date().toLocaleTimeString()}`;
   const started=new Date(data.started_at);get('started').textContent=`Counting since ${Number.isNaN(started.valueOf())?'tracking began':started.toLocaleString()}. Historical visits before then are not included.`;if(pendingTrackedRefresh){pendingTrackedRefresh=false;void read();}return true;
@@ -25,7 +26,7 @@ export function mountStatus(doc,client,win=window){
  const closeDialog=()=>{get('codeDialog').close();get('codeValue').value='';};
  form.addEventListener('submit',submit);show.addEventListener('click',showCode);copy.addEventListener('click',copyCode);close.addEventListener('click',closeDialog);get('codeDialog').addEventListener('close',()=>{get('codeValue').value='';});lock.addEventListener('click',clear);
  const refresh=()=>{if(unlocked&&!doc.hidden)read();};
- const tracker=startSiteAnalytics(client,win,{countViews:false,onResult(ok){if(!alive)return;get('trackingMessage').textContent=ok?'':'Online presence could not be updated. Counts may be incomplete; check your connection or browser privacy settings.';if(ok){if(unlocked)refresh();else pendingTrackedRefresh=true;}}});
+ const tracker=startSiteAnalytics(client,win,{countViews:false,onResult(ok){if(!alive)return;get('trackingMessage').textContent=ok?'':'Signed-in presence could not be updated. Counts may be incomplete; check your connection or browser privacy settings.';if(ok){if(unlocked)refresh();else pendingTrackedRefresh=true;}}});
  doc.addEventListener('visibilitychange',refresh);get('refreshStatus').addEventListener('click',refresh);
  const {data:subscription}=client.auth.onAuthStateChange(event=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT')win.setTimeout(()=>{if(event==='SIGNED_OUT'){owner=false;show.hidden=true;if(unlocked&&!code)clear();}checkOwner();},0);});
  client.auth.getSession().then(checkOwner).catch(()=>{message.textContent='Could not check your account. You can still try an access code.';});

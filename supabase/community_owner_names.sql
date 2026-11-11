@@ -56,13 +56,15 @@ drop trigger if exists live_nickname_guard on public.live_players;
 create trigger live_nickname_guard before insert or update of nickname on public.live_players
 for each row execute function public.live_nickname_guard();
 
--- The Owner badge is derived on the server from a confirmed account address.
--- The address itself is never returned to chat clients.
+-- The Owner badge uses trusted Supabase Auth app_metadata, not an email or
+-- user-editable user_metadata value. Only a project admin can set this marker.
 create or replace function public.chat_is_owner(p_user uuid) returns boolean
 language sql stable security definer set search_path = '' as $$
-  select exists(select 1 from auth.users where id=p_user and email_confirmed_at is not null and lower(email)='parmars@ucs.org.uk');
+  select exists(select 1 from auth.users where id=p_user and email_confirmed_at is not null
+    and raw_app_meta_data->>'site_owner'='true');
 $$;
 revoke all on function public.chat_is_owner(uuid) from public, anon, authenticated;
+grant execute on function public.chat_is_owner(uuid) to service_role;
 
 create or replace function public.community_chat_list() returns jsonb language plpgsql security definer set search_path = '' as $$
 declare result jsonb;

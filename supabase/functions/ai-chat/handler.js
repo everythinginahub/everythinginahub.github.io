@@ -1,5 +1,5 @@
 // Dependency injection keeps authentication, quota enforcement and provider calls testable.
-const headers = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store'};
+const headers = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
 const json=(status,body)=>new Response(JSON.stringify(body),{status,headers});
 async function readLimited(request){
  const reader=request.body?.getReader(); if(!reader)throw Error('empty');
