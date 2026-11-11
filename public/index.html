@@ -3,14 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#191a35"><meta name="description" content="A personal hub for lists, tasks, habits, notes, books, games and useful tools.">
+  <meta name="referrer" content="strict-origin-when-cross-origin"><meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self' https://cdn.jsdelivr.net; form-action 'self' https://www.youtube.com">
   <title>Everything Hub — Apps for everyday life</title>
-  <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "zb3y8jd6m6");
-  </script>
   <link rel="icon" type="image/svg+xml" href="logo.svg?v=20261114-12"><link rel="stylesheet" href="style.css?v=20261114-16"><link rel="stylesheet" href="site-design.css?v=20261106-11"><link rel="stylesheet" href="site-polish.css?v=20261106-3">
 </head>
 <body>
@@ -29,7 +23,7 @@
         <p class="entry-kicker">YOUR ACCOUNT</p><h2 id="entryTitle">Make yourself at home.</h2>
         <p>Sign in to pick up where you left off, or create an account to get started.</p>
         <div class="entry-actions"><button class="btn dark" data-open-auth="login" disabled>Sign in <span aria-hidden="true">→</span></button><button class="entry-register" data-open-auth="register" disabled>Create an account</button></div>
-        <p class="entry-note">Your lists, habits, notes and timetable are saved with your account. Usage is measured using a browser identifier and recent activity; Microsoft Clarity also collects usage data.</p>
+        <p class="entry-note">Your lists, habits, notes and timetable are saved with your account. Signed-in visits are counted using a browser identifier and recent activity.</p>
       </section>
     </div>
   </main>
@@ -42,5 +36,5 @@
 <dialog id="appSwitcher" aria-labelledby="appSwitcherTitle"><div class="switcher-head"><div><p>EVERYTHING HUB</p><h2 id="appSwitcherTitle">Switch apps</h2></div><button type="button" id="closeAppSwitcher" aria-label="Close app switcher">×</button></div><label class="switcher-search" for="switcherSearch">Search apps<input type="search" id="switcherSearch" placeholder="Search by name or purpose…" autocomplete="off"></label><p class="switcher-hint">Quick jump: Ctrl/⌘ + K. Pin favourites for fast access on this device.</p><div id="switcherResults"></div><p id="switcherStatus" class="sr-only" role="status" aria-live="polite"></p></dialog>
 <dialog id="modal"><div id="modalContent"></div></dialog>
 <div id="toast" role="status" aria-live="polite"></div><div id="gameAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-<script type="module" src="app.js?v=20261106-17"></script>
+<script type="module" src="app.js?v=20261106-20"></script>
 </body></html>

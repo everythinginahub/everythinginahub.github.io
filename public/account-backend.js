@@ -21,7 +21,13 @@ export function createAccountBackend(client) {
   return {
     async session() { return check(await client.auth.getSession()).session?.user || null; },
     async signIn(email, password) { return check(await client.auth.signInWithPassword({ email, password })).user; },
-    async usernameSignIn(username, password) { const email=username.includes('@')?username:(await usernameRequest({action:'resolve',username})).email; return check(await client.auth.signInWithPassword({email,password})).user; },
+    async usernameSignIn(username, password) {
+      if (username.includes('@')) return check(await client.auth.signInWithPassword({email:username,password})).user;
+      const result=await usernameRequest({action:'login',username,password});
+      const session=result?.session;
+      if(!session?.access_token||!session?.refresh_token)throw new Error('Could not sign in. Check your username and password.');
+      return check(await client.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token})).user;
+    },
     async usernameSignUp(username,password) { return usernameRequest({action:'signup',username,password}); },
     async recoverUsername(username,code,password) { try{return await usernameRequest({action:'recover',username,code,password});}catch(err){throw new Error((err.message||'Recovery failed.')+' If the request failed after starting, the code may have been used; try signing in or use a different code.');} },
     async createRecoveryCodes() { return usernameRequest({action:'codes'}); },

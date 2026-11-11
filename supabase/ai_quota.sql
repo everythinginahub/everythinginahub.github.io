@@ -11,16 +11,16 @@ revoke all on public.ai_daily_usage from public, anon, authenticated;
 
 create or replace function public.ai_reserve_request(p_user_id uuid)
 returns integer language plpgsql security definer
-set search_path = pg_catalog, public
+set search_path = ''
 as $$
 declare current_used integer;
 begin
   if p_user_id is null then raise exception 'Missing user'; end if;
-  insert into public.ai_daily_usage (user_id, usage_day, used)
-  values (p_user_id, (now() at time zone 'UTC')::date, 1)
+  insert into public.ai_daily_usage as usage_row (user_id, usage_day, used)
+  values (p_user_id, (pg_catalog.now() at time zone 'UTC')::date, 1)
   on conflict (user_id, usage_day) do update
-    set used = ai_daily_usage.used + 1
-    where ai_daily_usage.used < 10
+    set used = usage_row.used + 1
+    where usage_row.used < 10
   returning used into current_used;
   return current_used; -- null means the allowance has already been used
 end;

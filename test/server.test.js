@@ -20,12 +20,14 @@ before(async () => {
 after(async()=>{await stopServer(); if(dir)await rm(dir,{recursive:true,force:true});});
 const post=(path,data,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(data)});
 test('static app and full account flow',async()=>{
-  assert.equal((await fetch(base+'/')).status,200);
+  const home=await fetch(base+'/');assert.equal(home.status,200);
+  assert.equal(home.headers.get('x-content-type-options'),'nosniff');assert.equal(home.headers.get('x-frame-options'),'DENY');assert.equal(home.headers.get('referrer-policy'),'strict-origin-when-cross-origin');assert.match(home.headers.get('content-security-policy'),/object-src 'none'/);assert.equal(home.headers.get('strict-transport-security'),null);
+  const secure=await fetch(base+'/api/health',{headers:{'x-forwarded-proto':'https'}});assert.match(secure.headers.get('strict-transport-security'),/max-age=31536000/);assert.equal(secure.headers.get('x-content-type-options'),'nosniff');assert.deepEqual(await secure.json(),{ok:true});
   assert.equal((await fetch(base+'/hero-art.jpg')).status,404);
   assert.equal((await fetch(base+'/logo.svg')).headers.get('content-type'),'image/svg+xml');
   assert.equal((await fetch(base+'/api/session')).status,200);
   assert.deepEqual(await (await fetch(base+'/api/health')).json(), {ok:true});
-  assert.equal((await fetch(base+'/')).headers.get('cache-control'),'no-cache');
+  assert.equal(home.headers.get('cache-control'),'no-cache');
   assert.equal((await post('/api/register',{name:'Alex',email:'alex@example.com',password:'short'})).status,400);
   let r=await post('/api/register',{name:'Alex',email:'alex@example.com',password:'a-long-password'});assert.equal(r.status,200); const cookie=r.headers.get('set-cookie').split(';')[0];assert.equal((await r.json()).user.name,'Alex');
   r=await fetch(base+'/api/progress',{method:'PUT',headers:{'Content-Type':'application/json',cookie},body:JSON.stringify({completed:{biology:true}})});assert.equal(r.status,200);

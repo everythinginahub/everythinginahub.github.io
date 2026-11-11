@@ -1,6 +1,6 @@
 import {miniApps, miniAppView, mountMiniApp} from './mini-apps.js?v=20261106-7';
 import { youtubeWorkspace, mountYouTubeWorkspace } from './youtube-player.js?v=20261106-1';
-import { startSiteAnalytics } from './site-analytics.js?v=20261106-3';
+import { startSiteAnalytics } from './site-analytics.js?v=20261106-5';
 import { aiChatWorkspace, mountAiChat } from './ai-chat.js?v=20261114-22';
 import { isHabitDue } from './habit-utils.js?v=20261114-15';
 import { restrictedNickname } from './nickname-policy.js?v=20261114-14';
@@ -12,7 +12,7 @@ import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from './school-tools.js?v=20261114-18';
 import { localDate, currentStreak, sortedTasks, taskDateLabel, recentStudyDays } from './study-utils.js?v=20261107-5';
 import { supabaseConfig } from './config.js?v=20261106-4';
-import { createAccountBackend, validateConfig } from './account-backend.js?v=20261106-7';
+import { createAccountBackend, validateConfig } from './account-backend.js?v=20261106-8';
 import { createClient } from './supabase-client.js?v=20261106-4';
 import { extraDecks, searchDecks } from './decks.js?v=20261107-1';
 import { subjects, starterDecks } from './starter-decks.js?v=20261107-17';
@@ -70,7 +70,8 @@ async function enterAccount(accountUser) {
   // Load first. Never overwrite a cloud row when the network or schema is unavailable.
   const id = accountUser.id;
   const remote = await backend.load(id);
-  user = { id, name: String(accountUser.email?.toLowerCase()==='parmars@ucs.org.uk' && accountUser.email_confirmed_at ? 'Shay' : (accountUser.user_metadata?.name || accountUser.email?.split('@')[0] || 'Learner')), email: accountUser.email || '' };
+  const displayName = accountUser.app_metadata?.site_owner === true ? 'Shay' : accountUser.user_metadata?.name || accountUser.email?.split('@')[0] || 'Learner';
+  user = { id, name: String(displayName), email: accountUser.email || '' };
   cloudProgress = remote;
   const hasPending = localStorage.getItem(pendingKey(id)) === '1';
   syncReady = !hasPending;

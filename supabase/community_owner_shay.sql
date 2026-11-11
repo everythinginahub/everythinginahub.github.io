@@ -80,10 +80,10 @@ end $$;
 -- other account or rewriting existing message snapshots.
 do $$
 begin
-  if (select count(*) from auth.users where lower(email)='parmars@ucs.org.uk' and email_confirmed_at is not null) <> 1 then
+  if (select count(*) from auth.users where public.chat_is_owner(id)) <> 1 then
     raise exception 'Expected exactly one confirmed owner account; no nickname was changed.';
   end if;
   insert into public.community_nicknames(user_id,nickname)
-    select id,'Shay' from auth.users where lower(email)='parmars@ucs.org.uk' and email_confirmed_at is not null
+    select id,'Shay' from auth.users where public.chat_is_owner(id)
     on conflict (user_id) do update set nickname=excluded.nickname;
 end $$;
