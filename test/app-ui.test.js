@@ -378,8 +378,8 @@ test('the Games app works without revision subjects and keeps old study routes',
 
 
 test('launcher searches all apps and opens focused views without a sidebar',async()=>{
- const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- const links=['ai','planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','youtube','world-clock','dice-roller','colour-palette','date-calculator','loan-calculator','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);assert.ok(q('.home-daily-challenge a[href="#daily-challenge"]'));
+ const links=['ai','planner','lists','notes','habits','bookmarks','timetable','arcade','tools','ebooks','revision','flashcards','subjects','videos','youtube','world-clock','dice-roller','colour-palette','date-calculator','loan-calculator','daily-challenge','qr-maker','resources','chat','shop'];for(const link of links)assert.ok(q(`.home-directory a[href="#${link}"]`),link);assert.equal(q('.sidebar'),null);assert.equal(q('.os-secondary'),null);
  assert.equal(w.document.querySelectorAll('.home-directory [data-directory-group]').length,4);
  const search=q('#directorySearch');search.value='notes';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(w.document.querySelectorAll('.home-directory [data-directory-group]:not([hidden])').length,1);assert.equal(w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])').length,1);
  search.value='study games';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#arcade"]').hidden);search.value='flashcards';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.ok(!q('.home-directory a[href="#flashcards"]').hidden);assert.ok(q('.home-directory a[href="#notes"]').hidden);assert.match(q('#directoryStatus').textContent,/results/);search.value='no-such-app';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('#directoryStatus').textContent,'0 results');search.value='';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('.home-directory [data-directory-item]:not([hidden])')].length,links.length);
@@ -536,7 +536,7 @@ test('YouTube player is accessible without subjects and stops when leaving',asyn
  }finally{dom.window.close();}
 });
 
-test('five new apps are available without subjects and shared app links can be copied',async()=>{
+test('standalone apps are available without subjects and shared app links can be copied',async()=>{
  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);try{
   let copied='';Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async text=>{copied=text;}}});await run();const q=s=>w.document.querySelector(s);
   for(const [id,app] of Object.entries(miniApps)){assert.ok(q(`.home-directory a[href="#${id}"]`));go(w,`#${id}`);assert.equal(q('#crumb').textContent,app.name);assert.match(w.document.title,new RegExp(app.name));assert.ok(q('.mini-panel'));assert.equal(q('#subjectsForm'),null);go(w,'#home');}

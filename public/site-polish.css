@@ -1086,3 +1086,497 @@ dialog::backdrop {
     transition-duration: .01ms !important;
   }
 }
+
+/* A visible daily hook helps learners find a small reason to return. */
+.home-daily-challenge {
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  margin: 17px 0 0;
+  padding: 20px 23px;
+  overflow: hidden;
+  background: linear-gradient(115deg, #fff, #f0f0ff 62%, #eaf9f6);
+  border: 1px solid #e0e2f3;
+  border-radius: 18px;
+}
+
+.home-daily-star {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: #6156cb;
+  background: #e8e6ff;
+  border-radius: 14px;
+  font-size: 21px;
+}
+
+.home-daily-star::before {
+  content: "✦";
+}
+
+.home-daily-challenge .daily-app-label,
+.daily-app-label {
+  margin: 0 0 5px;
+  color: #554db5;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .11em;
+}
+
+.home-daily-challenge h2 {
+  margin: 0;
+  color: #222549;
+  font-size: clamp(16px, 2.2vw, 20px);
+  font-weight: 800;
+  letter-spacing: -.04em;
+}
+
+.home-daily-challenge > div > p:last-child {
+  margin: 5px 0 0;
+  color: #626b86;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.home-daily-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 43px;
+  padding: 0 15px;
+  color: #fff;
+  background: linear-gradient(120deg, #5548d5, #28377c);
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.home-daily-link:focus-visible {
+  outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .home-daily-link:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Daily Brain Break: playful, legible and entirely user-paced. */
+.daily-challenge-app {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.daily-challenge-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.daily-challenge-head > div:first-child > p:last-child {
+  margin: 0;
+  color: #68718a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.daily-streak-card {
+  flex: none;
+  min-width: 112px;
+  padding: 12px 15px;
+  background: #f0efff;
+  border: 1px solid #e1defb;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.daily-streak-card span,
+.daily-streak-card strong {
+  display: block;
+}
+
+.daily-streak-card span {
+  color: #5f5b9c;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.daily-streak-card strong {
+  margin-top: 4px;
+  color: #38367b;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-date {
+  margin: 16px 0 0;
+  color: #707892;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.daily-welcome,
+.daily-game,
+.daily-done {
+  margin-top: 14px;
+  padding: clamp(20px, 4vw, 32px);
+  background: linear-gradient(145deg, #fff, #f7f7ff 65%, #f1fbf8);
+  border: 1px solid #e2e5f3;
+  border-radius: 18px;
+}
+
+.daily-round-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 5px 10px;
+  color: #514bb1;
+  background: #eeedff;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.daily-welcome h2,
+.daily-done h2 {
+  margin: 18px 0 8px;
+  color: #202345;
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 800;
+  letter-spacing: -.055em;
+  line-height: 1.08;
+}
+
+.daily-welcome > p:not(.daily-saved-summary),
+.daily-instruction {
+  max-width: 520px;
+  color: #626b86;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.daily-saved-summary {
+  margin: 18px 0 13px;
+  color: #514c9d;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+}
+
+.daily-welcome .btn,
+.daily-game .btn,
+.daily-done > .btn {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+.daily-meter {
+  height: 8px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  background: #e8e9f3;
+  border-radius: 999px;
+}
+
+.daily-meter > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #6254dd, #27bfb9);
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 180ms ease;
+}
+
+.daily-round-label {
+  margin: 0 0 8px;
+  color: #5c55bf;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.daily-game h2 {
+  margin: 0;
+  color: #212447;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -.045em;
+}
+
+.daily-prompt {
+  display: inline-block;
+  margin: 18px 0 7px;
+  padding: 12px 16px;
+  color: #272953;
+  background: #f0efff;
+  border: 1px solid #e5e2fc;
+  border-radius: 12px;
+  font-size: clamp(18px, 3vw, 25px);
+  font-weight: 800;
+  letter-spacing: .02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-instruction {
+  margin: 5px 0 17px;
+}
+
+#dailyAnswerForm {
+  max-width: 470px;
+}
+
+#dailyAnswerForm label {
+  display: block;
+  margin-bottom: 7px;
+  color: #373d67;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+#dailyAnswerForm input {
+  width: 100%;
+  min-height: 48px;
+  max-width: none;
+  padding: 11px 13px;
+  color: #202345;
+  background: #fff;
+  border: 1px solid #d8dced;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 16px;
+}
+
+#dailyAnswerForm input:disabled {
+  color: #525a79;
+  background: #f7f7fb;
+}
+
+.daily-feedback {
+  min-height: 1.5em;
+  margin: 8px 0 12px;
+  color: #515a75;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.daily-feedback:empty {
+  visibility: hidden;
+}
+
+.daily-feedback.is-correct {
+  color: #18785e;
+  font-weight: 750;
+}
+
+.daily-feedback.is-incorrect {
+  color: #944b52;
+}
+
+.daily-done > .daily-app-label {
+  margin-top: 0;
+}
+
+.daily-final-score {
+  display: block;
+  margin: 12px 0 3px;
+  color: #5145c3;
+  font-size: clamp(40px, 7vw, 54px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 850;
+  letter-spacing: -.06em;
+}
+
+.daily-final-streak {
+  color: #4b488d;
+  font-weight: 750;
+}
+
+.daily-save-note {
+  color: #65708a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.daily-share-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e3e6f1;
+  border-radius: 12px;
+}
+
+.daily-share-card code {
+  flex: 1;
+  min-width: 0;
+  color: #303457;
+  font: 700 11px/1.5 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.daily-share-card .btn {
+  flex: none;
+}
+
+.daily-share-card > p {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* QR Code Maker: private, high-contrast output with a direct PNG download. */
+#miniQrForm > label {
+  display: block;
+}
+
+#miniQrText {
+  display: block;
+  width: 100%;
+  max-width: none;
+  min-height: 92px;
+  margin-top: 7px;
+  padding: 12px;
+  color: #202345;
+  background: #fff;
+  border: 1px solid #d8dced;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.qr-controls {
+  align-items: end;
+  margin-top: 17px;
+}
+
+.qr-controls input[type="color"] {
+  display: block;
+  width: 100%;
+  height: 44px;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid #d8dced;
+  border-radius: 10px;
+}
+
+.qr-controls select {
+  max-width: none;
+  border-radius: 10px;
+}
+
+#miniQrStatus {
+  margin: 16px 0;
+  font-size: 12px;
+}
+
+.qr-output {
+  display: grid;
+  grid-template-columns: minmax(150px, 240px) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  background: #f7f8ff;
+  border: 1px solid #e2e5f3;
+  border-radius: 15px;
+}
+
+.qr-output[hidden] {
+  display: none !important;
+}
+
+.qr-output img {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e1e4ef;
+  border-radius: 10px;
+  image-rendering: pixelated;
+}
+
+.qr-output > div > p {
+  margin: 0 0 7px;
+  color: #626b86;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.qr-output code {
+  display: block;
+  margin-bottom: 14px;
+  color: #293052;
+  font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.qr-output .btn {
+  min-height: 40px;
+  text-decoration: none;
+}
+
+@media (max-width: 700px) {
+  .home-daily-challenge {
+    grid-template-columns: 42px minmax(0, 1fr);
+    padding: 17px;
+  }
+
+  .home-daily-link {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 550px) {
+  .daily-challenge-head {
+    align-items: flex-start;
+  }
+
+  .daily-streak-card {
+    min-width: 95px;
+    padding: 10px;
+  }
+
+  .daily-share-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .daily-share-card .btn {
+    align-self: flex-start;
+  }
+
+  .qr-output {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .qr-output img {
+    width: min(100%, 260px);
+    margin: 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daily-meter > span {
+    transition: none;
+  }
+}

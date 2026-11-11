@@ -12,10 +12,12 @@
     "build:client": "esbuild scripts/supabase-entry.js --bundle --format=esm --minify --outfile=public/supabase-client.js --legal-comments=inline",
     "build:ocr": "node scripts/copy-ocr-assets.js",
     "build:pdf": "node scripts/copy-pdf-assets.js",
-    "build:dice": "node scripts/build-dice-renderer.mjs"
+    "build:dice": "node scripts/build-dice-renderer.mjs",
+    "build:qr": "node scripts/build-qr-maker.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
+    "qrcode": "^1.5.4",
     "three": "^0.187.0"
   },
   "devDependencies": {
