@@ -256,7 +256,7 @@ test('game completion awards coins once and the streak reflects study activity',
 test('decorative starbursts are absent while existing rewards and site branding remain',async()=>{
   const progress={...defaultProgress,rewards:{coins:0,owned:['spark','sun','bloom'],equipped:'spark',daily:{date:'',claimed:[]}}};
   const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261114-11');assert.equal(q('.sidebar'),null);
+  assert.equal(q('#landing .brand-mark').getAttribute('src'),'logo.svg?v=20261114-12');assert.equal(q('.sidebar'),null);
   assert.equal(q('.top-avatar').textContent,'◇');
   for(const hash of ['#home','#games','#games/bio-transport','#flashcards/bio-transport/study','#shop','#videos/bio-osmosis']){
     go(w,hash);await wait();assert.doesNotMatch(q('.app-shell').textContent,/[✳✦☀✿]/,hash);
@@ -458,7 +458,9 @@ test('app switcher searches, pins and navigates without changing synced progress
  q('[data-switcher-pin="notes"]').click();assert.equal(q('[data-switcher-pin="notes"]').getAttribute('aria-pressed'),'true');assert.equal(log.saved,null);
  q('[data-switcher-link]').click();go(w,'#notes');assert.equal(q('#appSwitcher').open,false);assert.ok(q('#notesApp'));
  q('#openAppSwitcher').click();assert.equal(q('#switcherResults [data-switcher-link]').getAttribute('href'),'#notes');assert.equal(q('[data-switcher-link]').getAttribute('aria-current'),'page');q('#closeAppSwitcher').click();
- w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'a',altKey:true,bubbles:true}));assert.equal(q('#appSwitcher').open,true);
+ w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'a',altKey:true,bubbles:true}));assert.equal(q('#appSwitcher').open,true);q('#closeAppSwitcher').click();
+ w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true}));assert.equal(q('#appSwitcher').open,true);q('#closeAppSwitcher').click();
+ q('#switcherSearch').dispatchEvent(new w.KeyboardEvent('keydown',{key:'k',ctrlKey:true,bubbles:true}));assert.equal(q('#appSwitcher').open,false);
  }finally{dom.window.close();}
 });
 
