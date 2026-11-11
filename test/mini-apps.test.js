@@ -14,7 +14,7 @@ test('dice and colours produce valid and bounded values',()=>{
  assert.deepEqual(rollDice(3,6,()=>0),[1,1,1]);assert.deepEqual(rollDice(2,20,()=>.9999),[20,20]);assert.throws(()=>rollDice(11,6));assert.throws(()=>rollDice(2,7));assert.equal(shades('#34556a')[2],'#34556A');assert.equal(shades('#000000').length,5);assert.throws(()=>shades('red'));
 });
 test('all standalone apps mount, function and clean up',()=>{
- assert.equal(Object.keys(miniApps).length,7);
+ assert.equal(Object.keys(miniApps).length,9);
  for(const id of Object.keys(miniApps)){
   const dom=new JSDOM(`<main>${miniAppView(id)}</main>`,{url:'https://example.test/'});try{
    const win=dom.window,root=win.document.querySelector('main'),q=s=>root.querySelector(s),ctl=mountMiniApp({root,id,win});
