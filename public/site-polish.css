@@ -1,0 +1,1088 @@
+/*
+ * Shared visual and motion layer for Everything Hub.
+ * Page structure stays in site-design.css; this file owns the visual tokens,
+ * common surfaces, responsive launcher treatment, and restrained interactions.
+ */
+:root {
+  --ink: #18203d;
+  --muted: #68718a;
+  --line: #e1e5f2;
+  --bg: #f4f6ff;
+  --paper: #fff;
+  --green: #16887d;
+  --dark: #25264e;
+  --accent: #f17368;
+  --hub-violet: #6255df;
+  --hub-cyan: #27c5cb;
+  --hub-focus: #8d7bff;
+  --hub-radius-card: 18px;
+  --hub-radius-control: 12px;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 86px;
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 5% 5%, #e9edff 0, transparent 32%),
+    radial-gradient(ellipse at 95% 18%, #e1f8f4 0, transparent 29%),
+    var(--bg);
+}
+
+.app-shell.os-home,
+.app-shell:not(.os-home) {
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse at 8% 2%, #e8edff 0, transparent 34%),
+    radial-gradient(ellipse at 94% 19%, #e3f7f5 0, transparent 30%),
+    #f5f7ff;
+}
+
+:where(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--hub-focus);
+  outline-offset: 3px;
+}
+
+/* Shared controls: concise focus/press feedback, without animating layout. */
+.btn {
+  border-radius: var(--hub-radius-control);
+  font-size: 12px;
+  font-weight: 750;
+  transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.btn.dark {
+  color: #fff;
+  background: linear-gradient(125deg, #5548d5, #27357a);
+  box-shadow: 0 7px 18px #4037a52c;
+}
+
+.btn.outline {
+  color: #333e7c;
+  background: #fff;
+  border-color: #d4d9eb;
+}
+
+.field input,
+.field select,
+.field textarea,
+#app input:not([type="checkbox"]):not([type="radio"]),
+#app select,
+#app textarea {
+  border-color: #d7dced;
+  border-radius: 11px;
+}
+
+.field :is(input, select, textarea):focus,
+#app :is(input, select, textarea):focus {
+  border-color: #8b7bf1;
+  outline: none;
+  box-shadow: 0 0 0 4px #7566e41b;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn.dark:hover {
+    background: linear-gradient(125deg, #493bc8, #202e70);
+  }
+
+  .btn.outline:hover {
+    background: #f4f3ff;
+    border-color: #b8b2f2;
+  }
+
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(.985);
+}
+
+/* A single, high-contrast masthead across the launcher and every app. */
+.app-shell.os-home .topbar,
+.app-shell:not(.os-home) .topbar {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  height: 70px;
+  padding: 0 clamp(18px, 4vw, 54px);
+  color: #f7f8ff;
+  background: linear-gradient(105deg, #191a35, #25214b 63%, #173e4c);
+  border: 0;
+  border-bottom: 1px solid #ffffff1e;
+  box-shadow: 0 8px 28px #16173018;
+}
+
+.top-brand,
+.breadcrumb strong,
+.breadcrumb .app-home-link,
+.os-home .breadcrumb .app-home-link,
+.os-home .breadcrumb .app-home-link span {
+  color: #f5f4ff;
+}
+
+.top-brand img {
+  border-radius: 9px;
+  box-shadow: 0 4px 14px #070a1d55;
+}
+
+.breadcrumb,
+.top-date {
+  color: #c2c8e1;
+}
+
+.breadcrumb .breadcrumb-divider {
+  color: #8790b6;
+}
+
+.app-shell .top-actions {
+  gap: 9px;
+}
+
+.app-switcher-trigger {
+  padding: 9px 13px;
+  color: #f5f5ff;
+  background: #ffffff10;
+  border: 1px solid #ffffff35;
+  border-radius: 11px;
+  font-size: 11px;
+  transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.help-button,
+.app-shell .top-avatar {
+  width: 34px;
+  height: 34px;
+  color: #fff;
+  background: #ffffff14;
+  border: 1px solid #ffffff36;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+.app-shell .top-avatar {
+  color: #202448;
+  background: linear-gradient(145deg, #a8f1dc, #9eb2ff);
+  border: 0;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-switcher-trigger:hover {
+    background: #ffffff20;
+    border-color: #ffffff60;
+    transform: translateY(-1px);
+  }
+}
+
+.app-shell:not(.os-home) #app,
+.os-home #app {
+  padding-top: clamp(26px, 4vw, 46px);
+}
+
+/* The launcher hero makes search and today's snapshot the first visual stops. */
+.launcher-heading {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 26px;
+  min-height: 220px;
+  padding: clamp(25px, 4vw, 42px);
+  margin-bottom: 18px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(circle at 83% 28%, #50d4d155, transparent 23%),
+    linear-gradient(118deg, #252251 0%, #5144a3 55%, #147d8b 100%);
+  border: 1px solid #ffffff20;
+  border-radius: 26px;
+  box-shadow: 0 22px 54px #3933812c;
+}
+
+.launcher-heading::before {
+  position: absolute;
+  z-index: -1;
+  top: -55%;
+  right: 7%;
+  width: 340px;
+  aspect-ratio: 1;
+  content: "";
+  border: 1px solid #ffffff24;
+  border-radius: 50%;
+  box-shadow: 0 0 0 24px #ffffff08, 0 0 0 52px #ffffff06, 0 0 58px #7ee9dc28;
+  pointer-events: none;
+}
+
+.launcher-heading::after {
+  position: absolute;
+  z-index: 0;
+  top: 17%;
+  right: 10%;
+  color: #e9ddffb5;
+  content: "✦";
+  font-size: 30px;
+  text-shadow: 0 0 24px #fff;
+  animation: hub-float 4.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.launcher-heading > div,
+.launcher-heading .launcher-search {
+  position: relative;
+  z-index: 1;
+}
+
+.launcher-heading h1,
+#app .launcher-heading h1 {
+  margin: 13px 0 11px;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 800;
+  letter-spacing: -.065em;
+  line-height: 1.02;
+}
+
+.launcher-heading > div > p:last-child {
+  color: #e4e4ff;
+  font-size: 14px;
+}
+
+.os-date {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 5px 11px;
+  color: #d9eaff;
+  background: #ffffff12;
+  border: 1px solid #ffffff2c;
+  border-radius: 50px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.launcher-search {
+  width: min(365px, 100%);
+  padding: 0 15px;
+  color: #5352a3;
+  background: #fff;
+  border: 1px solid #ffffffb8;
+  border-radius: 15px;
+  box-shadow: 0 14px 30px #1013313d;
+}
+
+.launcher-search input {
+  padding: 14px 0;
+  color: #25264e;
+  font-size: 13px;
+}
+
+.launcher-search:focus-within {
+  outline: 3px solid #b7f1ea;
+  outline-offset: 3px;
+}
+
+/* Four compact daily cards form a scannable bento row. */
+.os-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+  background: transparent;
+  border: 0;
+}
+
+.os-widget-grid .os-widget {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 136px;
+  padding: 20px;
+  overflow: hidden;
+  color: #202546;
+  background: linear-gradient(150deg, #fff, #fbfbff);
+  border: 1px solid #e4e7f3;
+  border-radius: 19px;
+  box-shadow: 0 10px 26px #25315b0d;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.os-widget-grid .os-widget::after {
+  position: absolute;
+  z-index: -1;
+  right: -54px;
+  bottom: -62px;
+  width: 120px;
+  aspect-ratio: 1;
+  content: "";
+  background: #8273ef12;
+  border-radius: 50%;
+}
+
+.os-widget-grid .os-widget span,
+.os-widget-grid .os-widget small {
+  color: #626b86;
+}
+
+.os-widget-grid .os-widget span {
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.os-widget-grid .os-widget strong {
+  position: relative;
+  z-index: 1;
+  margin: 11px 0 6px;
+  color: #1c2343;
+  font-size: 16px;
+  letter-spacing: -.025em;
+  line-height: 1.25;
+}
+
+.os-widget-grid .os-widget small {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.os-widget-grid .os-widget b {
+  position: absolute;
+  top: 17px;
+  right: 18px;
+  color: #7970d7;
+}
+
+.os-widget-grid .os-widget.os-clock {
+  color: #fff;
+  background: linear-gradient(135deg, #23224b, #5140a3 72%, #3e6d9b);
+  border: 0;
+  box-shadow: 0 14px 30px #35308124;
+}
+
+.os-widget-grid .os-widget.os-clock::after {
+  right: -55px;
+  bottom: -88px;
+  width: 170px;
+  background: transparent;
+  border: 1px solid #ffffff2a;
+  box-shadow: 0 0 0 18px #ffffff08, 0 0 36px #8fdfff24;
+}
+
+.os-widget-grid .os-widget.os-clock span,
+.os-widget-grid .os-widget.os-clock small {
+  color: #e0e5ff;
+}
+
+.os-widget-grid .os-widget.os-clock strong {
+  color: #fff;
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  letter-spacing: -.06em;
+}
+
+.os-widget-grid .os-widget.os-clock b {
+  color: #a9a3ff;
+}
+
+.os-section-heading {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  margin: 42px 0 17px;
+  padding: 0 0 12px;
+  color: #1d2144;
+  border: 0;
+}
+
+.os-section-heading::after {
+  height: 1px;
+  flex: 1;
+  content: "";
+  background: linear-gradient(90deg, #cfd2ee, transparent);
+}
+
+.os-section-heading h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.045em;
+}
+
+.os-section-heading p {
+  color: #626b86;
+  font-size: 11px;
+}
+
+/* Pins and recent apps stay visible without competing with the directory. */
+.home-quick-access {
+  margin-top: 18px;
+  padding: 22px 24px;
+  background: linear-gradient(140deg, #fff, #fbfbff);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 10px 26px #25315b0b;
+}
+
+.home-quick-access[hidden] {
+  display: none;
+}
+
+.quick-app-heading h2 {
+  color: #202447;
+  font-size: 19px;
+  letter-spacing: -.04em;
+}
+
+.quick-app-heading button {
+  color: #564cbe;
+  background: #f3f2ff;
+  border-color: #e0def9;
+  border-radius: 10px;
+}
+
+.quick-app-list {
+  gap: 8px;
+}
+
+.quick-app-link {
+  min-height: 46px;
+  color: #2c345c;
+  background: #fff;
+  border: 1px solid #e6e8f3;
+  border-radius: 12px;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.quick-app-link .switcher-icon {
+  color: #4d55bd;
+  background: linear-gradient(145deg, #eeeefe, #e7f7f4);
+  border-radius: 9px;
+}
+
+.quick-app-empty,
+.home-quick-access h3 {
+  color: #626b86;
+}
+
+/* Categorised app links have consistent touch targets and clear affordances. */
+.os-app-grid.home-directory {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.home-directory-group {
+  min-width: 0;
+  padding: 18px;
+  background: #ffffffdc;
+  border: 1px solid #e2e6f3;
+  border-radius: 21px;
+  box-shadow: 0 10px 28px #29375d0c;
+}
+
+.home-directory-group[hidden] {
+  display: none !important;
+}
+
+.home-group-heading {
+  padding-bottom: 12px;
+  margin-bottom: 11px;
+  color: #2a2d58;
+  border-bottom-color: #e8e9f3;
+}
+
+.home-group-heading h3 {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.home-group-heading span {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  color: #5b53c9;
+  background: #f0efff;
+  border-radius: 9px;
+  font-weight: 800;
+}
+
+.home-group-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.os-app-grid.home-directory .hub-tile,
+.os-app-grid.home-directory .hub-tile.dashboard-action {
+  position: relative;
+  display: grid;
+  grid-template-columns: 39px minmax(0, 1fr) 14px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  min-width: 0;
+  min-height: 70px;
+  padding: 10px;
+  border: 1px solid #eaebf4;
+  border-radius: 13px;
+  color: #222849;
+  background: linear-gradient(150deg, #fff, #fbfbff);
+  box-shadow: 0 4px 12px #24254e07;
+  column-gap: 10px;
+  row-gap: 3px;
+  text-align: left;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.os-app-grid.home-directory .hub-tile[hidden] {
+  display: none !important;
+}
+
+.os-app-grid.home-directory .hub-tile-icon,
+.os-app-grid.home-directory .hub-tile:nth-child(n) .hub-tile-icon {
+  grid-row: 1 / 3;
+  grid-column: 1;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  color: #5953c8;
+  background: linear-gradient(145deg, #eceaff, #e6f8f4);
+}
+
+.os-app-grid.home-directory .hub-tile:nth-child(4n + 2) .hub-tile-icon {
+  color: #c55d55;
+  background: linear-gradient(145deg, #fff0e8, #ffe2d7);
+}
+
+.os-app-grid.home-directory .hub-tile:nth-child(4n + 3) .hub-tile-icon {
+  color: #317d9f;
+  background: linear-gradient(145deg, #e3f7fb, #d9eaff);
+}
+
+.os-app-grid.home-directory .hub-tile:nth-child(4n) .hub-tile-icon {
+  color: #8253ae;
+  background: linear-gradient(145deg, #f4e9ff, #ebe2ff);
+}
+
+.os-app-grid.home-directory .hub-tile strong {
+  grid-row: 1;
+  grid-column: 2;
+  color: #242b50;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.os-app-grid.home-directory .hub-tile p {
+  display: block;
+  grid-row: 2;
+  grid-column: 2;
+  margin: 0;
+  color: #616b86;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.os-app-grid.home-directory .hub-tile-arrow {
+  position: static;
+  grid-row: 1 / 3;
+  grid-column: 3;
+  align-self: center;
+  color: #7974bb;
+  font-size: 14px;
+}
+
+/* Common surfaces keep a clear hierarchy across the site's many small apps. */
+#app :is(
+  .content-card, .school-panel, .school-day, .everyday-card, .bookmark-row,
+  .topic-row, .task, .reward-card, .resource-card, .deck-card, .subject-card,
+  .video-card, .game-mode-card, .game-set-card, .practice-setup,
+  .practice-question, .practice-review, .practice-summary, .live-panel,
+  .book-card, .reader-settings, .books-aside > *, .featured-card, .embed-card,
+  .arcade-game-card, .game-type, .ai-panel, .bookmarks-add, .timetable-add,
+  .mini-panel, .overview-panel, .home-extra, .streak-panel, .subject-settings,
+  .creator, .note-card, .note-form
+) {
+  border-color: var(--line);
+  border-radius: var(--hub-radius-card);
+  box-shadow: 0 8px 25px #2733580b;
+}
+
+.app-shell:not(.os-home) #app h1 {
+  color: #1d2244;
+  font-family: inherit;
+  font-weight: 780;
+  letter-spacing: -.05em;
+}
+
+.app-shell:not(.os-home) #app :is(
+  .hub-page-head h1, .view-intro h1, .everyday-head h1,
+  .books-heading h2, .timetable-header h1, .bookmarks-header h1
+) {
+  font-size: clamp(31px, 4vw, 42px);
+  line-height: 1.08;
+}
+
+.app-shell:not(.os-home) #app :is(
+  .text-link, .back-link, .arcade-back, .everyday-actions button, .everyday-clear
+) {
+  color: #5148bc;
+}
+
+.app-shell:not(.os-home) #app :is(
+  .subject-card, .deck-card, .video-card, .game-set-card, .resource-card,
+  .featured-card, .embed-card, .book-card, .game-type, .arcade-game-card,
+  .bookmark-tile, .hub-tile, .quick-app-link
+) {
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.app-shell:not(.os-home) #app :is(
+  .task, .school-day, .everyday-card, .bookmark-row, .resource-card,
+  .deck-card, .subject-card, .video-card, .game-mode-card, .game-set-card,
+  .practice-setup, .practice-question, .practice-review, .practice-summary,
+  .live-panel, .book-card, .reader-settings, .featured-card, .embed-card,
+  .arcade-game-card, .game-type, .ai-panel, .bookmarks-add, .timetable-add,
+  .mini-panel, .content-card
+) {
+  background-color: #fff;
+}
+
+.app-shell:not(.os-home) #app :is(
+  .eyebrow, .game-eyebrow, .everyday-kicker, .lists-eyebrow, .notes-kicker,
+  .books-kicker, .ai-kicker, .bookmarks-kicker, .timetable-kicker
+) {
+  color: #5149ad;
+}
+
+.app-shell:not(.os-home) #app .bar span,
+.app-shell:not(.os-home) #app .reader-progress span {
+  background: linear-gradient(90deg, #6254dd, #2ec5bb);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .os-widget-grid .os-widget:not(.os-clock):hover,
+  .os-app-grid.home-directory .hub-tile:hover,
+  .quick-app-link:hover,
+  .app-shell:not(.os-home) #app :is(
+    .subject-card, .deck-card, .video-card, .game-set-card, .resource-card,
+    .featured-card, .embed-card, .book-card, .game-type, .arcade-game-card,
+    .bookmark-tile
+  ):hover {
+    transform: translateY(-2px);
+    border-color: #c5c0f1;
+    background-color: #fff;
+  }
+}
+
+/* Dialog surfaces share the same focus-friendly, high-contrast treatment. */
+dialog {
+  color: #202546;
+  background: #fff;
+  border: 1px solid #e3e5f1;
+  border-radius: 20px;
+  box-shadow: 0 26px 90px #14153142;
+}
+
+dialog::backdrop {
+  background: #10132d88;
+}
+
+#appSwitcher {
+  color: #202546;
+}
+
+.switcher-head p {
+  color: #5d55c9;
+}
+
+.switcher-head h2 {
+  font: 800 28px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: -.04em;
+}
+
+.switcher-head button {
+  color: #4f4aaa;
+  background: #f4f3ff;
+  border-radius: 10px;
+}
+
+.switcher-row {
+  border-color: #ececf5;
+}
+
+.switcher-row > a {
+  color: #24284c;
+  border-radius: 12px;
+}
+
+.switcher-icon {
+  color: #514fc0;
+  background: linear-gradient(145deg, #eceaff, #e3f7f5);
+  border-radius: 10px;
+}
+
+.switcher-row > button {
+  color: #6156cf;
+  border-radius: 10px;
+}
+
+.switcher-search input,
+.bookmark-search input,
+.resource-search input,
+.task-search input,
+.book-sort select {
+  border-color: #dadeed;
+  border-radius: 11px;
+}
+
+/* Keep sign-in visually related without competing with the sign-in card. */
+#landing.entry-screen {
+  color: #fff;
+  background:
+    radial-gradient(ellipse at 18% 18%, #30c9cd35, transparent 33%),
+    radial-gradient(ellipse at 88% 76%, #a47cff38, transparent 35%),
+    linear-gradient(132deg, #17182f 0%, #2a275c 54%, #145867 100%);
+}
+
+.entry-intro .brand {
+  color: #fff;
+}
+
+.entry-intro .brand > span > span {
+  color: #8ce9d8;
+}
+
+.entry-intro .brand-mark {
+  border-radius: 13px;
+  box-shadow: 0 8px 25px #070b2a59;
+}
+
+.entry-intro .entry-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 44px 0 16px;
+  padding: 6px 12px;
+  color: #bcd6ff;
+  background: #ffffff0d;
+  border: 1px solid #ffffff30;
+  border-radius: 50px;
+  font-weight: 800;
+}
+
+.entry-intro h1 {
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: clamp(44px, 6vw, 72px);
+  font-weight: 850;
+  letter-spacing: -.075em;
+  line-height: .98;
+  text-shadow: 0 10px 34px #1113345c;
+}
+
+.entry-intro > p:not(.entry-kicker) {
+  color: #d9def5;
+  font-size: 16px;
+}
+
+.entry-index,
+.entry-index > div {
+  border-color: #ffffff28;
+}
+
+.entry-index span {
+  color: #83ead6;
+  font-weight: 800;
+}
+
+.entry-index strong {
+  color: #f7f7ff;
+}
+
+.entry-index small {
+  color: #c1c8e4;
+}
+
+.entry-card {
+  background: linear-gradient(155deg, #fff, #f7f7ff);
+  border: 1px solid #ffffffa6;
+  border-radius: 24px;
+  box-shadow: 0 30px 90px #0c102b62;
+}
+
+.entry-card .entry-kicker {
+  color: #5e55cb;
+}
+
+.entry-card h2 {
+  color: #202345;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 800;
+  letter-spacing: -.05em;
+}
+
+.entry-card > p:not(.entry-kicker):not(.entry-note) {
+  color: #626b87;
+}
+
+.entry-actions .btn.dark {
+  background: linear-gradient(125deg, #5f51dc, #28367f);
+  box-shadow: 0 9px 22px #4337b533;
+}
+
+.entry-register {
+  color: #5049b2;
+}
+
+.entry-card .entry-note {
+  color: #626b86;
+  border-color: #e5e7f2;
+}
+
+/* Route and home entrances use transform/opacity only; no script or layout work. */
+#app > :is(.everything-home, .mini-app, .ai-page, .school-tools, .bookmarks-workspace, .timetable-workspace) {
+  animation: hub-page-enter 240ms cubic-bezier(.2, .72, .25, 1) both;
+}
+
+.home-directory-group,
+.os-widget-grid .os-widget {
+  animation: hub-card-enter 340ms cubic-bezier(.2, .72, .25, 1) both;
+}
+
+.home-directory-group:nth-child(2),
+.os-widget-grid .os-widget:nth-child(2) {
+  animation-delay: 35ms;
+}
+
+.home-directory-group:nth-child(3),
+.os-widget-grid .os-widget:nth-child(3) {
+  animation-delay: 70ms;
+}
+
+.home-directory-group:nth-child(4),
+.os-widget-grid .os-widget:nth-child(4) {
+  animation-delay: 105ms;
+}
+
+@keyframes hub-page-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hub-card-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hub-float {
+  from { transform: translateY(2px) rotate(-6deg); }
+  to { transform: translateY(-5px) rotate(6deg); }
+}
+
+@media (max-width: 900px) {
+  .os-widget-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .os-app-grid.home-directory {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .home-directory-group {
+    padding: 16px;
+  }
+
+  .home-group-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell.os-home .topbar,
+  .app-shell:not(.os-home) .topbar {
+    height: 62px;
+    padding: 0 17px;
+  }
+
+  .app-shell .top-actions {
+    gap: 7px;
+  }
+
+  .app-switcher-trigger {
+    padding: 8px 10px;
+  }
+
+  .top-date {
+    display: none;
+  }
+
+  .launcher-heading {
+    display: grid;
+    align-items: start;
+    gap: 21px;
+    min-height: 0;
+    padding: 25px;
+    border-radius: 21px;
+  }
+
+  .launcher-heading::before {
+    top: -72%;
+    right: -15%;
+  }
+
+  .launcher-heading::after {
+    top: 13%;
+    right: 10%;
+  }
+
+  .launcher-heading h1,
+  #app .launcher-heading h1 {
+    font-size: clamp(36px, 9vw, 50px);
+  }
+
+  .launcher-search {
+    width: 100%;
+  }
+
+  .os-widget-grid .os-widget {
+    min-height: 124px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .os-widget-grid .os-widget.os-clock strong {
+    font-size: 30px;
+  }
+
+  .os-section-heading {
+    margin-top: 33px;
+  }
+
+  .home-quick-access {
+    padding: 17px;
+    border-radius: 16px;
+  }
+
+  .home-directory-group {
+    border-radius: 17px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-brand {
+    gap: 7px;
+  }
+
+  .app-shell .top-actions {
+    gap: 5px;
+  }
+
+  .app-switcher-trigger {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .help-button,
+  .app-shell .top-avatar {
+    width: 31px;
+    height: 31px;
+  }
+
+  .launcher-heading {
+    padding: 22px;
+  }
+
+  .os-app-grid.home-directory .hub-tile,
+  .os-app-grid.home-directory .hub-tile.dashboard-action {
+    min-height: 66px;
+    padding: 8px;
+  }
+
+  .os-app-grid.home-directory .hub-tile-icon,
+  .os-app-grid.home-directory .hub-tile:nth-child(n) .hub-tile-icon {
+    width: 33px;
+    height: 33px;
+  }
+
+  .home-group-links {
+    gap: 7px;
+  }
+
+  .home-directory-group {
+    padding: 13px;
+  }
+
+  .quick-app-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-app-heading button {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-shell.os-home .topbar,
+  .app-shell:not(.os-home) .topbar {
+    padding: 0 10px;
+  }
+
+  .app-shell .topbar-start {
+    gap: 8px;
+  }
+
+  .top-brand {
+    font-size: 12px;
+  }
+
+  .app-shell .top-actions {
+    gap: 4px;
+  }
+
+  .app-shell #copyAppLink {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+    overflow: hidden;
+    font-size: 0;
+  }
+
+  .app-shell #copyAppLink::before {
+    content: "↗";
+    font-size: 14px;
+  }
+
+  .app-switcher-trigger {
+    padding: 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
