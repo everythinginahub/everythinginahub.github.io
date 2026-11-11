@@ -1,5 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
-  <rect width="48" height="48" rx="4" fill="#233B4B"/>
-  <path d="M12 13h24M12 24h18M12 35h24" stroke="#F8F6F0" stroke-width="3"/>
-  <circle cx="35" cy="24" r="3" fill="#D9A876"/>
+  <defs><linearGradient id="orbit" x1="5" y1="3" x2="43" y2="45" gradientUnits="userSpaceOnUse"><stop stop-color="#6456E8"/><stop offset="1" stop-color="#168C9C"/></linearGradient></defs>
+  <rect width="48" height="48" rx="14" fill="url(#orbit)"/>
+  <path d="M12 15h24M12 24h16M12 33h21" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="34" cy="24" r="3.4" fill="#65E3CC"/>
+  <path d="M36 9.5v6M33 12.5h6" stroke="#FFE08A" stroke-width="2" stroke-linecap="round"/>
 </svg>
