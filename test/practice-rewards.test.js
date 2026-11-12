@@ -25,11 +25,17 @@ test('badges require coins, do not double-charge and can be re-equipped',()=>{
   let result=chooseReward(wallet,'sun');wallet=result.wallet;assert.equal(result.status,'purchased');assert.equal(wallet.coins,0);assert.equal(wallet.equipped,'sun');assert.ok(wallet.owned.includes('sun'));
   result=chooseReward(wallet,'sun');assert.equal(result.status,'equipped');assert.equal(result.wallet.coins,0);wallet=chooseReward(result.wallet,'leaf').wallet;result=chooseReward(wallet,'sun');assert.equal(result.status,'changed');assert.equal(result.wallet.coins,0);assert.equal(chooseReward(result.wallet,'unknown').status,'unknown');
 });
-test('malformed legacy reward data is handled safely and only known badges survive',()=>{
+test('malformed legacy reward data is handled safely and only known rewards survive',()=>{
   const wallet=normalizeRewards({coins:-10,owned:['__proto__','sun','sun'],equipped:'__proto__',daily:{date:'bad',claimed:['game','game','invalid']}});
-  assert.equal(wallet.coins,0);assert.deepEqual(wallet.owned,['leaf','sun']);assert.equal(wallet.equipped,'leaf');assert.deepEqual(wallet.daily.claimed,['game']);assert.ok(rewardsCatalog.every(item=>typeof item.price==='number'));
+  assert.equal(wallet.coins,0);assert.deepEqual(wallet.owned,['leaf','sun']);assert.equal(wallet.equipped,'leaf');assert.equal(wallet.chatColor,'default');assert.equal(wallet.avatarBorder,'none');assert.deepEqual(wallet.daily.claimed,['game']);assert.ok(rewardsCatalog.every(item=>typeof item.price==='number'));
 });
-
+test('cosmetic rewards can equip a chat colour and profile frame without replacing the badge',()=>{
+ let wallet=normalizeRewards({coins:200,owned:['leaf','sun'],equipped:'sun'});
+ let result=chooseReward(wallet,'chat-lagoon');assert.equal(result.status,'purchased');wallet=result.wallet;assert.equal(wallet.equipped,'sun');assert.equal(wallet.chatColor,'chat-lagoon');
+ result=chooseReward(wallet,'chat-violet');assert.equal(result.status,'purchased');wallet=result.wallet;assert.equal(wallet.chatColor,'chat-violet');assert.ok(wallet.owned.includes('chat-lagoon'));
+ result=chooseReward(wallet,'frame-mint');assert.equal(result.status,'purchased');wallet=result.wallet;assert.equal(wallet.avatarBorder,'frame-mint');assert.equal(wallet.equipped,'sun');assert.equal(chooseReward(wallet,'frame-mint').status,'equipped');
+ wallet=normalizeRewards({...wallet,chatColor:'chat-gold',avatarBorder:'frame-rainbow'});assert.equal(wallet.chatColor,'default');assert.equal(wallet.avatarBorder,'none');
+});
 test('everyday activities award once a day without disturbing legacy balances or badges',()=>{
  let wallet={coins:42,owned:['leaf','sun'],equipped:'sun',daily:{date:'2026-11-07',claimed:['card']}};
  for(const [kind,amount] of [['task',5],['habit',5],['list',5],['reading',5],['arcade',10]]){let result=awardDaily(wallet,kind,'2026-11-07');assert.equal(result.gained,amount);wallet=result.wallet;assert.equal(awardDaily(wallet,kind,'2026-11-07').gained,0);}
