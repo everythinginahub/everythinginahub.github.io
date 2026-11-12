@@ -36,6 +36,17 @@ test('cosmetic rewards can equip a chat colour and profile frame without replaci
  result=chooseReward(wallet,'frame-mint');assert.equal(result.status,'purchased');wallet=result.wallet;assert.equal(wallet.avatarBorder,'frame-mint');assert.equal(wallet.equipped,'sun');assert.equal(chooseReward(wallet,'frame-mint').status,'equipped');
  wallet=normalizeRewards({...wallet,chatColor:'chat-gold',avatarBorder:'frame-rainbow'});assert.equal(wallet.chatColor,'default');assert.equal(wallet.avatarBorder,'none');
 });
+test('verified owner border is granted for free and stripped from every other account',()=>{
+ const unverified=normalizeRewards({coins:17,owned:['leaf','frame-owner-aurora'],avatarBorder:'frame-owner-aurora'});
+ assert.equal(unverified.avatarBorder,'none');assert.ok(!unverified.owned.includes('frame-owner-aurora'));
+ assert.equal(chooseReward({coins:17,owned:['leaf'],avatarBorder:'none'},'frame-owner-aurora').status,'unknown');
+ const owner=normalizeRewards({coins:17,owned:['leaf','frame-mint'],avatarBorder:'frame-mint'},true);
+ assert.equal(owner.avatarBorder,'frame-mint');assert.ok(owner.owned.includes('frame-owner-aurora'));
+ const equipped=chooseReward(owner,'frame-owner-aurora',true);assert.equal(equipped.status,'changed');assert.equal(equipped.wallet.avatarBorder,'frame-owner-aurora');assert.equal(equipped.wallet.coins,17);
+ const earned=awardDaily(equipped.wallet,'card','2026-11-08',true);assert.equal(earned.wallet.avatarBorder,'frame-owner-aurora');assert.equal(earned.wallet.coins,22);
+ const defaultOwner=normalizeRewards({coins:0},true);assert.equal(defaultOwner.avatarBorder,'frame-owner-aurora');
+ assert.ok(rewardsCatalog.some(item=>item.id==='frame-owner-aurora'&&item.ownerOnly===true&&item.price===0));
+});
 test('everyday activities award once a day without disturbing legacy balances or badges',()=>{
  let wallet={coins:42,owned:['leaf','sun'],equipped:'sun',daily:{date:'2026-11-07',claimed:['card']}};
  for(const [kind,amount] of [['task',5],['habit',5],['list',5],['reading',5],['arcade',10]]){let result=awardDaily(wallet,kind,'2026-11-07');assert.equal(result.gained,amount);wallet=result.wallet;assert.equal(awardDaily(wallet,kind,'2026-11-07').gained,0);}
