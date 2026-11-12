@@ -21,10 +21,13 @@ after(async()=>{await stopServer(); if(dir)await rm(dir,{recursive:true,force:tr
 const post=(path,data,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(data)});
 test('static app and full account flow',async()=>{
   const home=await fetch(base+'/');assert.equal(home.status,200);
+  const robots=await fetch(base+'/robots.txt');assert.equal(robots.status,200);assert.match(robots.headers.get('content-type'),/text\/plain/);assert.match(await robots.text(),/Sitemap: https:\/\/everythinginahub\.github\.io\/sitemap\.xml/);
+  const sitemap=await fetch(base+'/sitemap.xml');assert.equal(sitemap.status,200);assert.match(sitemap.headers.get('content-type'),/application\/xml/);assert.match(await sitemap.text(),/<loc>https:\/\/everythinginahub\.github\.io\/public\/<\/loc>/);
   assert.equal(home.headers.get('x-content-type-options'),'nosniff');assert.equal(home.headers.get('x-frame-options'),'DENY');assert.equal(home.headers.get('referrer-policy'),'strict-origin-when-cross-origin');assert.match(home.headers.get('content-security-policy'),/object-src 'none'/);assert.equal(home.headers.get('strict-transport-security'),null);
   const secure=await fetch(base+'/api/health',{headers:{'x-forwarded-proto':'https'}});assert.match(secure.headers.get('strict-transport-security'),/max-age=31536000/);assert.equal(secure.headers.get('x-content-type-options'),'nosniff');assert.deepEqual(await secure.json(),{ok:true});
   assert.equal((await fetch(base+'/hero-art.jpg')).status,404);
   assert.equal((await fetch(base+'/logo.svg')).headers.get('content-type'),'image/svg+xml');
+  const socialCard=await fetch(base+'/social-preview.png');assert.equal(socialCard.status,200);assert.match(socialCard.headers.get('content-type'),/image\/png/);
   assert.equal((await fetch(base+'/api/session')).status,200);
   assert.deepEqual(await (await fetch(base+'/api/health')).json(), {ok:true});
   assert.equal(home.headers.get('cache-control'),'no-cache');

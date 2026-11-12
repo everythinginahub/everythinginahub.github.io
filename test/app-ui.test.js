@@ -65,11 +65,12 @@ function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
 }
 const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('hashchange'));};
 
-test('logged-out visitors see landing page and cannot access guest workspace',async()=>{
-  const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});await run();
+test('logged-out visitors see the study-and-everyday landing and cannot access guest workspace',async()=>{
+  const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});try{await run();
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
-  assert.match(w.document.querySelector('#landing').textContent,/Welcome to\s*Everything Hub/i);
-  w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);dom.window.close();
+  assert.match(w.document.querySelector('#landing').textContent,/Study, plan.*make room for life/i);
+  w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);
+  }finally{dom.window.close();}
 });
 test('username signup sends no email and shows recovery codes',async()=>{
   const {client,log}=mockClient();const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
@@ -350,13 +351,15 @@ test('book load failure is visible and can be retried',async()=>{
 });
 
 
-test('everything hub puts everyday spaces first while preserving school tools',async()=>{
-  const visitor=setup(null,{configured:false});await visitor.run();const landing=visitor.w.document.querySelector('#landing');
-  for(const word of ['lists','habits','notes','books','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
-  assert.match(landing.querySelector('.brand').textContent,/Everything Hub/);assert.equal(landing.querySelectorAll('.preview-list a,.preview-list button').length,0);visitor.dom.window.close();
-  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
-  for(const path of ['#lists','#habits','#bookmarks','#planner','#notes','#revision','#tools','#ebooks'])assert.ok(q(`.home-directory a[href="${path}"]`));
-  assert.equal(q('.widget-timetable').getAttribute('href'),'#timetable');go(w,'#explore');q('#directorySearch').value='packing';q('#directorySearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('[data-directory-item]')].filter(x=>!x.hidden).length,1);assert.equal(q('[data-directory-item]:not([hidden])').getAttribute('href'),'#lists');dom.window.close();
+test('study-and-everyday landing remains discoverable while signed-in users retain school tools',async()=>{
+  const visitor=setup(null,{configured:false});try{await visitor.run();const landing=visitor.w.document.querySelector('#landing');
+    for(const word of ['lists','habits','notes','books','revision'])assert.match(landing.textContent,new RegExp(word,'i'));
+    assert.match(landing.querySelector('.brand').textContent,/Everything Hub/);assert.equal(landing.querySelectorAll('.preview-list a,.preview-list button').length,0);
+  }finally{visitor.dom.window.close();}
+  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+    for(const path of ['#lists','#habits','#bookmarks','#planner','#notes','#revision','#tools','#ebooks'])assert.ok(q(`.home-directory a[href="${path}"]`));
+    assert.equal(q('.widget-timetable').getAttribute('href'),'#timetable');go(w,'#explore');q('#directorySearch').value='packing';q('#directorySearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal([...w.document.querySelectorAll('[data-directory-item]')].filter(x=>!x.hidden).length,1);assert.equal(q('[data-directory-item]:not([hidden])').getAttribute('href'),'#lists');
+  }finally{dom.window.close();}
 });
 
 test('dashboard shows only today’s lessons in time order and escapes lesson data',async()=>{
