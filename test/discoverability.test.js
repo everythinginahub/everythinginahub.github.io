@@ -22,6 +22,8 @@ test('public entry page has accurate search, canonical and social metadata',asyn
  assert.equal(statusDoc.querySelector('meta[name="robots"]').content,'noindex,nofollow');
  assert.match(doc.querySelector('h1').innerHTML,/Study, plan<br>and make room for life/);
  assert.match(doc.querySelector('.entry-index').textContent,/Flashcards, quizzes & books/);
+ assert.match(doc.querySelector('.entry-note').textContent,/daily puzzle is optional and untimed/i);
+ assert.match(doc.querySelector('.entry-note').textContent,/at your pace/i);
  const structured=JSON.parse(doc.querySelector('script[type="application/ld+json"]').textContent);
  assert.equal(structured['@type'],'WebApplication');
  assert.equal(structured.url,canonical);

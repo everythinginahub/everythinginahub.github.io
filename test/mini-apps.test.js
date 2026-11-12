@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
 import {miniApps,miniAppView,mountMiniApp,daysBetween,addDays,loanPayment,shades,rollDice} from '../public/mini-apps.js';
+import {calculateExpression,convertUnit,formatStopwatch,scrambleWord,scrambleWords} from '../public/popular-apps.js';
 
 test('date calculator respects leap years, signed days and invalid dates',()=>{
  assert.equal(addDays('2024-02-28',2),'2024-03-01');assert.equal(addDays('2024-03-01',-2),'2024-02-28');assert.equal(daysBetween('2024-02-28','2024-03-01'),2);assert.equal(daysBetween('2024-03-01','2024-02-28'),-2);
@@ -14,16 +15,20 @@ test('dice and colours produce valid and bounded values',()=>{
  assert.deepEqual(rollDice(3,6,()=>0),[1,1,1]);assert.deepEqual(rollDice(2,20,()=>.9999),[20,20]);assert.throws(()=>rollDice(11,6));assert.throws(()=>rollDice(2,7));assert.equal(shades('#34556a')[2],'#34556A');assert.equal(shades('#000000').length,5);assert.throws(()=>shades('red'));
 });
 test('all standalone apps mount, function and clean up',()=>{
- assert.equal(Object.keys(miniApps).length,9);
+ assert.equal(Object.keys(miniApps).length,13);
  for(const id of Object.keys(miniApps)){
   const dom=new JSDOM(`<main>${miniAppView(id)}</main>`,{url:'https://example.test/'});try{
-   const win=dom.window,root=win.document.querySelector('main'),q=s=>root.querySelector(s),ctl=mountMiniApp({root,id,win});
+   const win=dom.window,root=win.document.querySelector('main'),q=s=>root.querySelector(s);if(id==='word-scramble')win.Math.random=()=>0;const ctl=mountMiniApp({root,id,win});
    const submit=selector=>q(selector).dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));
    if(id==='world-clock'){assert.notEqual(q('#miniWorldClock').textContent,'—');q('#miniZone').value='Asia/Tokyo';q('#miniZone').dispatchEvent(new win.Event('change',{bubbles:true}));assert.equal(q('#miniCity').textContent,'Tokyo');}
    if(id==='dice-roller'){submit('#miniDiceForm');assert.match(q('#miniResult').textContent,/Total:/);}
    if(id==='colour-palette'){assert.equal(q('#miniPalette').children.length,5);q('#miniColour').value='#ff0000';submit('#miniColourForm');assert.equal(q('#miniPalette').children[2].textContent,'#FF0000');}
    if(id==='date-calculator'){q('#miniStart').value='2024-02-28';q('#miniDays').value='2';submit('#miniDateAdd');assert.match(q('#miniDateResult').textContent,/2024-03-01/);q('#miniFrom').value='2024-03-01';q('#miniTo').value='2024-02-28';submit('#miniDateDiff');assert.match(q('#miniDiffResult').textContent,/-2 days/);}
    if(id==='loan-calculator'){submit('#miniLoanForm');assert.match(q('#miniResult').textContent,/Monthly: 188\.71/);}
+   if(id==='calculator'){q('#calculatorExpression').value='(12 + 4) / 2';submit('#calculatorForm');assert.equal(q('#calculatorResult').textContent,'Answer: 8');}
+   if(id==='unit-converter'){submit('#unitConverterForm');assert.match(q('#unitResult').textContent,/1 Centimetres \(cm\) = 0\.01 Metres \(m\)/);}
+   if(id==='stopwatch'){q('#stopwatchToggle').click();assert.equal(q('#stopwatchToggle').textContent,'Pause');q('#stopwatchReset').click();assert.equal(q('#stopwatchDisplay').textContent,'00:00:00.00');}
+   if(id==='word-scramble'){q('#scrambleGuess').value=scrambleWords[0].word;q('#scrambleForm').dispatchEvent(new win.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#scrambleStatus').textContent,/Nice solving/);}
    ctl.destroy();
   }finally{dom.window.close();}
  }
