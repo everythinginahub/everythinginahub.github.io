@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://everythinginahub.github.io/sitemap.xml

@@ -27,7 +27,7 @@ test('static-host response-header configuration and GitHub Pages meta fallbacks 
   for(const name of ['Content-Security-Policy','X-Content-Type-Options','X-Frame-Options','Referrer-Policy','Permissions-Policy','Strict-Transport-Security'])assert.match(headers,new RegExp(`^\\s+${name}:`,'m'));
   assert.match(headers,/^\s+Strict-Transport-Security: max-age=31536000\s*$/m);
   assert.doesNotMatch(headers,/includeSubDomains/i);
-  assert.match(pages[0],/url=public\/\?v=20261106-8/,'the root redirect cache-busts the entry page');
+  assert.match(pages[0],/url=public\/\?v=20261106-9/,'the root redirect cache-busts the entry page');
   for(const page of pages)assert.match(page,/Content-Security-Policy/);
   assert.match(pages[1],/name="referrer" content="strict-origin-when-cross-origin"/);
   assert.match(pages[4],/name="referrer" content="no-referrer"/);

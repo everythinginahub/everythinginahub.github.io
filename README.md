@@ -8,6 +8,12 @@ The repository includes a `_headers` policy for hosts such as Cloudflare Pages o
 
 **GitHub Pages does not honor `_headers` or let a repository set arbitrary response headers.** Therefore repository changes alone cannot guarantee production `Strict-Transport-Security`, `X-Frame-Options`, `X-Content-Type-Options`, or `Permissions-Policy` headers on the current host. For those headers to take effect, serve through a configurable HTTPS proxy/CDN or move to a static host that honors `_headers`; verify the deployed response headers after that hosting change. Do not treat the `_headers` file as proof that GitHub Pages is sending them.
 
+## Search, sharing and healthy engagement
+
+The root page points search and social previews to the public landing page at `https://everythinginahub.github.io/public/`. The canonical URL, structured data and social-card metadata describe the real features; `robots.txt` points to a sitemap that lists only this public landing page. The sign-in callback and private status dashboard are excluded from indexing. If the GitHub Pages hostname changes, update the canonical, social-card, structured-data, robots and sitemap URLs together. Search engines may take time to recrawl the site; metadata improves clarity but cannot guarantee ranking or traffic.
+
+The product is designed to be useful to return to, not hard to leave. The daily puzzle is optional and untimed; this update improves clear value messaging and sharing rather than adding pressure prompts, artificial streak loss, endless feeds or notification nags.
+
 ## Everyday spaces
 
 - **Lists:** create up to 10 named checklists with up to 40 items each; search lists and items, filter by completion, add multiple items at once, reorder, edit and check items. Duplicate, reset or copy a list, and undo the most recent removal or deletion while the page is open. A duplicate starts unchecked; clipboard access depends on the browser. List progress is saved with account progress; search, drafts and undo are only kept while the Lists page is open.
