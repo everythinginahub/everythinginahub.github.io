@@ -1,29 +1,44 @@
 const BASE_COLOUR='#ffffff';
 const PALETTE=['#202447','#6254dd','#27bfb9','#f28b5b','#f0bf4b','#5388de','#d45279','#ffffff'];
 const HEX=/^#[0-9a-f]{6}$/i;
+const DEFAULT_SIZE=16;
+export const PIXEL_GRID_SIZES=Object.freeze([8,12,16,24,32]);
 
 function accountId(value='guest') {return String(value||'guest').replace(/[^\da-z_-]/gi,'').slice(0,100)||'guest';}
 export function pixelArtKey(userId='guest') {return `everything-hub-pixel-art-v1-${accountId(userId)}`;}
-export function makePixelGrid(size=16,colour=BASE_COLOUR) {
+export function makePixelGrid(size=DEFAULT_SIZE,colour=BASE_COLOUR) {
   if(!Number.isInteger(size)||size<4||size>32||!HEX.test(colour))throw new Error('Choose a supported grid size and colour.');
   return Array(size*size).fill(colour.toUpperCase());
 }
-export function pixelSvg(grid,size=16) {
-  if(!Number.isInteger(size)||size<4||size>32||!Array.isArray(grid)||grid.length!==size*size||grid.some(colour=>!HEX.test(colour)))throw new Error('The artwork is not valid.');
+export function pixelSvg(grid,size=DEFAULT_SIZE) {
+  if(!Number.isInteger(size)||size<4||size>32||!Array.isArray(grid)||grid.length!==size*size||grid.some(colour=>typeof colour!=='string'||!HEX.test(colour)))throw new Error('The artwork is not valid.');
   const pixels=grid.map((colour,index)=>`<rect x="${index%size}" y="${Math.floor(index/size)}" width="1" height="1" fill="${colour.toUpperCase()}"/>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size*24}" height="${size*24}" shape-rendering="crispEdges"><rect width="${size}" height="${size}" fill="#ffffff"/>${pixels}</svg>`;
 }
 function isValidGrid(value) {return value&&Number.isInteger(value.size)&&value.size>=4&&value.size<=32&&Array.isArray(value.pixels)&&value.pixels.length===value.size*value.size&&value.pixels.every(colour=>typeof colour==='string'&&HEX.test(colour));}
+function resizePixels(pixels,fromSize,toSize) {
+  return Array.from({length:toSize*toSize},(_,index)=>{
+    const row=Math.floor(index/toSize),column=index%toSize;
+    const sourceRow=Math.round(row*(fromSize-1)/(toSize-1)),sourceColumn=Math.round(column*(fromSize-1)/(toSize-1));
+    return pixels[sourceRow*fromSize+sourceColumn];
+  });
+}
 
 export function mountPixelArt({root,win=window,userId='guest'}) {
-  const $=selector=>root.querySelector(selector),board=$('#pixelBoard'),colourInput=$('#pixelColour');
-  const size=16,key=pixelArtKey(userId);let storage=null;
+  const $=selector=>root.querySelector(selector),board=$('#pixelBoard'),colourInput=$('#pixelColour'),sizeInput=$('#pixelSize');
+  const key=pixelArtKey(userId);let storage=null;
   try{storage=win.localStorage;}catch{}
+  let size=PIXEL_GRID_SIZES.includes(Number(sizeInput.value))?Number(sizeInput.value):DEFAULT_SIZE;
   let pixels=makePixelGrid(size),activeColour=colourInput.value.toUpperCase(),cursor=0,undoStack=[],redoStack=[];
-  try{const saved=JSON.parse(storage.getItem(key)||'null');if(isValidGrid(saved)&&saved.size===size)pixels=saved.pixels.map(colour=>colour.toUpperCase());}catch{}
+  try{
+    const saved=JSON.parse(storage.getItem(key)||'null');
+    if(isValidGrid(saved)&&PIXEL_GRID_SIZES.includes(saved.size)){size=saved.size;pixels=saved.pixels.map(colour=>colour.toUpperCase());}
+  }catch{}
+  sizeInput.value=String(size);
 
+  function snapshot(){return {size,pixels:pixels.slice(),cursor};}
   function render() {
-    board.replaceChildren();
+    sizeInput.value=String(size);board.style.setProperty('--pixel-grid-size',String(size));board.setAttribute('aria-label',`${size} by ${size} pixel-art canvas`);board.replaceChildren();
     for(let row=0;row<size;row++){
       const rowNode=win.document.createElement('div');rowNode.setAttribute('role','row');
       for(let column=0;column<size;column++){
@@ -41,24 +56,34 @@ export function mountPixelArt({root,win=window,userId='guest'}) {
     try{storage.setItem(key,JSON.stringify({size,pixels}));$('#pixelSaveNote').textContent='Artwork saved on this device.';return true;}
     catch{$('#pixelSaveNote').textContent='Could not save in this browser. Download your artwork to keep it.';return false;}
   }
+  function pushUndo(){undoStack.push(snapshot());if(undoStack.length>40)undoStack.shift();redoStack=[];}
+  function restore(saved){size=saved.size;pixels=saved.pixels.slice();cursor=Math.max(0,Math.min(saved.cursor,pixels.length-1));render();persist();}
   function commit(next) {
-    if(next.length!==pixels.length||next.every((colour,index)=>colour===pixels[index]))return;
-    undoStack.push(pixels.slice());if(undoStack.length>40)undoStack.shift();redoStack=[];pixels=next;render();persist();
+    if(next.length!==size*size||next.every((colour,index)=>colour===pixels[index]))return;
+    pushUndo();pixels=next;render();persist();
   }
   function paint(index,colour=activeColour) {
     if(!Number.isInteger(index)||index<0||index>=pixels.length||!HEX.test(colour))return;
     const next=pixels.slice();next[index]=colour.toUpperCase();commit(next);
   }
-  function undo() {if(!undoStack.length)return;redoStack.push(pixels.slice());pixels=undoStack.pop();render();persist();}
-  function redo() {if(!redoStack.length)return;undoStack.push(pixels.slice());pixels=redoStack.pop();render();persist();}
+  function undo() {if(!undoStack.length)return;redoStack.push(snapshot());restore(undoStack.pop());}
+  function redo() {if(!redoStack.length)return;undoStack.push(snapshot());restore(redoStack.pop());}
   function clear() {commit(makePixelGrid(size));}
+  function resize(newSize) {
+    if(!PIXEL_GRID_SIZES.includes(newSize)||newSize===size){sizeInput.value=String(size);return;}
+    pushUndo();
+    const oldSize=size,oldRow=Math.floor(cursor/oldSize),oldColumn=cursor%oldSize;
+    pixels=resizePixels(pixels,oldSize,newSize);size=newSize;
+    const row=Math.round(oldRow*(newSize-1)/(oldSize-1)),column=Math.round(oldColumn*(newSize-1)/(oldSize-1));cursor=row*newSize+column;
+    render();persist();
+  }
   function preset(kind) {
     const next=makePixelGrid(size);
     if(kind==='checker')for(let row=0;row<size;row++)for(let column=0;column<size;column++)if((row+column)%2===0)next[row*size+column]=activeColour;
     if(kind==='smile'){
-      const dark='#202447',gold='#f0bf4b';
-      for(let row=3;row<13;row++)for(let column=3;column<13;column++)next[row*size+column]=gold;
-      [[5,5],[5,10],[10,5],[10,6],[10,7],[10,8],[10,9],[10,10]].forEach(([row,column])=>next[row*size+column]=dark);
+      const dark='#202447',gold='#f0bf4b',scale=value=>Math.round(value*(size-1)/15),start=scale(3),end=scale(12);
+      for(let row=start;row<=end;row++)for(let column=start;column<=end;column++)next[row*size+column]=gold;
+      [[5,5],[5,10],[10,5],[10,6],[10,7],[10,8],[10,9],[10,10]].forEach(([row,column])=>next[scale(row)*size+scale(column)]=dark);
     }
     commit(next);
   }
@@ -79,6 +104,7 @@ export function mountPixelArt({root,win=window,userId='guest'}) {
     $('#pixelSaveNote').textContent='SVG download prepared. It stays sharp at any size.';
   }
   function onColourChange(){activeColour=colourInput.value.toUpperCase();updatePalette();}
+  function onSizeChange(){resize(Number(sizeInput.value));}
   function onKeydown(event) {
     const cell=event.target.closest?.('[data-pixel-index]');if(!cell)return;
     const index=Number(cell.dataset.pixelIndex),row=Math.floor(index/size),column=index%size;
@@ -86,7 +112,7 @@ export function mountPixelArt({root,win=window,userId='guest'}) {
     if(next[event.key]!==undefined){event.preventDefault();cursor=next[event.key];render();board.querySelector(`[data-pixel-index="${cursor}"]`).focus();}
     else if(event.key===' '||event.key==='Enter'){event.preventDefault();paint(index);render();board.querySelector(`[data-pixel-index="${index}"]`).focus();}
   }
-  board.addEventListener('keydown',onKeydown);root.addEventListener('click',onClick);colourInput.addEventListener('input',onColourChange);
+  board.addEventListener('keydown',onKeydown);root.addEventListener('click',onClick);colourInput.addEventListener('input',onColourChange);sizeInput.addEventListener('change',onSizeChange);
   render();updatePalette();$('#pixelSaveNote').textContent='Artwork saves on this device as you draw.';
-  return {destroy(){board.removeEventListener('keydown',onKeydown);root.removeEventListener('click',onClick);colourInput.removeEventListener('input',onColourChange);},snapshot(){return pixels.slice();}};
+  return {destroy(){board.removeEventListener('keydown',onKeydown);root.removeEventListener('click',onClick);colourInput.removeEventListener('input',onColourChange);sizeInput.removeEventListener('change',onSizeChange);},snapshot(){return pixels.slice();},get size(){return size;}};
 }
