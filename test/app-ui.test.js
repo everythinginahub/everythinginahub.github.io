@@ -246,6 +246,27 @@ test('rewards equip chat colours and profile picture frames independently from b
  }finally{dom.window.close();}
 });
 
+test('verified owner can equip the exclusive aurora border and sees it in account preview',async()=>{
+ const verifiedOwner={...account,app_metadata:{site_owner:true},user_metadata:{...account.user_metadata,site_owner:false}};
+ const progress={...defaultProgress,rewards:{coins:14,owned:['leaf','frame-mint'],equipped:'leaf',avatarBorder:'frame-mint',daily:{date:'',claimed:[]}}};
+ const {client,log}=mockClient({session:verifiedOwner,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+ assert.equal(q('.top-avatar').dataset.avatarBorder,'frame-mint');go(w,'#shop');await wait();
+ const ownerCard=q('#reward-frame-owner-aurora');assert.ok(ownerCard);assert.match(ownerCard.textContent,/OWNER EXCLUSIVE/);assert.equal(q('[data-reward="frame-owner-aurora"]').textContent,'Equip');
+ q('[data-reward="frame-owner-aurora"]').click();await wait();assert.equal(log.saved.progress.rewards.avatarBorder,'frame-owner-aurora');assert.equal(log.saved.progress.rewards.coins,14);assert.equal(q('.top-avatar').dataset.avatarBorder,'frame-owner-aurora');
+ q('#topAccount').click();assert.equal(q('#profilePicturePreview').dataset.avatarBorder,'frame-owner-aurora');
+ }finally{dom.window.close();}
+});
+
+test('owner-looking user metadata and forged reward data do not expose the exclusive border',async()=>{
+ const impostor={...account,user_metadata:{...account.user_metadata,site_owner:true}};
+ const progress={...defaultProgress,rewards:{coins:200,owned:['leaf','frame-owner-aurora'],equipped:'leaf',avatarBorder:'frame-owner-aurora',daily:{date:'',claimed:[]}}};
+ const {client}=mockClient({session:impostor,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+ assert.equal(q('.top-avatar').dataset.avatarBorder,'none');go(w,'#shop');await wait();
+ assert.equal(q('#reward-frame-owner-aurora'),null);assert.ok(q('#reward-frame-mint'));
+ q('#topAccount').click();assert.equal(q('#profilePicturePreview').dataset.avatarBorder,'none');
+ }finally{dom.window.close();}
+});
+
 test('account profile uploads a private cropped photo, previews it in rewards and removes it',async()=>{
  const progress={...defaultProgress,rewards:{coins:150,owned:['leaf','sun'],equipped:'sun',daily:{date:'',claimed:[]}}};const {client,log}=mockClient({session:account,progress});const messages=[{id:'mine',name:'Alex',text:'My study tip',mine:true},{id:'other',name:'Student',text:'A shared tip',mine:false}],baseRpc=client.rpc;client.rpc=async(name,args)=>name==='community_chat_list'?{data:structuredClone(messages)}:baseRpc(name,args);const {dom,w,run}=setup(client);const picture='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==';try{await run();const q=s=>w.document.querySelector(s);let drawArgs=null,closed=false;
  Object.defineProperty(w,'createImageBitmap',{configurable:true,value:async()=>({width:400,height:200,close(){closed=true;}})});

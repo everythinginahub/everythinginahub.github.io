@@ -14,10 +14,11 @@ export const rewardsCatalog = [
   { id:'chat-violet', name:'Violet chat', price:35, type:'chatColor', value:'chat-violet', description:'A soft violet accent for your chat name.' },
   { id:'chat-coral', name:'Coral chat', price:35, type:'chatColor', value:'chat-coral', description:'A bright coral accent for your chat name.' },
   { id:'chat-gold', name:'Golden chat', price:50, type:'chatColor', value:'chat-gold', description:'A warm golden accent for your chat name.' },
-  { id:'frame-mint', name:'Mint picture border', price:30, type:'avatarBorder', value:'frame-mint', description:'A fresh mint ring around your profile picture.' },
-  { id:'frame-violet', name:'Violet picture border', price:45, type:'avatarBorder', value:'frame-violet', description:'A bright violet ring around your profile picture.' },
-  { id:'frame-coral', name:'Coral picture border', price:45, type:'avatarBorder', value:'frame-coral', description:'A cheerful coral ring around your profile picture.' },
-  { id:'frame-gold', name:'Golden picture border', price:65, type:'avatarBorder', value:'frame-gold', description:'A sunny gold ring around your profile picture.' }
+  { id:'frame-mint', name:'Mint Tide frame', price:30, type:'avatarBorder', value:'frame-mint', description:'A dew-bright double ring with a fresh sea-glass glow.' },
+  { id:'frame-violet', name:'Violet Prism frame', price:45, type:'avatarBorder', value:'frame-violet', description:'A vivid violet halo edged in cool lilac light.' },
+  { id:'frame-coral', name:'Coral Bloom frame', price:45, type:'avatarBorder', value:'frame-coral', description:'A sunset-coral double ring with a rosy glow.' },
+  { id:'frame-gold', name:'Golden Hour frame', price:65, type:'avatarBorder', value:'frame-gold', description:'A rich golden ring with a soft amber shimmer.' },
+  { id:'frame-owner-aurora', name:'Owner’s Aurora', price:0, type:'avatarBorder', value:'frame-owner-aurora', ownerOnly:true, description:'A prismatic aurora with a crownlit star, reserved for the verified site owner.' }
 ];
 export const dailyRewardValues = Object.freeze({ card:5, game:10, test:15, task:5, habit:5, list:5, reading:5, arcade:10 });
 
@@ -30,21 +31,23 @@ function isEquippedCosmetic(wallet, id) {
   return wallet.equipped===id;
 }
 
-export function normalizeRewards(value) {
+export function normalizeRewards(value,isOwner=false) {
   const raw = value && typeof value === 'object' ? value : {};
   const coins = Number.isSafeInteger(raw.coins) && raw.coins >= 0 ? Math.min(raw.coins, 1000000000) : 0;
-  const owned = [...new Set(['leaf', ...(Array.isArray(raw.owned)?raw.owned.filter(id=>itemById.has(id)):[])])];
+  const owner=isOwner===true,available=id=>itemById.has(id)&&(!itemById.get(id).ownerOnly||owner);
+  const ownerDefaults=owner?rewardsCatalog.filter(item=>item.ownerOnly).map(item=>item.id):[];
+  const owned = [...new Set(['leaf', ...ownerDefaults, ...(Array.isArray(raw.owned)?raw.owned.filter(available):[])])];
   const equipped = owned.includes(raw.equipped) && itemById.get(raw.equipped)?.type==='badge' ? raw.equipped : 'leaf';
   const chatColor = owned.includes(raw.chatColor) && itemById.get(raw.chatColor)?.type==='chatColor' ? raw.chatColor : 'default';
-  const avatarBorder = owned.includes(raw.avatarBorder) && itemById.get(raw.avatarBorder)?.type==='avatarBorder' ? raw.avatarBorder : 'none';
+  const avatarBorder = owned.includes(raw.avatarBorder) && itemById.get(raw.avatarBorder)?.type==='avatarBorder' ? raw.avatarBorder : owner ? 'frame-owner-aurora' : 'none';
   const daily = raw.daily && typeof raw.daily==='object' ? raw.daily : {};
   const date = typeof daily.date==='string' && /^\d{4}-\d{2}-\d{2}$/.test(daily.date) ? daily.date : '';
   const claimed = [...new Set((Array.isArray(daily.claimed)?daily.claimed:[]).filter(kind=>Object.hasOwn(dailyRewardValues,kind)))];
   return { coins, owned, equipped, chatColor, avatarBorder, daily:{date,claimed} };
 }
 
-export function awardDaily(value, kind, date) {
-  const wallet=normalizeRewards(value);
+export function awardDaily(value, kind, date, isOwner=false) {
+  const wallet=normalizeRewards(value,isOwner);
   if(!Object.hasOwn(dailyRewardValues,kind) || typeof date!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return {wallet,gained:0};
   if(wallet.daily.date!==date) wallet.daily={date,claimed:[]};
   if(wallet.daily.claimed.includes(kind)) return {wallet,gained:0};
@@ -53,9 +56,9 @@ export function awardDaily(value, kind, date) {
   return {wallet,gained};
 }
 
-export function chooseReward(value, id) {
-  const wallet=normalizeRewards(value), item=itemById.get(id);
-  if(!item) return {wallet,status:'unknown'};
+export function chooseReward(value, id, isOwner=false) {
+  const owner=isOwner===true,wallet=normalizeRewards(value,owner),item=itemById.get(id);
+  if(!item||(item.ownerOnly&&!owner)) return {wallet,status:'unknown'};
   if(isEquippedCosmetic(wallet,id)) return {wallet,status:'equipped'};
   const slot=item.type==='chatColor'?'chatColor':item.type==='avatarBorder'?'avatarBorder':'equipped';
   if(wallet.owned.includes(id)){wallet[slot]=id;return {wallet,status:'changed'};}
