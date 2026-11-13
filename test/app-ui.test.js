@@ -29,6 +29,7 @@ import { listsView, habitsView, bookmarksView, mountEveryday, localDay } from '.
 import { mountNotes } from '../public/notes.js';
 import { revisionHub, schoolNotes, schoolTimetable, schoolToolkit, mountSchoolToolkit } from '../public/school-tools.js';
 import { ebookLibrary, ebookReader, mountEbookLibrary, mountEbookReader } from '../public/ebooks.js';
+import { mountLandingDemo } from '../public/landing-demo.js';
 const html=await readFile('public/index.html','utf8');
 const app=(await readFile('public/app.js','utf8')).replace(/^import .*;\n/gm,'');
 const wait=()=>new Promise(resolve=>setTimeout(resolve,30));
@@ -58,7 +59,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -71,6 +72,13 @@ test('logged-out visitors see the study-and-everyday landing and cannot access g
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
   assert.match(w.document.querySelector('#landing').textContent,/Study, plan.*make room for life/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);
+  }finally{dom.window.close();}
+});
+test('visitors can try a sample quiz without an account or saving their answers',async()=>{
+  const {dom,w,run}=setup(null,{configured:false});try{await run();const demo=w.document.querySelector('#entryDemo'),stored=w.localStorage.getItem('revisepro-state');demo.open=true;
+  assert.match(demo.querySelector('summary').textContent,/no account needed/i);assert.equal(demo.querySelector('#entryDemoNext').disabled,true);
+  demo.querySelector('[data-entry-demo-answer="0"]').click();assert.notEqual(demo.querySelector('#entryDemoFeedback').textContent,'Choose an answer to see a quick explanation.');assert.equal(demo.querySelector('#entryDemoNext').disabled,false);assert.equal(w.localStorage.getItem('revisepro-state'),stored);assert.equal(w.document.querySelector('.app-shell').hidden,true);
+  demo.querySelector('#entryDemoNext').click();assert.equal(demo.querySelector('#entryDemoNext').disabled,true);assert.equal(w.localStorage.getItem('revisepro-state'),stored);
   }finally{dom.window.close();}
 });
 test('username signup sends no email and shows recovery codes',async()=>{
