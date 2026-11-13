@@ -13,7 +13,8 @@
     "build:ocr": "node scripts/copy-ocr-assets.js",
     "build:pdf": "node scripts/copy-pdf-assets.js",
     "build:dice": "node scripts/build-dice-renderer.mjs",
-    "build:qr": "node scripts/build-qr-maker.mjs"
+    "build:qr": "node scripts/build-qr-maker.mjs",
+    "build:arcade3d": "node scripts/build-arcade-3d.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
