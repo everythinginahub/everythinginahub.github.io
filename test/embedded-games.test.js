@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
 import {readFile} from 'node:fs/promises';
 import {embeddedGames} from '../public/embedded-games-data.js';
-import {libraryView,embedView,embedUrl,mountLibrary} from '../public/embedded-games.js';
+import {libraryView,embedView,embedUrl,mountLibrary,mountEmbeddedGame} from '../public/embedded-games.js';
 import {arcadeView} from '../public/arcade.js';
 import {gameChooser} from '../public/game-views.js';
 import {liveHub} from '../public/live-games.js';
@@ -30,8 +30,18 @@ test('featured games use real local screenshots while older games remain text ca
  controller.destroy();dom.window.close();
 });
 
-test('original adventures are hidden from Games home; study/live modes use icons',async()=>{
+test('original adventures are discoverable and playable from Games home; study/live modes use icons',async()=>{
  const originals=arcadeView(),study=gameChooser({id:'test',subject:'Subject',title:'Set'},3),live=liveHub([]);
- for(const slug of ['skyline','orbit','reef']){assert.doesNotMatch(originals,new RegExp(`assets/game-screenshots/${slug}\\.png`));const file=await readFile(`public/assets/game-screenshots/${slug}.png`);assert.equal(file.subarray(0,8).toString('hex'),'89504e470d0a1a0a');}
+ for(const slug of ['skyline','orbit','reef']){assert.match(originals,new RegExp(`#arcade/${slug}`));assert.match(originals,new RegExp(`assets/game-screenshots/${slug}\\.png`));const file=await readFile(`public/assets/game-screenshots/${slug}.png`);assert.equal(file.subarray(0,8).toString('hex'),'89504e470d0a1a0a');}
+ assert.match(originals,/#arcade\/block-world/);assert.match(originals,/#arcade\/skypark-obby/);assert.match(arcadeView('block-world'),/blockWorldCanvas/);assert.match(arcadeView('skypark-obby'),/obbyCanvas/);
  assert.doesNotMatch(study,/assets\/game-thumbnails/);assert.doesNotMatch(live,/assets\/game-thumbnails/);assert.match(study,/study-game-icon/);assert.match(live,/live-mode-icon/);
+});
+
+test('third-party game viewer reports connection state, reloads and cleans up',()=>{
+ const dom=new JSDOM(`<main>${embedView('sudoku')}</main>`,{url:'https://example.test/'});try{
+  const root=dom.window.document.querySelector('main'),controller=mountEmbeddedGame(root,'sudoku',dom.window),frame=root.querySelector('#embeddedGameFrame'),status=root.querySelector('#embeddedGameStatus');
+  assert.match(status.textContent,/Connecting/);frame.dispatchEvent(new dom.window.Event('load'));assert.match(status.textContent,/host responded/);
+  root.querySelector('#embeddedGameReload').click();assert.match(status.textContent,/Connecting/);frame.dispatchEvent(new dom.window.Event('load'));assert.match(status.textContent,/host responded/);
+  controller.destroy();assert.equal(root.querySelector('#embeddedGameFrame'),null);
+ }finally{dom.window.close();}
 });
