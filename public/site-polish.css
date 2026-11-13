@@ -2322,3 +2322,55 @@ dialog::backdrop {
 @media(max-width:560px){.games-home-hero{grid-template-columns:minmax(0,1fr);min-height:0;padding:26px 23px}.games-home-art{position:absolute;right:-78px;bottom:-64px;width:230px;height:190px;opacity:.24;transform:scale(.9)}.games-home-copy{max-width:100%}.games-home-copy>p:not(.game-eyebrow){max-width:92%}.games-home-proof{gap:7px 13px}.games-home-proof span{font-size:9px}.game-type-grid{grid-template-columns:minmax(0,1fr);margin-bottom:30px}.game-type{padding:17px}.game-type p{margin-bottom:10px}.arcade-game-shelf{gap:10px}.arcade-card-copy{padding:12px}.arcade-card-copy h3{font-size:14px}.arcade-card-copy p{min-height:58px;font-size:10px}.arcade-card-art{min-height:112px}.creative-heading{flex-direction:column;align-items:stretch}.creative-heading-actions{align-self:flex-start}.creative-layout{gap:12px}.creative-main{border-radius:13px}.creative-hud{min-height:56px;padding:9px 10px;gap:10px}.creative-hud>div>strong{font-size:13px}.creative-hud>p{font-size:9px}.creative-overlay{padding:10px}.creative-overlay p{font-size:10px;margin-bottom:10px}.creative-overlay h2{font-size:22px}.creative-primary,.creative-secondary{min-height:37px;padding:0 10px;font-size:10px}.creative-touch-controls{gap:6px}.creative-touch-controls button{min-width:57px;min-height:41px;padding:0 10px}.creative-touch-controls button:nth-child(2){min-width:84px}.creative-hint{margin:5px 10px 12px;font-size:8px}.builder-hotbar{grid-template-columns:repeat(3,minmax(0,1fr))}.builder-material{grid-template-columns:16px 1fr auto;min-height:35px;font-size:8px}.builder-material strong{grid-column:auto}.creative-guide{display:block}.creative-guide ol{margin-top:10px}.creative-guide-note{margin-top:15px}.embedded-play-heading{align-items:flex-start;flex-direction:column}.embedded-game-actions{align-self:flex-start}}
 @media(max-width:390px){.games-home-copy>p:not(.game-eyebrow){max-width:100%}.games-home-actions a{flex:1}.games-home-proof{font-size:8px}.arcade-card-art{min-height:95px}.arcade-card-copy p{min-height:67px}.creative-hud{gap:8px}.creative-hud>div>span{font-size:7px}.creative-hud>div>strong{font-size:12px}.builder-hotbar{gap:4px}.builder-material{padding:4px}.creative-touch-controls button{min-width:50px;font-size:13px}.creative-touch-controls button:nth-child(2){min-width:77px}}
 @media(prefers-reduced-motion:reduce){.arcade-game-card,.arcade-card-art>img,.games-home-actions a{transition:none;}.arcade-game-card:hover,.games-home-actions a:hover{transform:none;}}
+
+/* Perspective survival, Bed Wars room controls, and the 3D parkour course. */
+.creative-mode-switch{display:flex;gap:8px;margin:0 0 15px;padding:5px;border:1px solid #dfe3f0;border-radius:13px;background:#f5f6fc;width:max-content}
+.creative-mode-switch button{min-height:40px;padding:0 15px;border:0;border-radius:9px;background:transparent;color:#59617d;font-size:11px;font-weight:850;cursor:pointer}
+.creative-mode-switch button.is-active{background:#514da0;color:#fff;box-shadow:0 3px 10px #39388128}
+.builder-3d-hud{gap:clamp(10px,2vw,22px)}
+.builder-3d-hud>p{max-width:370px}
+.builder-3d-screen,.creative-3d-screen{background:linear-gradient(180deg,#a9dff4,#697da8)}
+.creative-3d-screen canvas{cursor:grab}
+.creative-3d-screen canvas:active{cursor:grabbing}
+.creative-crosshair{position:absolute;top:50%;left:50%;color:#fff;font:700 17px/1 monospace;text-shadow:0 1px 5px #18233c;pointer-events:none;transform:translate(-50%,-50%);opacity:.78}
+.bedwars-lobby{display:grid;grid-template-columns:minmax(180px,.75fr) minmax(0,1.25fr);gap:18px;padding:17px 18px;border-top:1px solid #ffffff16;background:#252e4b;color:#e9effc}
+.bedwars-lobby[hidden]{display:none}
+.bedwars-lobby-copy .game-eyebrow{margin:0 0 5px;color:#a9f1dc;font-size:8px;font-weight:850;letter-spacing:.14em}
+.bedwars-lobby-copy h2{margin:0 0 7px;color:#fff;font-size:18px;letter-spacing:-.03em}
+.bedwars-lobby-copy p:last-child{margin:0;color:#b8c5df;font-size:10px;line-height:1.6}
+.bedwars-room-controls{display:grid;gap:7px;min-width:0}
+.bedwars-room-controls>label{color:#c7d3e9;font-size:9px;font-weight:800}
+.bedwars-code-row,.bedwars-room-actions{display:flex;flex-wrap:wrap;gap:7px}
+.bedwars-code-row input{flex:1;min-width:130px;min-height:38px;padding:0 11px;border:1px solid #657195;border-radius:9px;background:#1d2540;color:#fff;font-size:13px;font-weight:850;letter-spacing:.16em;text-transform:uppercase}
+.bedwars-code-row input::placeholder{color:#7f8cad}
+.bedwars-room-actions .creative-primary,.bedwars-room-actions .creative-secondary{min-height:36px;font-size:9px}
+.bedwars-room-controls>p{margin:0;color:#b8c5df;font-size:9px;line-height:1.5}
+.bedwars-room-code-display{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #7181a7;border-radius:9px;background:#1d2540;color:#b8c5df;font-size:8px;font-weight:850;letter-spacing:.12em}
+.bedwars-room-code-display[hidden]{display:none}
+.bedwars-room-code-display strong{color:#ffdf90;font-size:16px;letter-spacing:.2em}
+.bedwars-room-code-display span{margin-left:auto;color:#aebbd4;font-size:8px;font-weight:600;letter-spacing:0}
+.bedwars-player-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0;padding:0;list-style:none}
+.bedwars-player-list li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:6px;min-width:0;padding:6px 8px;border:1px solid #ffffff14;border-radius:8px;background:#ffffff08}
+.bedwars-player-list li strong{overflow:hidden;color:#fff;font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+.bedwars-player-list li small{color:#aebbd4;font-size:7px;font-weight:800;white-space:nowrap}
+.bedwars-team-dot{width:8px;height:8px;border-radius:50%;background:#ff6573}
+.bedwars-team-dot.team-blue{background:#69a8ff}
+.builder-3d-toolbar{align-items:center;flex-wrap:wrap}
+.builder-3d-toolbar .builder-tools{align-items:center;flex-wrap:wrap}
+.builder-3d-toolbar .builder-tools button{white-space:nowrap}
+.builder-3d-toolbar kbd{margin-left:4px;padding:2px 4px;border:1px solid #73809e;border-radius:4px;color:#e3eaf7;font:700 8px monospace}
+.bedwars-iron{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #786d57;border-radius:8px;background:#494139;color:#f7dfae}
+.bedwars-iron span{font-size:8px;font-weight:850;letter-spacing:.12em}
+.bedwars-iron strong{font-size:12px}
+.bedwars-touch-controls{display:grid;grid-template-columns:repeat(6,minmax(40px,1fr));max-width:460px;margin:0 auto}
+.bedwars-touch-controls button:nth-child(2){min-width:0;background:#343d63}
+.bedwars-touch-controls button:nth-child(5),.bedwars-touch-controls button:nth-child(6){background:#5952a4}
+.bedwars-team-board{display:grid;gap:6px;margin-top:17px;padding:12px;border:1px solid #e3e7f0;border-radius:11px;background:#f7f8fc;color:#59617d}
+.bedwars-team-board[hidden]{display:none}
+.bedwars-team-board strong{color:#343a60;font-size:9px;letter-spacing:.1em}
+.bedwars-team-board span{font-size:10px;font-weight:700}
+.obby-3d-touch{display:grid;grid-template-columns:repeat(5,minmax(45px,1fr));max-width:390px;margin:0 auto}
+.obby-3d-touch button:nth-child(2){min-width:0;background:#343d63}
+.obby-3d-touch button:nth-child(5){background:#5952a4}
+@media(max-width:900px){.bedwars-lobby{grid-template-columns:minmax(0,1fr)}.bedwars-lobby-copy{max-width:620px}}
+@media(max-width:560px){.creative-mode-switch{width:100%}.creative-mode-switch button{flex:1;padding:0 8px;font-size:9px}.bedwars-lobby{gap:11px;padding:13px 10px}.bedwars-room-actions>*{flex:1}.bedwars-player-list{grid-template-columns:minmax(0,1fr)}.bedwars-room-code-display{flex-wrap:wrap}.bedwars-room-code-display span{flex-basis:100%;margin-left:0}.bedwars-touch-controls{grid-template-columns:repeat(3,minmax(52px,1fr));max-width:250px}.bedwars-touch-controls button:nth-child(4){grid-column:1}.bedwars-touch-controls button:nth-child(5){grid-column:2}.bedwars-touch-controls button:nth-child(6){grid-column:3}.obby-3d-touch{grid-template-columns:repeat(3,minmax(52px,1fr));max-width:250px}.obby-3d-touch button:nth-child(4){grid-column:1}.obby-3d-touch button:nth-child(5){grid-column:2}.builder-3d-toolbar{align-items:stretch}.builder-3d-toolbar .builder-tools button{flex:1}.builder-3d-hud>p{max-width:none}}
