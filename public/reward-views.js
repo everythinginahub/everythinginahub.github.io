@@ -6,7 +6,7 @@ const activities = [
   {kind:'habit', label:'Check in on a habit', detail:'Mark a habit done today', href:'#habits', group:'everyday'},
   {kind:'list', label:'Check off a list item', detail:'Tick an item in Lists', href:'#lists', group:'everyday'},
   {kind:'reading', label:'Turn a page', detail:'Go forward in a hosted text edition', href:'#ebooks', group:'everyday'},
-  {kind:'arcade', label:'Finish an original game', detail:'Play Skyline, Orbit or Reef to the end', href:'#arcade', group:'everyday'},
+  {kind:'arcade', label:'Finish an original game', detail:'Clear Skypark Obby or finish a local arcade run', href:'#arcade', group:'everyday'},
   {kind:'card', label:'Review a flashcard', detail:'Mark a card reviewed', href:'#flashcards', group:'learning'},
   {kind:'game', label:'Finish a study game', detail:'Complete a study game round', href:'#games', group:'learning'},
   {kind:'test', label:'Complete a practice test', detail:'Submit a practice test', href:'#tests', group:'learning'}
