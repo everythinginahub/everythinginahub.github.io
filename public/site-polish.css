@@ -2375,7 +2375,7 @@ dialog::backdrop {
 @media(max-width:900px){.bedwars-lobby{grid-template-columns:minmax(0,1fr)}.bedwars-lobby-copy{max-width:620px}}
 @media(max-width:560px){.creative-mode-switch{width:100%}.creative-mode-switch button{flex:1;padding:0 8px;font-size:9px}.bedwars-lobby{gap:11px;padding:13px 10px}.bedwars-room-actions>*{flex:1}.bedwars-player-list{grid-template-columns:minmax(0,1fr)}.bedwars-room-code-display{flex-wrap:wrap}.bedwars-room-code-display span{flex-basis:100%;margin-left:0}.bedwars-touch-controls{grid-template-columns:repeat(3,minmax(52px,1fr));max-width:250px}.bedwars-touch-controls button:nth-child(4){grid-column:1}.bedwars-touch-controls button:nth-child(5){grid-column:2}.bedwars-touch-controls button:nth-child(6){grid-column:3}.obby-3d-touch{grid-template-columns:repeat(3,minmax(52px,1fr));max-width:250px}.obby-3d-touch button:nth-child(4){grid-column:1}.obby-3d-touch button:nth-child(5){grid-column:2}.builder-3d-toolbar{align-items:stretch}.builder-3d-toolbar .builder-tools button{flex:1}.builder-3d-hud>p{max-width:none}}
 
-/* Local text clarity editor: quiet colours and familiar Everything Hub controls. */
+/* Local humanizer: quiet colours and familiar Everything Hub controls. */
 #app .text-editor-app { color:#2b3d46; }
 #app .text-editor-notice { display:flex; align-items:flex-start; gap:12px; margin:0 0 22px; padding:13px 15px; border:1px solid #d8dfd8; border-left:3px solid #668a9a; background:#f1f3ee; color:#536568; font-size:12px; line-height:1.55; }
 #app .text-editor-notice strong { flex:none; color:#36566a; font-size:12px; }
