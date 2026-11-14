@@ -4,13 +4,13 @@ import {geometryDashView, mountGeometryDash} from './geometry-dash.js?v=20261114
 import {libraryView, embedView, mountLibrary, mountEmbeddedGame} from './embedded-games.js?v=20261114-13';
 import {newRunner,newOrbit,newReef,jumpRunner,launchReef,stepGame,WIDTH,HEIGHT} from './arcade-engine.js?v=20261113-1';
 import {drawArcade} from './arcade-render.js?v=20261113-1';
-import {blockWorld3DView,skyparkObby3DView} from './arcade-3d-views.js?v=20261106-1';
+import {blockWorld3DView,skyparkObby3DView} from './arcade-3d-views.js?v=20261106-2';
 
 const originalGames=[
  {slug:'skyline',name:'Skyline Sprint',category:'ENDLESS RUNNER',description:'Leap across rooftops, dodge obstacles and chase your best run.',image:'assets/game-screenshots/skyline.png'},
  {slug:'orbit',name:'Orbit Defender',category:'SPACE ACTION',description:'Take on waves of drones in a fast, colourful space battle.',image:'assets/game-screenshots/orbit.png'},
  {slug:'reef',name:'Reef Breaker',category:'ACTION PUZZLE',description:'Bounce through an underwater world and smash every crystal.',image:'assets/game-screenshots/reef.png'},
- {slug:'block-world',name:'Blockbound 3D',category:'SURVIVAL + BED WARS',description:'Survive, bridge the gaps, or play Bed Wars online with friends.',art:'blockworld'},
+ {slug:'block-world',name:'Blockbound 3D',category:'SURVIVAL + BED WARS',description:'Explore the islands or battle an AI rival in first-person 3D.',art:'blockworld'},
  {slug:'skypark-obby',name:'Skypark Obby 3D',category:'3D PARKOUR CHALLENGE',description:'Jump across floating platforms, collect stars and try not to fall.',art:'obby'}
 ];
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -36,7 +36,7 @@ export function arcadeView(id, view){
 function mountLazy3DGame({root, mountName, ...options}){
  let destroyed=false,controller=null;
  const obby=mountName==='mountSkyparkObby3D',pending=[];
- const controls=obby?'[data-obby-action]':'[data-world-action],[data-world-mode],[data-room-action]';
+ const controls=obby?'[data-obby-action]':'[data-world-action],[data-world-mode],[data-room-action],[data-ai-action]';
  const startSelector=obby?'[data-obby-action="start"]':'[data-world-action="start"]';
  const capture=event=>{
   const button=event.target.closest?.(controls);
@@ -50,7 +50,7 @@ function mountLazy3DGame({root, mountName, ...options}){
   }
  };
  root.addEventListener('click',capture,true);
- import('./arcade-3d-game.js?v=20261106-1').then(module=>{
+ import('./arcade-3d-game.js?v=20261106-2').then(module=>{
   if(destroyed)return;
   root.removeEventListener('click',capture,true);
   controller=module[mountName]({...options,root});

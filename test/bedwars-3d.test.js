@@ -5,8 +5,8 @@ import {arcadeView} from '../public/arcade.js';
 import {
   BEDWARS_MAX_PLAYERS, OBBY_3D_STARS, addWorldBlock, applyPlayerHit, blockAt,
   breakEnemyBed, createBedWarsGame, createObby3DGame, createSurvivalGame,
-  jumpObby3D, jumpPlayer, placeBridgeBlock, startMatch, stepBlockbound3D,
-  stepObby3D
+  jumpObby3D, jumpPlayer, placeBridgeBlock, startMatch, stepBedwarsBots,
+  stepBlockbound3D, stepObby3D
 } from '../public/bedwars-engine.js';
 import {cleanRoomCode, makeRoomCode} from '../public/bedwars-realtime.js';
 import {blockWorld3DView, skyparkObby3DView} from '../public/arcade-3d-views.js';
@@ -123,6 +123,36 @@ test('Bed Wars players can place bridge wool across a void, gather iron, break b
   assert.equal(blue.respawnAt,null,'a player cannot respawn after their bed is gone');
 });
 
+test('local Bed Wars AI builds a bridge, fights the player, and can break the rival bed',()=>{
+  const game=createBedWarsGame({players:[
+    {id:'human',name:'Human',joinedAt:1,team:'red'},
+    {id:'bot',name:'Tide Bot',joinedAt:2,team:'blue',isBot:true}
+  ],localId:'human'});
+  assert.equal(game.players.bot.isBot,true);
+  assert.equal(startMatch(game),true);
+  const human=game.players.human,bot=game.players.bot;
+  for(let step=0;step<600;step++){
+    stepBedwarsBots(game,1/60,'standard');
+    stepBlockbound3D(game,1/60,{});
+  }
+  assert.ok(game.blocksPlaced>=5,'the bot places wool to bridge the void');
+  assert.ok(bot.z<8,'the bot crosses from its base towards the centre');
+  human.x=bot.x;human.y=1;human.z=bot.z+1.5;human.health=100;human.alive=true;
+  for(let step=0;step<90;step++){
+    stepBedwarsBots(game,1/60,'standard');
+    stepBlockbound3D(game,1/60,{});
+  }
+  assert.ok(human.health<100,'the bot attacks an opponent in reach');
+  human.alive=false;human.respawnAt=null;
+  for(let step=0;step<1800&&game.status==='running';step++){
+    stepBedwarsBots(game,1/60,'standard');
+    stepBlockbound3D(game,1/60,{});
+  }
+  assert.equal(game.beds.red.alive,false,'the bot can break the enemy bed');
+  assert.equal(game.winner,'blue');
+  assert.equal(game.status,'lost');
+});
+
 test('3D Survival and Obby simulate jumping, bridging, checkpoints, and falling back safely',()=>{
   const survival=createSurvivalGame({playerId:'builder'});
   survival.status='running';
@@ -160,7 +190,7 @@ test('3D Survival and Obby simulate jumping, bridging, checkpoints, and falling 
   assert.equal(obby.status,'won');
 });
 
-test('the public game routes render perspective play, bridge controls, room codes and a jumping 3D obby',()=>{
+test('the public game routes render first-person Bed Wars vs AI, optional rooms and a jumping 3D obby',()=>{
   const arcade=arcadeView();
   assert.match(arcade,/Blockbound 3D/);
   assert.match(arcade,/SURVIVAL \+ BED WARS/);
@@ -169,13 +199,53 @@ test('the public game routes render perspective play, bridge controls, room code
   assert.match(block,/id="blockWorldCanvas"/);
   assert.match(block,/FIRST-PERSON 3D/);
   assert.match(block,/data-world-mode="bedwars"/);
+  assert.match(block,/data-ai-action="start"/);
+  assert.match(block,/Bed Wars vs AI/);
   assert.match(block,/data-room-action="create"/);
   assert.match(block,/data-room-action="join"/);
+  assert.match(block,/lock the mouse/);
   assert.match(block,/Place block/);
   const obby=skyparkObby3DView();
   assert.match(obby,/id="obbyCanvas"/);
   assert.match(obby,/data-obby-action="jump"/);
   assert.match(obby,/3D parkour/i);
+});
+
+test('Bed Wars locks the pointer for first-person mouse look and keeps a drag fallback',()=>{
+  const dom=new JSDOM(`<main>${blockWorld3DView()}</main>`,{url:'https://example.test/',pretendToBeVisual:true});
+  const {window:win}=dom;win.HTMLCanvasElement.prototype.getContext=()=>null;
+  const frames=mockFrames(win),root=win.document.querySelector('main'),canvas=root.querySelector('#blockWorldCanvas');
+  let lockedElement=null;
+  Object.defineProperty(win.document,'pointerLockElement',{configurable:true,get:()=>lockedElement});
+  canvas.requestPointerLock=()=>{lockedElement=canvas;win.document.dispatchEvent(new win.Event('pointerlockchange'));};
+  win.document.exitPointerLock=()=>{lockedElement=null;win.document.dispatchEvent(new win.Event('pointerlockchange'));};
+  const controller=mountBlockWorld3D({root,userId:'mouse-test',win});
+  root.querySelector('[data-world-mode="bedwars"]').click();
+  root.querySelector('[data-ai-action="start"]').click();
+  assert.equal(lockedElement,canvas,'starting the local match requests pointer lock');
+  const human=controller.game.players[controller.game.localId],bot=Object.values(controller.game.players).find(player=>player.isBot);
+  bot.x=human.x;bot.y=human.y;bot.z=human.z+1;
+  canvas.dispatchEvent(new win.MouseEvent('pointerdown',{bubbles:true,cancelable:true,button:0}));
+  assert.equal(bot.health,55,'left-click attacks while the pointer is locked');
+  const yaw=controller.cameraYaw,look=new win.MouseEvent('pointermove',{bubbles:true,clientX:300,clientY:200});
+  Object.defineProperty(look,'movementX',{value:30});Object.defineProperty(look,'movementY',{value:-8});canvas.dispatchEvent(look);
+  assert.notEqual(controller.cameraYaw,yaw,'locked mouse movement changes the first-person camera');
+  controller.destroy();
+  assert.equal(lockedElement,null,'destroying the game releases pointer lock');
+  assert.equal(frames.size,0);
+  win.close();
+
+  const fallbackDom=new JSDOM(`<main>${blockWorld3DView()}</main>`,{url:'https://example.test/',pretendToBeVisual:true});
+  const fallbackWin=fallbackDom.window;fallbackWin.HTMLCanvasElement.prototype.getContext=()=>null;
+  const fallbackRoot=fallbackWin.document.querySelector('main'),fallbackCanvas=fallbackRoot.querySelector('#blockWorldCanvas');
+  const fallback=mountBlockWorld3D({root:fallbackRoot,userId:'drag-test',win:fallbackWin});
+  fallbackRoot.querySelector('[data-world-action="start"]').click();
+  const before=fallback.cameraYaw;
+  fallbackCanvas.dispatchEvent(new fallbackWin.MouseEvent('pointerdown',{bubbles:true,cancelable:true,button:0,clientX:10,clientY:20}));
+  fallbackCanvas.dispatchEvent(new fallbackWin.MouseEvent('pointermove',{bubbles:true,cancelable:true,clientX:35,clientY:22}));
+  fallbackCanvas.dispatchEvent(new fallbackWin.MouseEvent('pointerup',{bubbles:true,cancelable:true,button:0,clientX:35,clientY:22}));
+  assert.notEqual(fallback.cameraYaw,before,'dragging still turns the view when pointer lock is unavailable');
+  fallback.destroy();fallbackWin.close();
 });
 
 test('Bed Wars realtime room helpers sanitize invite codes and generate six-character codes',()=>{

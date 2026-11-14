@@ -51,13 +51,13 @@ function buildSurvivalBlocks() {
   return blocks;
 }
 
-function makePlayer({ id, name, team, local = false, spawn, seat = 0 }) {
+function makePlayer({ id, name, team, local = false, isBot = false, spawn, seat = 0 }) {
   const info = TEAM_INFO[team] || TEAM_INFO.red;
   const point = spawn || info.spawn;
   const offset = ((seat % 3) - 1) * .8;
   return {
     id: String(id), name: String(name || (local ? 'You' : 'Player')).slice(0, 24), team,
-    local, x: point.x + offset, y: point.y, z: point.z, vx: 0, vy: 0,
+    local, isBot: Boolean(isBot), x: point.x + offset, y: point.y, z: point.z, vx: 0, vy: 0,
     yaw: team === 'red' ? Math.PI : 0, health: 100, alive: true, grounded: true,
     blocks: 24, iron: 0, crystals: 0, kills: 0, respawnAt: null, hitAt: 0, falls: 0
   };
@@ -75,14 +75,19 @@ export function createBedWarsGame({ players = [], localId = 'local-player', seed
   const unique = new Map();
   for (const player of players) {
     const id = String(player?.id || '').slice(0, 80);
-    if (id && !unique.has(id)) unique.set(id, { id, name: String(player.name || 'Player').slice(0, 24), joinedAt: Number(player.joinedAt) || 0 });
+    if (id && !unique.has(id)) unique.set(id, {
+      id, name: String(player.name || 'Player').slice(0, 24),
+      joinedAt: Number(player.joinedAt) || 0,
+      team: ['red', 'blue'].includes(player.team) ? player.team : '',
+      isBot: Boolean(player.isBot)
+    });
   }
-  if (!unique.has(String(localId))) unique.set(String(localId), { id: String(localId), name: 'You', joinedAt: Date.now() });
+  if (!unique.has(String(localId))) unique.set(String(localId), { id: String(localId), name: 'You', joinedAt: Date.now(), team: '', isBot: false });
   const roster = [...unique.values()].slice(0, BEDWARS_MAX_PLAYERS).sort((a, b) => a.joinedAt - b.joinedAt || a.id.localeCompare(b.id));
   const teamSeats = { red: 0, blue: 0 };
   const gamePlayers = {};
   roster.forEach((entry, index) => {
-    const team = index % 2 === 0 ? 'red' : 'blue';
+    const team = entry.team || (index % 2 === 0 ? 'red' : 'blue');
     const seat = teamSeats[team]++;
     gamePlayers[entry.id] = makePlayer({ ...entry, team, local: entry.id === String(localId), seat });
   });
@@ -92,7 +97,7 @@ export function createBedWarsGame({ players = [], localId = 'local-player', seed
     blocks: buildBedwarsBlocks(), players: gamePlayers, localId: String(localId), beds,
     generators: [{ id: 'centre', x: .5, z: .5, kind: 'emerald' }, { id: 'red', x: .5, z: -14.5, kind: 'iron' }, { id: 'blue', x: .5, z: 14.5, kind: 'iron' }],
     crystals: [], time: 0, kills: 0, blocksPlaced: 0, blocksMined: 0, winner: '',
-    message: 'Create a room, invite friends with the code, then start the match.'
+    message: 'Choose an AI opponent or create an online room to start a match.'
   };
   buildBlockIndex(game);
   return game;
@@ -114,7 +119,7 @@ export function startMatch(game) {
   if (!game || game.mode !== 'bedwars' || Object.keys(game.players).length < 2) return false;
   game.status = 'running';
   game.time = 0;
-  game.message = 'Protect your bed, collect iron, build a bridge, and break the other team’s bed.';
+  game.message = 'Protect your bed, gather iron, build a bridge, and break the other team’s bed.';
   return true;
 }
 
@@ -247,7 +252,7 @@ export function stepBlockbound3D(game, dt, input = {}) {
     if (player.respawnAt && game.time >= player.respawnAt) { resetPlayer(game, player); continue; }
     if (!player.alive) continue;
     const isLocal = player.id === game.localId;
-    const controls = isLocal ? input : {};
+    const controls = isLocal ? input : player.isBot ? (player.aiInput || {}) : {};
     const forward = Number(Boolean(controls.forward)) - Number(Boolean(controls.back));
     const sideways = Number(Boolean(controls.right)) - Number(Boolean(controls.left));
     const magnitude = Math.hypot(forward, sideways) || 1;
@@ -259,12 +264,12 @@ export function stepBlockbound3D(game, dt, input = {}) {
     const dz = (fz * forward + rz * sideways) / magnitude * speed * duration;
     if (!collidesAt(game, player, player.x + dx, player.z)) player.x += dx;
     if (!collidesAt(game, player, player.x, player.z + dz)) player.z += dz;
-    if (!isLocal) continue;
+    if (!isLocal && !player.isBot) continue;
     if (game.mode === 'bedwars' && Math.hypot(player.x - (TEAM_INFO[player.team]?.spawn.x || 0), player.z - (TEAM_INFO[player.team]?.spawn.z || 0)) < 4.5) {
       player.generatorTick = (player.generatorTick || 0) + duration;
       if (player.generatorTick >= 3) { player.generatorTick -= 3; player.iron = Math.min(999, player.iron + 1); }
     }
-    if (game.mode === 'survival') {
+    if (game.mode === 'survival' && isLocal) {
       const crystalIndex = game.crystals.findIndex(item => (item.x - player.x) ** 2 + (item.y - player.y) ** 2 + (item.z - player.z) ** 2 < 1.35 ** 2);
       if (crystalIndex >= 0) {
         game.crystals.splice(crystalIndex, 1);
@@ -283,6 +288,75 @@ export function stepBlockbound3D(game, dt, input = {}) {
   if (game.mode === 'bedwars') checkWinner(game);
 }
 
+const BOT_DIFFICULTIES = Object.freeze({
+  chill: Object.freeze({thinkEvery:.28, attackEvery:.95, sprint:false}),
+  standard: Object.freeze({thinkEvery:.18, attackEvery:.68, sprint:true}),
+  sharp: Object.freeze({thinkEvery:.1, attackEvery:.5, sprint:true})
+});
+
+export function stepBedwarsBots(game, dt, difficulty = 'standard') {
+  if (!game || game.mode !== 'bedwars' || game.status !== 'running') return;
+  const duration = clamp(Number(dt) || 0, 0, .05);
+  const skill = BOT_DIFFICULTIES[difficulty] || BOT_DIFFICULTIES.standard;
+  for (const bot of Object.values(game.players)) {
+    if (!bot.isBot) continue;
+    if (!bot.alive) { bot.aiInput = {}; continue; }
+    bot.brainTick = (bot.brainTick || 0) + duration;
+    if (bot.brainTick < skill.thinkEvery) continue;
+    bot.brainTick %= skill.thinkEvery;
+
+    const opponent = nearestOpponent(game, bot.id);
+    if (opponent) {
+      const yaw = Math.atan2(opponent.x - bot.x, -(opponent.z - bot.z));
+      const distance = Math.sqrt(distanceSquared(bot, opponent));
+      if (game.time - (bot.lastAttackAt ?? -Infinity) >= skill.attackEvery) {
+        applyPlayerHit(game, bot.id, opponent.id);
+        bot.lastAttackAt = game.time;
+      }
+      bot.aiInput = {yaw, forward:distance > 2.4, sprint:skill.sprint};
+      continue;
+    }
+
+    const bed = nearestEnemyBed(game, bot.id);
+    let target = bed;
+    if (!target) {
+      target = Object.values(game.players)
+        .filter(player => player.alive && player.team !== bot.team)
+        .sort((a, b) => distanceSquared(bot, a) - distanceSquared(bot, b))[0] || null;
+    }
+    if (!target) { bot.aiInput = {}; continue; }
+
+    const dx = target.x - bot.x, dz = target.z - bot.z;
+    const yaw = Math.atan2(dx, -dz);
+    if (bed && distanceSquared(bot, bed) <= 3.2 ** 2) {
+      if (game.time - (bot.lastBedActionAt ?? -Infinity) >= .7) {
+        breakEnemyBed(game, bot.id, bed.team);
+        bot.lastBedActionAt = game.time;
+      }
+      bot.aiInput = {yaw, forward:false};
+      continue;
+    }
+
+    const forwardX = Math.sin(yaw), forwardZ = -Math.cos(yaw);
+    const groundY = Math.max(0, Math.floor(bot.y - .001));
+    const nextX = Math.floor(bot.x + forwardX * .9);
+    const nextZ = Math.floor(bot.z + forwardZ * .9);
+    const currentX = Math.floor(bot.x), currentZ = Math.floor(bot.z);
+    let canMove = true;
+    if (bot.grounded && !blockAt(game, nextX, groundY, nextZ)) {
+      if (bot.blocks < 1 && bot.iron >= 4) buyBridgeBlocks(game, bot.id);
+      if (bot.blocks > 0) {
+        const currentSupport = blockAt(game, currentX, groundY, currentZ);
+        const buildX = currentSupport ? nextX : currentX;
+        const buildZ = currentSupport ? nextZ : currentZ;
+        const built = addWorldBlock(game, {x:buildX,y:groundY,z:buildZ,kind:'wool',owner:bot.id}, {consume:true,playerId:bot.id});
+        canMove = Boolean(blockAt(game, nextX, groundY, nextZ) || (!currentSupport && built));
+      } else canMove = false;
+    }
+    bot.aiInput = {yaw, forward:canMove, sprint:skill.sprint};
+  }
+}
+
 export function buyBridgeBlocks(game, playerId = game?.localId) {
   const player = game?.players?.[playerId];
   if (!game || game.status !== 'running' || game.mode !== 'bedwars' || !player?.alive || player.iron < 4) return false;
@@ -295,7 +369,7 @@ export function breakEnemyBed(game, playerId = game?.localId, team = null) {
   const player = game?.players?.[playerId];
   if (!game || game.status !== 'running' || game.mode !== 'bedwars' || !player?.alive) return false;
   const targets = team ? [game.beds[team]] : Object.values(game.beds).filter(bed => bed.team !== player.team && bed.alive);
-  const bed = targets.find(item => item?.alive && distanceSquared(player, item) <= 2.8 ** 2);
+  const bed = targets.find(item => item?.alive && distanceSquared(player, item) <= 3.2 ** 2);
   if (!bed || bed.team === player.team) return false;
   bed.alive = false;
   game.message = `${TEAM_INFO[bed.team].name} bed destroyed! They have no more respawns.`;

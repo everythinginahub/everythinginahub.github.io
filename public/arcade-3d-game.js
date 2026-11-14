@@ -4,8 +4,8 @@ import {
   createBedWarsGame, createObby3DGame, createSurvivalGame, jumpObby3D,
   jumpPlayer, nearestEnemyBed, nearestOpponent,
   placeBridgeBlock, removeWorldBlock, snapshotPlayer, startMatch,
-  stepBlockbound3D, stepObby3D
-} from './bedwars-engine.js?v=20261106-1';
+  stepBedwarsBots, stepBlockbound3D, stepObby3D
+} from './bedwars-engine.js?v=20261106-2';
 import {cleanRoomCode, createBedWarsRoom, makeRoomCode} from './bedwars-realtime.js?v=20261106-1';
 import {createBlockboundViewport} from './arcade-3d-renderer.bundle.js?v=20261106-1';
 
@@ -45,9 +45,9 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
   let game = createSurvivalGame({playerId: localId, playerName: localName});
   let viewport = createBlockboundViewport(canvas, {win, mode});
   let cameraYaw = 0, cameraPitch = 0;
-  let frame = null, lastFrame = null, lastBroadcast = 0, lastAttack = -1;
+  let frame = null, lastFrame = null, lastBroadcast = 0, lastAttack = -1, lastUiUpdate = 0;
   let room = null, roomCode = '', roomHostId = '', roomMembers = [], roomReady = false, creatingRoom = false, advertisedHostId = '';
-  let roomTimeout = null, destroyed = false;
+  let roomTimeout = null, destroyed = false, lockRequested = false;
   const input = {forward: false, back: false, left: false, right: false, sprint: false};
   let dragging = false, dragMoved = false, pointerX = 0, pointerY = 0;
   const status = q('#worldStatus'), overlay = q('#worldOverlay'), overlayTitle = q('#worldOverlayTitle'), overlayText = q('#worldOverlayText');
@@ -61,13 +61,34 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
   };
   const draw = () => viewport?.draw(game, cameraYaw, cameraPitch);
   const focusCanvas = () => { try { canvas.focus({preventScroll: true}); } catch { canvas.focus?.(); } };
+  const hasPointerLock = () => win.document.pointerLockElement === canvas;
+  const requestPointerLock = () => {
+    if (hasPointerLock() || lockRequested) return true;
+    if (typeof canvas.requestPointerLock !== 'function') return false;
+    try {
+      lockRequested = true;
+      const result = canvas.requestPointerLock();
+      if (result && typeof result.catch === 'function') result.catch(() => {
+        lockRequested = false;
+        setStatus('Mouse lock is unavailable. Drag the game view to look around instead.');
+      });
+      return true;
+    } catch {
+      lockRequested = false;
+      return false;
+    }
+  };
+  const releasePointerLock = () => {
+    if (!hasPointerLock()) return;
+    try { win.document.exitPointerLock?.(); } catch {}
+  };
   const clearInput = () => { for (const key of Object.keys(input)) input[key] = false; };
   const localPlayer = () => game.players?.[game.localId];
   const setMode = async nextMode => {
     if (!['survival', 'bedwars'].includes(nextMode)) return;
     if (room && nextMode !== mode) await leaveRoom(false);
     if (frame !== null) win.cancelAnimationFrame(frame);
-    frame = null; lastFrame = null; clearInput();
+    frame = null; lastFrame = null; clearInput(); releasePointerLock(); lockRequested = false; dragging = false;
     mode = nextMode;
     if (mode === 'survival') {
       game = createSurvivalGame({playerId: localId, playerName: localName, seed: 7212026});
@@ -80,8 +101,8 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
       q('#worldGuideTitle').textContent = 'A little island. A lot to do.';
       q('#worldGuideSteps').innerHTML = '<li><strong>Explore</strong><span>Walk, jump and look around the floating survival islands.</span></li><li><strong>Build</strong><span>Press E to place a block in front of you and bridge the gaps.</span></li><li><strong>Collect</strong><span>Mine glowing crystals and bring them back to your island.</span></li>';
       q('#worldGuideNoteTitle').textContent = 'Survival mode';
-      q('#worldGuideNote').textContent = 'This solo world runs in your browser. Your blocks are local; Bed Wars uses live room codes for multiplayer.';
-      setStatus('3D Survival is ready. Start exploring or choose Bed Wars Online.');
+      q('#worldGuideNote').textContent = 'This solo world runs in your browser. Your blocks are local; Bed Wars can be played against an AI opponent.';
+      setStatus('3D Survival is ready. Start exploring or choose Bed Wars vs AI.');
     } else {
       game = createBedWarsGame({players: [{id: localId, name: localName, joinedAt: Date.now()}], localId});
       cameraYaw = 0; cameraPitch = 0;
@@ -90,11 +111,11 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
       q('[data-world-action="buy"]').hidden = false;
       q('.bedwars-iron').hidden = false;
       q('#bedwarsTeamBoard').hidden = false;
-      q('#worldGuideTitle').textContent = 'Team up. Build out. Break beds.';
-      q('#worldGuideSteps').innerHTML = '<li><strong>Join online</strong><span>Create a room and share its code, or join a friend.</span></li><li><strong>Bridge the void</strong><span>Collect iron and place wool blocks with E.</span></li><li><strong>Protect your bed</strong><span>Attack rival players and break their bed with F.</span></li>';
-      q('#worldGuideNoteTitle').textContent = 'Online Bed Wars';
-      q('#worldGuideNote').textContent = 'Rooms use live Supabase Realtime. Room codes are temporary; only share a code with people you want to play with.';
-      setStatus('Create a room or join a friend with a six-character code.');
+      q('#worldGuideTitle').textContent = 'Defend. Bridge. Break beds.';
+      q('#worldGuideSteps').innerHTML = '<li><strong>Pick a challenge</strong><span>Choose an AI difficulty and start a local match.</span></li><li><strong>Bridge the void</strong><span>Collect iron and place wool blocks with E or right-click.</span></li><li><strong>Protect your bed</strong><span>Fight the rival and break their bed with F or left-click.</span></li>';
+      q('#worldGuideNoteTitle').textContent = 'Bed Wars vs AI';
+      q('#worldGuideNote').textContent = 'The AI match runs locally in your browser. Online rooms remain available as an optional way to play with friends.';
+      setStatus('Choose an opponent difficulty, then start a local match.');
     }
     modeButtons.forEach(button => {
       const selected = button.dataset.worldMode === mode;
@@ -124,22 +145,30 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     overlay.hidden = !showOverlay;
     if (mode === 'survival') {
       overlayTitle.textContent = paused ? 'Take a breather' : over ? 'Island adventure complete!' : 'Ready to explore?';
-      overlayText.textContent = paused ? 'Your island is safe. Resume when you are ready.' : over ? game.message : 'Choose 3D Survival for a solo island challenge, or switch to Bed Wars Online to create a room and play with friends.';
+      overlayText.textContent = paused ? 'Your island is safe. Resume when you are ready.' : over ? game.message : 'Explore the islands, collect crystals and bridge the gaps. Or switch to Bed Wars vs AI for a fight.';
       const start = q('[data-world-action="start"]');
       start.hidden = false;
       start.textContent = paused ? 'Resume survival →' : over ? 'Explore again →' : 'Start Survival →';
     } else {
-      overlayTitle.textContent = over ? (game.status === 'won' ? 'Bed Wars victory!' : 'Match over') : 'Ready for Bed Wars?';
-      overlayText.textContent = over ? game.message : roomReady ? 'Your room is connected. The host can start when at least two players are here.' : 'Create a room or enter a friend’s six-character code below, then defend your bed and build across the void.';
+      overlayTitle.textContent = over ? (game.status === 'won' ? 'Bed Wars victory!' : 'Bed Wars defeat') : 'Ready for Bed Wars?';
+      overlayText.textContent = over ? game.message : roomReady ? 'Your room is connected. The host can start when at least two players are here.' : 'Choose a difficulty below to start a local match against an AI opponent.';
       q('[data-world-action="start"]').hidden = true;
     }
     pauseButton.textContent = paused ? 'Resume' : 'Pause';
     pauseButton.disabled = mode === 'bedwars' || game.status === 'ready';
     q('[data-world-action="buy"]').disabled = mode !== 'bedwars' || !running || (player?.iron || 0) < 4;
     q('[data-world-action="interact"]').textContent = mode === 'bedwars' ? '⚔ Attack / bed <kbd>F</kbd>' : '⛏ Mine block <kbd>F</kbd>';
-    q('[data-room-action="create"]').disabled = Boolean(room) || !client;
-    q('[data-room-action="join"]').disabled = Boolean(room) || !client;
-    q('[data-room-action="start"]').disabled = !roomReady || !roomHostId || roomHostId !== localId || roomMembers.length < 2 || roomMembers.length > BEDWARS_MAX_PLAYERS;
+    const aiStart = q('[data-ai-action="start"]');
+    const difficulty = q('#bedwarsDifficulty');
+    if (aiStart) aiStart.disabled = Boolean(room) || (running && game.isAIMatch);
+    if (difficulty) difficulty.disabled = Boolean(room) || (running && game.isAIMatch);
+    const onlinePanel = q('#bedwarsOnlinePanel');
+    if (onlinePanel) onlinePanel.hidden = Boolean(running && game.isAIMatch);
+    const aiStatus = q('#bedwarsAiStatus');
+    if (aiStatus && game.isAIMatch) aiStatus.textContent = `Playing against ${game.aiName || 'Tide Bot'} · ${({chill:'Chill',standard:'Standard',sharp:'Sharp'})[game.aiDifficulty] || 'Standard'} difficulty.`;
+    q('[data-room-action="create"]').disabled = Boolean(room) || !client || (running && game.isAIMatch);
+    q('[data-room-action="join"]').disabled = Boolean(room) || !client || (running && game.isAIMatch);
+    q('[data-room-action="start"]').disabled = !roomReady || !roomHostId || roomHostId !== localId || roomMembers.length < 2 || roomMembers.length > BEDWARS_MAX_PLAYERS || (running && game.isAIMatch);
     q('[data-room-action="leave"]').hidden = !room;
     q('#bedwarsRoomInfo').hidden = !room;
     if (room) setText(root, '#bedwarsRoomCodeDisplay', roomCode);
@@ -157,14 +186,20 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     lastFrame = timestamp;
     if (game.status === 'running') {
       const controls = {...input, yaw: cameraYaw};
-      if (mode === 'bedwars') stepBlockbound3D(game, dt, controls);
-      else stepBlockbound3D(game, dt, controls);
+      if (mode === 'bedwars' && game.isAIMatch) stepBedwarsBots(game, dt, game.aiDifficulty);
+      stepBlockbound3D(game, dt, controls);
       const player = localPlayer();
       if (room?.ready && mode === 'bedwars' && timestamp - lastBroadcast > 120 && player) {
         lastBroadcast = timestamp;
         room.send('position', {player: snapshotPlayer(player)});
       }
-      if (game.status !== 'running') update();
+      if (game.status !== 'running') {
+        clearInput(); releasePointerLock(); lockRequested = false;
+      }
+      if (game.status !== 'running' || timestamp - lastUiUpdate >= 120) {
+        lastUiUpdate = timestamp;
+        update();
+      }
     }
     draw();
     if (game.status === 'running') frame = win.requestAnimationFrame(loop);
@@ -178,13 +213,42 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     }
     game.status = 'running';
     game.message = 'Explore, gather crystals, and build a safe route between the islands.';
-    clearInput(); update(); draw(); focusCanvas(); lastFrame = null; beginLoop();
+    clearInput(); update(); draw(); focusCanvas(); lastFrame = null; beginLoop(); requestPointerLock();
   };
   const togglePause = () => {
     if (mode !== 'survival') return;
     if (game.status === 'running') { game.status = 'paused'; clearInput(); lastFrame = null; }
     else if (game.status === 'paused') { game.status = 'running'; lastFrame = null; beginLoop(); }
     update(); draw();
+  };
+  const startAiMatch = () => {
+    if (mode !== 'bedwars') return;
+    if (room) { setStatus('Leave the online room before starting a local AI match.'); return; }
+    if (game.status === 'running') return;
+    clearInput(); releasePointerLock(); lockRequested = false;
+    const difficulty = q('#bedwarsDifficulty')?.value || 'standard';
+    const botId = `${localId}-bot`;
+    const botName = 'Tide Bot';
+    game = createBedWarsGame({
+      players: [
+        {id:localId,name:localName,joinedAt:1,team:'red'},
+        {id:botId,name:botName,joinedAt:2,team:'blue',isBot:true}
+      ],
+      localId,
+      seed: Math.floor(Math.random() * 0xffffffff)
+    });
+    game.isAIMatch = true;
+    game.aiDifficulty = ['chill','standard','sharp'].includes(difficulty) ? difficulty : 'standard';
+    game.aiName = botName;
+    startMatch(game);
+    roomReady = false;
+    roomMembers = [];
+    roomHostId = '';
+    viewport?.setGame(game);
+    cameraYaw = localPlayer()?.yaw || 0;
+    cameraPitch = 0;
+    setStatus(`${botName} is ready. Move with W A S D, defend your bed, and bridge across the void.`);
+    update(); draw(); focusCanvas(); lastFrame = null; beginLoop(); requestPointerLock();
   };
   const place = () => {
     if (game.status !== 'running') return;
@@ -237,7 +301,7 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     viewport?.setGame(game);
     cameraYaw = localPlayer()?.yaw || 0;
     setStatus('Match started! Gather iron, place wool blocks, and defend your bed.');
-    update(); draw(); focusCanvas(); lastFrame = null; beginLoop();
+    update(); draw(); focusCanvas(); lastFrame = null; beginLoop(); requestPointerLock();
     return true;
   };
   const startHostMatch = () => {
@@ -308,6 +372,7 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     if (showMessage) setStatus('You left the Bed Wars room.');
   };
   const openRoom = async (code, isHost) => {
+    if (game.status === 'running' && game.isAIMatch) { setStatus('Finish the AI match before opening an online room.'); return false; }
     if (!client?.channel) { setStatus('Online Bed Wars is not available. Check your connection and sign in again.'); return false; }
     if (room) { setStatus('Leave your current room before joining another.'); return false; }
     roomCode = cleanRoomCode(code);
@@ -365,6 +430,8 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     if (modeButton) { setMode(modeButton.dataset.worldMode); return; }
     const actionButton = event.target.closest('[data-world-action]');
     if (actionButton) { hitButton(actionButton.dataset.worldAction, actionButton); return; }
+    const aiButton = event.target.closest('[data-ai-action]');
+    if (aiButton) { startAiMatch(); return; }
     const roomButton = event.target.closest('[data-room-action]');
     if (!roomButton) return;
     const action = roomButton.dataset.roomAction;
@@ -376,6 +443,12 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
     } else if (action === 'start') startHostMatch();
     else if (action === 'leave') leaveRoom();
   };
+  let pointerButton = 0;
+  const rotateCamera = (dx, dy) => {
+    cameraYaw -= dx * .0028;
+    cameraPitch = Math.max(-.85, Math.min(.85, cameraPitch + dy * .0025));
+    viewport?.setCamera(cameraYaw, cameraPitch); draw();
+  };
   const pointerDown = event => {
     const hold = event.target.closest('[data-world-hold]');
     if (hold && game.status === 'running') {
@@ -384,26 +457,55 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
       return;
     }
     if (event.target !== canvas || game.status !== 'running') return;
-    dragging = true; dragMoved = false; pointerX = event.clientX; pointerY = event.clientY;
-    try { canvas.setPointerCapture(event.pointerId); } catch {}
     event.preventDefault(); focusCanvas();
+    if (hasPointerLock()) {
+      if (event.button === 0) interact();
+      else if (event.button === 2) place();
+      return;
+    }
+    if (event.pointerType !== 'touch' && requestPointerLock()) {
+      dragging = false;
+      return;
+    }
+    dragging = true; dragMoved = false; pointerButton = event.button || 0;
+    pointerX = event.clientX; pointerY = event.clientY;
+    try { canvas.setPointerCapture(event.pointerId); } catch {}
   };
   const pointerMove = event => {
+    if (hasPointerLock() && event.target === canvas) {
+      rotateCamera(Number(event.movementX) || 0, Number(event.movementY) || 0);
+      return;
+    }
     if (!dragging || event.target !== canvas) return;
     const dx = event.clientX - pointerX, dy = event.clientY - pointerY;
     if (Math.abs(dx) + Math.abs(dy) > 2) dragMoved = true;
     pointerX = event.clientX; pointerY = event.clientY;
-    cameraYaw -= dx * .008;
-    cameraPitch = Math.max(-.85, Math.min(.85, cameraPitch + dy * .004));
-    viewport?.setCamera(cameraYaw, cameraPitch); draw();
+    rotateCamera(dx, dy);
   };
   const pointerUp = event => {
     const hold = event.target.closest?.('[data-world-hold]');
     if (hold) input[hold.dataset.worldHold] = false;
     if (dragging && event.target === canvas) {
       dragging = false;
-      if (!dragMoved) { if (mode === 'survival') interact(); else interact(); }
+      if (!dragMoved) {
+        if (pointerButton === 2) place();
+        else if (pointerButton === 0) interact();
+      }
     }
+  };
+  const contextMenu = event => { if (event.target === canvas) event.preventDefault(); };
+  const pointerLockChange = () => {
+    const locked = hasPointerLock();
+    if (locked) {
+      lockRequested = false; dragging = false;
+      if (game.status === 'running') setStatus('Mouse locked. Move to look; left-click attacks or mines, right-click places, and Esc unlocks.');
+    } else if (!lockRequested && game.status === 'running') {
+      setStatus('Mouse unlocked. Click the game to lock it, or drag to look around.');
+    }
+  };
+  const pointerLockError = () => {
+    lockRequested = false; dragging = false;
+    if (game.status === 'running') setStatus('Mouse lock is unavailable. Drag the game view to look around instead.');
   };
   const keyDown = event => {
     if (event.target.closest?.('input,textarea,select,[contenteditable="true"],a,button')) return;
@@ -433,6 +535,9 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
   root.addEventListener('click', click);
   root.addEventListener('pointerdown', pointerDown); root.addEventListener('pointermove', pointerMove);
   root.addEventListener('pointerup', pointerUp); root.addEventListener('pointercancel', pointerUp);
+  canvas.addEventListener('contextmenu', contextMenu);
+  win.document.addEventListener('pointerlockchange', pointerLockChange);
+  win.document.addEventListener('pointerlockerror', pointerLockError);
   win.addEventListener('keydown', keyDown); win.addEventListener('keyup', keyUp);
   win.addEventListener('blur', blur); win.document.addEventListener('visibilitychange', visibility);
   if (!client) setStatus('Online play requires the connected account service. 3D Survival works offline.');
@@ -441,6 +546,8 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
   return {
     get game() { return game; },
     get roomCode() { return roomCode; },
+    get cameraYaw() { return cameraYaw; },
+    get cameraPitch() { return cameraPitch; },
     destroy() {
       destroyed = true; clearInput();
       if (frame !== null) win.cancelAnimationFrame(frame);
@@ -449,6 +556,10 @@ export function mountBlockWorld3D({root, userId, playerName = 'Player', client =
       root.removeEventListener('click', click); root.removeEventListener('pointerdown', pointerDown);
       root.removeEventListener('pointermove', pointerMove); root.removeEventListener('pointerup', pointerUp);
       root.removeEventListener('pointercancel', pointerUp);
+      canvas.removeEventListener('contextmenu', contextMenu);
+      win.document.removeEventListener('pointerlockchange', pointerLockChange);
+      win.document.removeEventListener('pointerlockerror', pointerLockError);
+      releasePointerLock();
       win.removeEventListener('keydown', keyDown); win.removeEventListener('keyup', keyUp);
       win.removeEventListener('blur', blur); win.document.removeEventListener('visibilitychange', visibility);
       viewport?.destroy();
