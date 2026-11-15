@@ -48,10 +48,14 @@ createServer(async (req, res) => {
       return send(res, 404, { error: 'Not found' });
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
-    const rootFiles = {'/robots.txt':['robots.txt','text/plain; charset=utf-8'],'/sitemap.xml':['sitemap.xml','application/xml; charset=utf-8']};
+    const rootFiles = {'/':['index.html','text/html; charset=utf-8'],'/index.html':['index.html','text/html; charset=utf-8'],'/robots.txt':['robots.txt','text/plain; charset=utf-8'],'/sitemap.xml':['sitemap.xml','application/xml; charset=utf-8'],'/privacy':['privacy/index.html','text/html; charset=utf-8'],'/privacy/':['privacy/index.html','text/html; charset=utf-8'],'/privacy/index.html':['privacy/index.html','text/html; charset=utf-8'],'/status/':['status/index.html','text/html; charset=utf-8'],'/status/index.html':['status/index.html','text/html; charset=utf-8']};
     const rootFile = rootFiles[url.pathname];
     if (rootFile) { const content = await readFile(resolve(rootFile[0])); res.writeHead(200, {'Content-Type':rootFile[1],'Cache-Control':'no-cache'}); return res.end(req.method === 'HEAD' ? undefined : content); }
-    const pathname = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname); const root = resolve('./public'); const file = resolve(root, '.' + pathname);
+    if (url.pathname === '/public') { res.writeHead(308, {'Location':`/public/${url.search}`}); return res.end(); }
+    let pathname = decodeURIComponent(url.pathname);
+    if (pathname === '/public/') pathname = '/index.html';
+    else if (pathname.startsWith('/public/')) pathname = pathname.slice('/public'.length);
+    const root = resolve('./public'); const file = resolve(root, '.' + pathname);
     if (!file.startsWith(root + sep)) { res.writeHead(403); return res.end(); }
     const content = await readFile(file); res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': extname(file) === '.html' ? 'no-cache' : 'public, max-age=3600' }); res.end(req.method === 'HEAD' ? undefined : content);
   } catch (error) { if (error.code === 'ENOENT') { res.writeHead(404); res.end('Not found'); } else { send(res, 400, { error: 'Could not process request.' }); } }

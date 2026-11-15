@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {JSDOM} from 'jsdom';
 
-const canonical='https://everythinginahub.github.io/public/';
+const canonical='https://everythinginahub.github.io/';
 const read=path=>readFile(new URL(path,import.meta.url),'utf8');
 
 function visibleWordCount(element){
@@ -16,7 +16,7 @@ function structuredData(document){
  return [...document.querySelectorAll('script[type="application/ld+json"]')].map(script=>JSON.parse(script.textContent));
 }
 
-test('public entry and root fallback have a keyword H1 and substantive, structured copy',async()=>{
+test('public entry and root overview have a keyword H1 and substantive, structured copy',async()=>{
  const [html,root,login,status]=await Promise.all([read('../public/index.html'),read('../index.html'),read('../public/login.html'),read('../public/status.html')]);
  const doc=new JSDOM(html).window.document,rootDoc=new JSDOM(root).window.document,loginDoc=new JSDOM(login).window.document,statusDoc=new JSDOM(status).window.document;
  assert.match(doc.title,/Study Planner, Flashcards & Everyday Tools/);
@@ -35,9 +35,9 @@ test('public entry and root fallback have a keyword H1 and substantive, structur
  assert.equal(loginDoc.querySelector('meta[name="robots"]').content,'noindex,nofollow');
  assert.equal(statusDoc.querySelector('meta[name="robots"]').content,'noindex,nofollow');
 
- for(const [name,page,copy] of [
+  for(const [name,page,copy] of [
   ['public landing',doc,doc.querySelector('#landing')],
-  ['root redirect fallback',rootDoc,rootDoc.querySelector('main')]
+  ['root overview',rootDoc,rootDoc.querySelector('main')]
  ]){
   assert.equal(page.querySelectorAll('h1').length,1,`${name} has exactly one H1`);
   assert.match(page.querySelector('h1').textContent,/study planner/i,`${name} H1 uses the target topic`);
@@ -60,12 +60,13 @@ test('public entry and root fallback have a keyword H1 and substantive, structur
  assert.ok(application.featureList.includes('Flashcards, quizzes and practice tests'));
 });
 
-test('robots and sitemap advertise only the public landing page and social image is a valid 1200 by 630 PNG',async()=>{
+test('robots and sitemap advertise the canonical overview and privacy page and social image is valid',async()=>{
  const [robots,sitemap,image]=await Promise.all([read('../robots.txt'),read('../sitemap.xml'),readFile(new URL('../public/social-preview.png',import.meta.url))]);
  assert.match(robots,/^User-agent: \*\s+Allow: \/\s+/);
  assert.match(robots,/Sitemap: https:\/\/everythinginahub\.github\.io\/sitemap\.xml/);
- assert.match(sitemap,/<loc>https:\/\/everythinginahub\.github\.io\/public\/<\/loc>/);
- assert.doesNotMatch(sitemap,/status|login|#/i);
+ assert.match(sitemap,/<loc>https:\/\/everythinginahub\.github\.io\/<\/loc>/);
+ assert.match(sitemap,/<loc>https:\/\/everythinginahub\.github\.io\/privacy\/<\/loc>/);
+ assert.doesNotMatch(sitemap,/public\/|status|login|#/i);
  assert.equal(image.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
  assert.equal(image.readUInt32BE(16),1200);
  assert.equal(image.readUInt32BE(20),630);

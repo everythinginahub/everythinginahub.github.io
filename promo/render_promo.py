@@ -5,7 +5,7 @@ Install Python dependencies with: pip install Pillow qrcode
 Then run: python render_promo.py --output everything-hub-promo.mp4
 
 The result is a silent 1280x720 H.264 motion-graphics video. Its end card
-includes a scannable QR code to the public landing page.
+includes a scannable QR code directly to the interactive /public/ workspace.
 """
 from __future__ import annotations
 
@@ -27,7 +27,8 @@ TRANSITION_SECONDS = 0.38
 SCENE_STEP = SCENE_SECONDS - TRANSITION_SECONDS
 SCENE_COUNT = 5
 TOTAL_SECONDS = SCENE_STEP * (SCENE_COUNT - 1) + SCENE_SECONDS
-SITE_URL = "https://everythinginahub.github.io/public/"
+# Promo CTA intentionally opens the interactive workspace; SEO canonical URLs use the root.
+WORKSPACE_URL = "https://everythinginahub.github.io/public/"
 
 # Everything Hub brand palette.
 PAPER = (248, 247, 242)
@@ -136,7 +137,7 @@ LOGO = create_logo()
 def make_qr(size: int = 184) -> Image.Image:
     qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_H,
                        box_size=8, border=4)
-    qr.add_data(SITE_URL)
+    qr.add_data(WORKSPACE_URL)
     qr.make(fit=True)
     image = qr.make_image(fill_color="#273B46", back_color="#fffefa").convert("RGB")
     return image.resize((size, size), Image.Resampling.NEAREST)
