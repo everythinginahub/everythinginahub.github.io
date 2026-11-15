@@ -1,6 +1,13 @@
+import {corsPreflightResponse,corsResponseHeaders} from '../_shared/cors.js';
+
 // Dependency injection keeps authentication, quota enforcement and provider calls testable.
-const headers = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
-const json=(status,body)=>new Response(JSON.stringify(body),{status,headers});
+const responseHeaders = {
+ 'Content-Type':'application/json',
+ 'Cache-Control':'no-store',
+ 'X-Content-Type-Options':'nosniff',
+ 'Referrer-Policy':'no-referrer'
+};
+const json=(request,status,body)=>new Response(JSON.stringify(body),{status,headers:corsResponseHeaders(request,responseHeaders)});
 async function readLimited(request){
  const reader=request.body?.getReader(); if(!reader)throw Error('empty');
  let total=0;const parts=[];
@@ -14,23 +21,23 @@ export function providerError(status){
 }
 export function createHandler({authenticate,reserve,generate,configured=true}){
  return async request=>{
-  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
-  if(request.method!=='POST')return json(405,{error:'Method not allowed.'});
-  if(!configured)return json(503,{error:'AI chat is not configured yet.'});
+  if(request.method==='OPTIONS')return corsPreflightResponse(request,responseHeaders);
+  if(request.method!=='POST')return json(request,405,{error:'Method not allowed.'});
+  if(!configured)return json(request,503,{error:'AI chat is not configured yet.'});
   try{
    const user=await authenticate(request.headers.get('authorization')||'');
-   if(!user?.id||!user.email_confirmed_at||user.is_anonymous)return json(401,{error:'Sign in with a confirmed account to use AI chat.'});
-   let body;try{body=await readLimited(request);}catch{return json(400,{error:'Invalid request.'});}
-   if(!body || typeof body.message!=='string' || !body.message.trim() || body.message.length>4000)return json(400,{error:'Enter a question of up to 4,000 characters.'});
+   if(!user?.id||!user.email_confirmed_at||user.is_anonymous)return json(request,401,{error:'Sign in with a confirmed account to use AI chat.'});
+   let body;try{body=await readLimited(request);}catch{return json(request,400,{error:'Invalid request.'});}
+   if(!body || typeof body.message!=='string' || !body.message.trim() || body.message.length>4000)return json(request,400,{error:'Enter a question of up to 4,000 characters.'});
    const used=await reserve(user.id);
-   if(used===null)return json(429,{error:'You have used your 10 questions for today. Your allowance resets at midnight UTC.'});
+   if(used===null)return json(request,429,{error:'You have used your 10 questions for today. Your allowance resets at midnight UTC.'});
    const answer=await generate(body.message.trim());
-   if(typeof answer!=='string'||!answer.trim())return json(502,{error:'The AI could not provide an answer. This attempt counts towards your daily allowance.'});
-   return json(200,{answer:answer.slice(0,20000),remaining:10-used});
+   if(typeof answer!=='string'||!answer.trim())return json(request,502,{error:'The AI could not provide an answer. This attempt counts towards your daily allowance.'});
+   return json(request,200,{answer:answer.slice(0,20000),remaining:10-used});
   }catch(error){
    // Never expose upstream responses, credentials or user prompts in logs or errors.
-   if(error?.name==='ProviderError')return json(error.status,{error:error.message+' This attempt counts towards your daily allowance.'});
-   return json(503,{error:'AI chat is unavailable right now. If your request reached the AI, the attempt counts towards your daily allowance.'});
+   if(error?.name==='ProviderError')return json(request,error.status,{error:error.message+' This attempt counts towards your daily allowance.'});
+   return json(request,503,{error:'AI chat is unavailable right now. If your request reached the AI, the attempt counts towards your daily allowance.'});
   }
  };
 }

@@ -70,7 +70,7 @@ const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('
 test('logged-out visitors see the study-and-everyday landing and cannot access guest workspace',async()=>{
   const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});try{await run();
   assert.equal(w.document.querySelector('#landing').hidden,false);assert.equal(w.document.querySelector('.app-shell').hidden,true);
-  assert.match(w.document.querySelector('#landing').textContent,/Study, plan.*make room for life/i);
+  assert.match(w.document.querySelector('#landing').textContent,/study planner.*everyday life/i);
   w.document.querySelector('[data-open-auth="login"]').click();assert.match(w.document.querySelector('#modal').textContent,/setup is not complete/i);
   }finally{dom.window.close();}
 });

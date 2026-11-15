@@ -6,11 +6,25 @@ import {JSDOM} from 'jsdom';
 const canonical='https://everythinginahub.github.io/public/';
 const read=path=>readFile(new URL(path,import.meta.url),'utf8');
 
-test('public entry page has accurate search, canonical and social metadata',async()=>{
+function visibleWordCount(element){
+ const copy=element.cloneNode(true);
+ copy.querySelectorAll('script,style,noscript,[hidden]').forEach(node=>node.remove());
+ copy.querySelectorAll('details:not([open]) > :not(summary)').forEach(node=>node.remove());
+ return (copy.textContent.match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu)||[]).length;
+}
+function structuredData(document){
+ return [...document.querySelectorAll('script[type="application/ld+json"]')].map(script=>JSON.parse(script.textContent));
+}
+
+test('public entry and root fallback have a keyword H1 and substantive, structured copy',async()=>{
  const [html,root,login,status]=await Promise.all([read('../public/index.html'),read('../index.html'),read('../public/login.html'),read('../public/status.html')]);
  const doc=new JSDOM(html).window.document,rootDoc=new JSDOM(root).window.document,loginDoc=new JSDOM(login).window.document,statusDoc=new JSDOM(status).window.document;
  assert.match(doc.title,/Study Planner, Flashcards & Everyday Tools/);
- assert.match(doc.querySelector('meta[name="description"]').content,/study planner and revision hub/i);
+ assert.match(doc.title,/study planner/i);
+ const description=doc.querySelector('meta[name="description"]').content;
+ assert.ok(description.length>=70&&description.length<=160,`description length is ${description.length}`);
+ assert.match(description,/study planner/i);
+ assert.match(doc.querySelector('.entry-intro > p:not(.entry-kicker)').textContent,/study planner/i);
  assert.equal(doc.querySelector('link[rel="canonical"]').href,canonical);
  assert.equal(doc.querySelector('meta[property="og:url"]').content,canonical);
  assert.equal(doc.querySelector('meta[property="og:type"]').content,'website');
@@ -20,14 +34,30 @@ test('public entry page has accurate search, canonical and social metadata',asyn
  assert.equal(rootDoc.querySelector('meta[property="og:image"]').content,doc.querySelector('meta[property="og:image"]').content);
  assert.equal(loginDoc.querySelector('meta[name="robots"]').content,'noindex,nofollow');
  assert.equal(statusDoc.querySelector('meta[name="robots"]').content,'noindex,nofollow');
- assert.match(doc.querySelector('h1').innerHTML,/Study, plan<br>and make room for life/);
+
+ for(const [name,page,copy] of [
+  ['public landing',doc,doc.querySelector('#landing')],
+  ['root redirect fallback',rootDoc,rootDoc.querySelector('main')]
+ ]){
+  assert.equal(page.querySelectorAll('h1').length,1,`${name} has exactly one H1`);
+  assert.match(page.querySelector('h1').textContent,/study planner/i,`${name} H1 uses the target topic`);
+  assert.ok(visibleWordCount(copy)>=300,`${name} has at least 300 visible words (found ${visibleWordCount(copy)})`);
+  assert.ok(page.querySelectorAll('h2').length>=2,`${name} copy is divided with H2 headings`);
+  assert.ok(page.querySelectorAll('h3').length>=1,`${name} copy includes H3 subheadings`);
+  const website=structuredData(page).find(schema=>schema['@type']==='WebSite');
+  assert.ok(website,`${name} has WebSite JSON-LD`);
+  assert.equal(website.name,'Everything Hub');
+  assert.equal(website.url,canonical);
+  assert.match(website.description,/study planning|revision|everyday/i);
+ }
+
  assert.match(doc.querySelector('.entry-index').textContent,/Flashcards, quizzes & books/);
  assert.match(doc.querySelector('.entry-note').textContent,/daily puzzle is optional and untimed/i);
  assert.match(doc.querySelector('.entry-note').textContent,/at your pace/i);
- const structured=JSON.parse(doc.querySelector('script[type="application/ld+json"]').textContent);
- assert.equal(structured['@type'],'WebApplication');
- assert.equal(structured.url,canonical);
- assert.ok(structured.featureList.includes('Flashcards, quizzes and practice tests'));
+ const application=structuredData(doc).find(schema=>schema['@type']==='WebApplication');
+ assert.ok(application,'the existing WebApplication schema is preserved');
+ assert.equal(application.url,canonical);
+ assert.ok(application.featureList.includes('Flashcards, quizzes and practice tests'));
 });
 
 test('robots and sitemap advertise only the public landing page and social image is a valid 1200 by 630 PNG',async()=>{
