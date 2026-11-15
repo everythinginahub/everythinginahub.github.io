@@ -2375,7 +2375,7 @@ dialog::backdrop {
   width:120px;
   height:32px;
   margin:16px 0 0 auto;
-  opacity:.46;
+  opacity:.72;
   line-height:0;
   transition:opacity .16s ease;
 }
