@@ -2368,3 +2368,25 @@ dialog::backdrop {
  #app .text-editor-actions button { flex:1 1 auto; }
  #app .text-editor-result-row .text-editor-actions { width:100%; }
 }
+
+/* Subtle Launch Orbit credit at the foot of the intro copy. */
+.launch-orbit-badge {
+  display:block;
+  width:120px;
+  height:32px;
+  margin:16px 0 0 auto;
+  opacity:.46;
+  line-height:0;
+  transition:opacity .16s ease;
+}
+.launch-orbit-badge img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.launch-orbit-badge:hover,
+.launch-orbit-badge:focus-visible { opacity:1; }
+.launch-orbit-badge:focus-visible { outline:2px solid #bcd6ff; outline-offset:4px; border-radius:4px; }
+@media(prefers-reduced-motion:reduce) { .launch-orbit-badge { transition:none; } }
+@media(max-width:480px) { .launch-orbit-badge { width:105px; height:28px; margin-top:12px; } }
