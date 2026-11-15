@@ -131,7 +131,7 @@ test('a careful Skypark run can finish the entire course with its built-in jump 
 
 test('new creative game routes render playable canvas screens and reachable controls',()=>{
   const home = arcadeView();
-  assert.match(home, /#arcade\/block-world/);
+  assert.match(home, /#arcade\/voxelcraft-survival/);
   assert.match(home, /#arcade\/skypark-obby/);
   assert.match(blockWorldView(), /id="blockWorldCanvas"/);
   assert.match(blockWorldView(), /data-world-action="start"/);
