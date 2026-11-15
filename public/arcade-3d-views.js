@@ -1,4 +1,4 @@
-export const VOXELCRAFT_SURVIVAL_URL = 'https://sites.google.com/view/voxelcraftsurvival';
+export const VOXELCRAFT_SURVIVAL_PATH = './voxelcraft-survival.html';
 
 const OBBY_3D_STAR_COUNT = 5;
 
@@ -6,12 +6,12 @@ export function voxelcraftSurvivalView() {
   return `<div class="embedded-play voxelcraft-survival">
     <a class="arcade-back" href="#arcade">← Games home</a>
     <header class="embedded-play-heading">
-      <div><p class="game-eyebrow">VOXELCRAFT · SURVIVAL SANDBOX</p><h1>VoxelCraft Survival — Complete Sandbox Edition</h1><p>Play the survival world from its Google Sites page, embedded right here in the hub.</p></div>
-      <div class="embedded-game-actions"><a class="adventure-utility" href="${VOXELCRAFT_SURVIVAL_URL}" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>
+      <div><p class="game-eyebrow">VOXELCRAFT · SURVIVAL SANDBOX</p><h1>VoxelCraft Survival — Complete Sandbox Edition</h1><p>Play the complete survival sandbox locally from the Games hub.</p></div>
+      <div class="embedded-game-actions"><a class="adventure-utility" href="${VOXELCRAFT_SURVIVAL_PATH}" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>
     </header>
-    <p class="external-note">If the embedded game stays blank, its host may not allow framing in this browser. Use <strong>Open in new tab</strong> instead.</p>
-    <div class="embedded-frame voxelcraft-survival-frame"><iframe id="voxelcraftFrame" title="VoxelCraft Survival — Complete Sandbox Edition" src="${VOXELCRAFT_SURVIVAL_URL}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; gamepad; pointer-lock" allowfullscreen></iframe></div>
-    <p class="external-note">This game is provided by Google Sites. Its content and availability are controlled by the site publisher.</p>
+    <p class="external-note">The game is hosted with the hub. If the embedded screen stays blank, your browser may not support WebGL; try <strong>Open in new tab</strong>.</p>
+    <div class="embedded-frame voxelcraft-survival-frame"><iframe id="voxelcraftFrame" title="VoxelCraft Survival — Complete Sandbox Edition" src="${VOXELCRAFT_SURVIVAL_PATH}" loading="eager" sandbox="allow-scripts allow-pointer-lock" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; gamepad; pointer-lock" allowfullscreen></iframe></div>
+    <p class="external-note">The game and its Three.js renderer are served from this site; it no longer depends on Google Sites framing.</p>
   </div>`;
 }
 
