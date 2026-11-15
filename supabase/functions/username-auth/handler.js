@@ -1,15 +1,24 @@
 import {normalizeUsername,isRestrictedUsername,isValidNewPassword} from './policy.js';
 import {generateRecoveryCodes,normalizeRecoveryCode,hashRecoveryCode} from './recovery.js';
-const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
-const reply=(status,data)=>new Response(JSON.stringify(data),{status,headers});
+import {corsPreflightResponse,corsResponseHeaders} from '../_shared/cors.js';
+
+const responseHeaders={
+ 'Content-Type':'application/json',
+ 'Cache-Control':'no-store',
+ 'X-Content-Type-Options':'nosniff',
+ 'Referrer-Policy':'no-referrer'
+};
+
 async function readBody(req){
  const reader=req.body?.getReader();if(!reader)throw Error();let n=0;const chunks=[];
  for(;;){const x=await reader.read();if(x.done)break;n+=x.value.byteLength;if(n>4096){await reader.cancel();throw Error();}chunks.push(x.value);}
  const bytes=new Uint8Array(n);let i=0;for(const chunk of chunks){bytes.set(chunk,i);i+=chunk.length;}return JSON.parse(new TextDecoder().decode(bytes));
 }
+
 export function createUsernameHandler({reserve,register,resolve,login,consume,replace,changePassword,authenticate,cryptoProvider=globalThis.crypto,configured=true,loginConfigured=true}){
  return async req=>{
-  if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
+  const reply=(status,data)=>new Response(JSON.stringify(data),{status,headers:corsResponseHeaders(req,responseHeaders)});
+  if(req.method==='OPTIONS')return corsPreflightResponse(req,responseHeaders);
   if(req.method!=='POST')return reply(405,{error:'Method not allowed.'});
   if(!configured)return reply(503,{error:'Account service is unavailable.'});
   let body;try{body=await readBody(req);}catch{return reply(400,{error:'Invalid request.'});}

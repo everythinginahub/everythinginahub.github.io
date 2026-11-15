@@ -2390,3 +2390,30 @@ dialog::backdrop {
 .launch-orbit-badge:focus-visible { outline:2px solid #bcd6ff; outline-offset:4px; border-radius:4px; }
 @media(prefers-reduced-motion:reduce) { .launch-orbit-badge { transition:none; } }
 @media(max-width:480px) { .launch-orbit-badge { width:105px; height:28px; margin-top:12px; } }
+
+/* Search-friendly overview below the sign-in landing content. */
+.landing-details {
+  margin: 30px 0 0;
+  padding: clamp(28px, 5vw, 58px);
+  color: #252a48;
+  background: #f5f6fb;
+  border: 1px solid #ffffff38;
+  border-radius: 24px;
+}
+.landing-details-inner { width: min(100%, 1120px); margin: 0 auto; }
+.landing-details-kicker { margin: 0 0 12px; color: #5d58bd; font-size: 10px; font-weight: 800; letter-spacing: .12em; }
+.landing-details h2 { max-width: 760px; margin: 0 0 14px; color: #242744; font: 800 clamp(25px, 3.5vw, 37px)/1.18 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -.045em; }
+.landing-details-intro { max-width: 850px; margin: 0 0 25px; color: #59617a; font-size: 14px; line-height: 1.75; }
+.landing-details-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin: 24px 0 40px; }
+.landing-details-grid article { padding: 22px; background: #fff; border: 1px solid #e2e4ef; border-radius: 15px; }
+.landing-details-grid h3 { margin: 0 0 10px; color: #2f3154; font-size: 15px; line-height: 1.4; }
+.landing-details-grid p,
+.landing-details-guidance p { margin: 0; color: #59617a; font-size: 13px; line-height: 1.75; }
+.landing-details-guidance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-top: 20px; }
+.landing-details-guidance p { padding: 18px; background: #eceefa; border-radius: 12px; }
+@media (max-width: 760px) {
+  .landing-details { margin-top: 20px; padding: 27px 22px; border-radius: 18px; }
+  .landing-details-grid,
+  .landing-details-guidance { grid-template-columns: 1fr; }
+  .landing-details-grid { margin-bottom: 32px; }
+}
