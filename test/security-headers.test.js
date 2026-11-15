@@ -9,6 +9,9 @@ test('self-hosted server emits baseline security headers and HTTPS-only HSTS',()
   const http=securityHeadersForRequest({headers:{},socket:{encrypted:false}});
   assert.equal(http['X-Content-Type-Options'],'nosniff');
   assert.equal(http['X-Frame-Options'],'DENY');
+  const embeddedGame=securityHeadersForRequest({url:'/voxelcraft-survival.html?test=1',headers:{},socket:{encrypted:false}});
+  assert.equal(embeddedGame['X-Frame-Options'],'SAMEORIGIN');
+  assert.match(embeddedGame['Content-Security-Policy'],/frame-ancestors 'self'/);
   assert.equal(http['Referrer-Policy'],'strict-origin-when-cross-origin');
   assert.match(http['Content-Security-Policy'],/object-src 'none'/);
   assert.match(http['Content-Security-Policy'],/base-uri 'self' https:\/\/cdn\.jsdelivr\.net/);
@@ -25,6 +28,8 @@ test('static-host response-header configuration and GitHub Pages meta fallbacks 
     read('../_headers'),read('../README.md'),read('../index.html'),read('../public/index.html'),read('../public/login.html'),read('../public/status.html'),read('../status/index.html')
   ]);
   for(const name of ['Content-Security-Policy','X-Content-Type-Options','X-Frame-Options','Referrer-Policy','Permissions-Policy','Strict-Transport-Security'])assert.match(headers,new RegExp(`^\\s+${name}:`,'m'));
+  assert.match(headers,/\/public\/voxelcraft-survival\.html[\s\S]*?Content-Security-Policy: [^\n]*frame-ancestors 'self'/);
+  assert.match(headers,/\/public\/voxelcraft-survival\.html[\s\S]*?X-Frame-Options: SAMEORIGIN/);
   assert.match(headers,/^\s+Strict-Transport-Security: max-age=31536000\s*$/m);
   assert.doesNotMatch(headers,/includeSubDomains/i);
   assert.match(pages[0],/url=public\/\?v=20261106-9/,'the root redirect cache-busts the entry page');

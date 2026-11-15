@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
 import {arcadeView, mountArcade} from '../public/arcade.js';
-import {VOXELCRAFT_SURVIVAL_URL, skyparkObby3DView} from '../public/arcade-3d-views.js';
+import {VOXELCRAFT_SURVIVAL_PATH, skyparkObby3DView} from '../public/arcade-3d-views.js';
 import {OBBY_3D_STARS, createObby3DGame, jumpObby3D, stepObby3D} from '../public/blockbound-engine.js';
 import {mountSkyparkObby3D} from '../public/arcade-3d-game.js';
 
@@ -23,24 +23,26 @@ test('the Games hub features VoxelCraft Survival instead of the local Blockbound
   assert.match(home,/Skypark Obby 3D/,'Skypark Obby remains a separate game');
 });
 
-test('VoxelCraft opens as an embedded Google Sites page with a new-tab fallback',()=>{
+test('VoxelCraft runs from a locally hosted sandboxed page with a new-tab fallback',()=>{
   const view=arcadeView('voxelcraft-survival');
   const dom=new JSDOM(`<main>${view}</main>`,{url:'https://example.test/',pretendToBeVisual:true});
   const root=dom.window.document.querySelector('main'),frame=root.querySelector('#voxelcraftFrame');
   assert.ok(frame);
-  assert.equal(frame.src,VOXELCRAFT_SURVIVAL_URL);
+  assert.equal(frame.getAttribute('src'),VOXELCRAFT_SURVIVAL_PATH);
+  assert.equal(frame.src,'https://example.test/voxelcraft-survival.html');
   assert.equal(frame.title,'VoxelCraft Survival — Complete Sandbox Edition');
   assert.equal(frame.getAttribute('loading'),'eager');
   assert.equal(frame.getAttribute('allowfullscreen'),'');
+  assert.equal(frame.getAttribute('sandbox'),'allow-scripts allow-pointer-lock');
   assert.match(frame.getAttribute('allow'),/fullscreen/);
   assert.match(frame.getAttribute('allow'),/pointer-lock/);
   const fallback=root.querySelector('.embedded-game-actions a');
-  assert.equal(fallback.href,VOXELCRAFT_SURVIVAL_URL);
+  assert.equal(fallback.href,frame.src);
   assert.equal(fallback.target,'_blank');
   assert.match(fallback.rel,/noopener/);
-  assert.match(root.textContent,/If the embedded game stays blank/);
-  assert.doesNotMatch(view,/blockWorldCanvas|data-world-action/);
-  assert.equal(arcadeView('block-world').includes(VOXELCRAFT_SURVIVAL_URL),true,'old bookmarks still open the replacement embed');
+  assert.match(root.textContent,/The game is hosted with the hub/);
+  assert.doesNotMatch(view,/sites\.google\.com|blockWorldCanvas|data-world-action/);
+  assert.equal(arcadeView('block-world').includes(VOXELCRAFT_SURVIVAL_PATH),true,'old bookmarks still open the replacement embed');
   dom.window.close();
 });
 

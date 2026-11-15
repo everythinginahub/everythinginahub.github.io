@@ -4,13 +4,13 @@ import {geometryDashView, mountGeometryDash} from './geometry-dash.js?v=20261114
 import {libraryView, embedView, mountLibrary, mountEmbeddedGame} from './embedded-games.js?v=20261114-13';
 import {newRunner,newOrbit,newReef,jumpRunner,launchReef,stepGame,WIDTH,HEIGHT} from './arcade-engine.js?v=20261113-1';
 import {drawArcade} from './arcade-render.js?v=20261113-1';
-import {voxelcraftSurvivalView,skyparkObby3DView} from './arcade-3d-views.js?v=20261106-5';
+import {voxelcraftSurvivalView,skyparkObby3DView} from './arcade-3d-views.js?v=20261106-6';
 
 const originalGames=[
  {slug:'skyline',name:'Skyline Sprint',category:'ENDLESS RUNNER',description:'Leap across rooftops, dodge obstacles and chase your best run.',image:'assets/game-screenshots/skyline.png'},
  {slug:'orbit',name:'Orbit Defender',category:'SPACE ACTION',description:'Take on waves of drones in a fast, colourful space battle.',image:'assets/game-screenshots/orbit.png'},
  {slug:'reef',name:'Reef Breaker',category:'ACTION PUZZLE',description:'Bounce through an underwater world and smash every crystal.',image:'assets/game-screenshots/reef.png'},
- {slug:'voxelcraft-survival',name:'VoxelCraft Survival',category:'SURVIVAL SANDBOX · EMBEDDED',description:'Play the Complete Sandbox Edition from its Google Sites page, embedded right here.',art:'blockworld',badge:'EMBEDDED'},
+ {slug:'voxelcraft-survival',name:'VoxelCraft Survival',category:'SURVIVAL SANDBOX · EMBEDDED',description:'Explore a full survival sandbox, locally hosted and playable right here.',art:'blockworld',badge:'EMBEDDED'},
  {slug:'skypark-obby',name:'Skypark Obby 3D',category:'3D PARKOUR CHALLENGE',description:'Jump across floating platforms, collect stars and try not to fall.',art:'obby'}
 ];
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
