@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="How Everything Hub handles account information, saved progress, signed-in activity counts, AI questions and third-party services.">
+  <meta name="robots" content="index,follow">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="canonical" href="https://everythinginahub.github.io/privacy/">
+  <link rel="icon" href="../public/logo.svg">
+  <link rel="stylesheet" href="../public/legal.css">
+  <title>Privacy Policy — Everything Hub</title>
+</head>
+<body class="privacy-document">
+  <header class="privacy-header"><a href="/">← Everything Hub</a></header>
+  <main class="privacy-page">
+    <p class="privacy-updated">Last updated: 6 November 2026</p>
+    <h1>Privacy Policy</h1>
+    <p>This page describes what the current Everything Hub website and its connected features do with information. It is a practical description of the implementation, not a promise about the separate services linked or embedded here. Their practices and the site’s features can change.</p>
+
+    <div class="privacy-callout"><strong>In brief:</strong> you can try the sample question without an account. Accounts can save workspace progress to Supabase. A small first-party activity counter runs only for signed-in accounts. If you use AI chat, the question you send is passed to Google Gemini. Avoid entering personal, confidential or sensitive information into shared tools or AI chat.</div>
+
+    <h2>Who provides the site</h2>
+    <p>Everything Hub is a static website hosted on GitHub Pages. Supabase provides the account, database and server-side function services used by the site. Google provides the Gemini AI service used by AI chat. These providers may process technical request information under their own terms and privacy notices.</p>
+
+    <h2>Information used by the site</h2>
+    <h3>Accounts and sign-in</h3>
+    <p>Depending on the sign-in method, account information can include a username or email address, authentication credentials, a display name or chat nickname, and selected subjects. Supabase Auth handles passwords and sign-in sessions; passwords are not included in the saved progress record. Username-only accounts use an internal sign-in identifier managed by the account service. Account email addresses are not shown to other people in chat. Username recovery codes are shown when generated; the recovery service stores hashes of those codes rather than the codes themselves.</p>
+
+    <h3>Saved progress and device storage</h3>
+    <p>When you sign in, the workspace can save lists, habits, tasks, notes, bookmarks, timetable and revision progress, rewards, profile-picture data and other account settings. The main progress record is stored in Supabase, is limited to 100,000 bytes, and is also cached in this browser so it can load and handle interrupted sync. Sync is not end-to-end encrypted; the service operator and service providers may be able to access stored data. Do not save information you would not want the service operator to see.</p>
+    <p>Some features also keep device-only data such as game scores, app pins and recent items, reading position and settings, and unsynced changes. These use browser storage and may be associated with the signed-in account on that device. Signing out does not necessarily erase these local copies. Clearing this site’s browser storage removes local data and identifiers, but does not delete the account or cloud data; unsynced changes may be lost.</p>
+
+    <h3>Community and shared content</h3>
+    <p>If you choose to publish a flashcard set, it is visible to other signed-in users. Community chat messages and the nickname used with them are visible to signed-in users. The current chat code removes messages older than 24 hours during later message activity and caps the stored message list at 1,000; because cleanup runs when messages are sent, a message may remain longer if no later message triggers cleanup. You can delete your own community message in the app. Reports and moderation-related records may also be processed.</p>
+    <p>Live-game rooms contain the host’s questions, players’ nicknames and answers, and any room-chat messages. Rooms expire after about two hours and are removed during later room creation; related room data is deleted with the room. Expired data may remain until that cleanup runs. Use a nickname that does not identify you, and do not post contact details or other private information.</p>
+
+    <h3>Signed-in activity counts</h3>
+    <p>The site’s first-party status counter records activity only while an account is signed in. It uses a random browser identifier saved in local storage, a random per-tab session identifier, the signed-in account identifier and timestamps to count page views and recent presence. The private status page is excluded from page-view counts. Its counting function does not store page paths, page text, questions, IP addresses or email-address fields. Supabase may still process ordinary request metadata, such as a source IP address, while serving requests under its own service practices. The browser identifier helps estimate distinct browsers; it is not a reliable count of people and changes if browser storage is cleared.</p>
+    <p>Session rows older than one day are removed when a later activity ping performs cleanup. Unique-browser identifiers and aggregate totals have no automatic expiry in the current database code. Historical anonymous totals from before anonymous tracking was disabled remain part of the displayed historical counts; new anonymous page views are not collected.</p>
+
+    <h3>AI chat</h3>
+    <p>If you choose to send a question, the current message (up to 4,000 characters) is sent to the Everything Hub Supabase function and then to Google Gemini 3.5 Flash-Lite. Earlier chat messages are not sent. The displayed conversation stays in browser memory while the page is open; clearing it only clears that display. Supabase stores the account identifier, UTC date and number of daily attempts for the quota, not the prompt. The current quota table has no automatic cleanup job. Failed or cancelled requests may count towards the daily allowance. Google’s processing and any use of prompts are governed by Google’s terms and data practices; the current free-tier service may use content to improve its products. Do not submit personal or sensitive details.</p>
+
+    <h2>Browser storage and third-party services</h2>
+    <p>The site uses browser local storage and session storage for sign-in state, saved or cached progress, the activity identifier, settings and device-only feature data. The core app does not load a third-party analytics SDK. The signed-in counter described above is first-party and uses a local-storage identifier rather than an advertising cookie.</p>
+    <p>Some features contact external services when you view or use them. The landing-page Launch Orbit badge loads an image from Launch Orbit. Video thumbnails and embedded lessons use YouTube services, including YouTube’s privacy-enhanced player domain. Optional book scans use Internet Archive. Games may load from Geometry Dash, Two Player Games, Classroom Resources, jsDelivr or the independent game collection. Links and saved bookmarks can open other websites. These services receive their own requests and may receive information such as your IP address, browser/device information and a referrer, and may use cookies or similar technologies. Their availability, content and data practices are controlled by those providers, not Everything Hub. Review the relevant provider’s privacy information before using an embed or external link.</p>
+
+    <h2>Retention and account requests</h2>
+    <p>Cloud progress and account information remain in the connected service until changed or removed by the service operator. The site does not currently provide a self-service account deletion control. The current implementation also has no general automatic expiry for account progress or daily AI quota rows. Provider logs, backups and operational records may have separate retention rules set by the providers. Local browser data remains until it is overwritten or cleared in your browser.</p>
+    <div class="privacy-contact">
+      <p><strong>Questions or deletion requests:</strong> contact the maintainer through the <a href="https://github.com/everythinginahub/everythinginahub.github.io">project’s GitHub page</a>. GitHub issues are public, so do not post your username, email address, recovery code, password, AI prompt or other private account information there. No private support form or self-service deletion flow is currently provided on this site.</p>
+    </div>
+
+    <h2>Changes to this policy</h2>
+    <p>This policy may be updated when the site’s data practices or connected services change. The date at the top indicates the latest revision.</p>
+  </main>
+  <footer class="site-footer"><a href="/">Everything Hub home</a><a href="/privacy/" aria-current="page">Privacy Policy</a></footer>
+</body>
+</html>
