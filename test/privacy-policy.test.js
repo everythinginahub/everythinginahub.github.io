@@ -43,7 +43,8 @@ test('privacy policy reflects the current accounts, progress, activity and third
   const policy=await text('privacy/index.html');
   for(const phrase of [
     'Supabase Auth','100,000 bytes','not end-to-end encrypted','random browser identifier',
-    'older than one day','no automatic expiry','Google Gemini 3.5 Flash-Lite','may use content to improve its products',
+    'older than one day','no automatic expiry','kindlehub-api.arancool3000.workers.dev',"share the key owner's daily AI allowance",'Google Gemini','provider keys remain server-side',
+    'latest short-term request window','no per-account daily site cap','12 attempts per account in a fixed 60-second window','may incur charges',
     'Launch Orbit','Better Launch','CodeHype','YouTube','Internet Archive','24 hours','two hours',
     'does not store page paths','ordinary request metadata','self-service account deletion control','GitHub issues are public'
   ])assert.ok(policy.toLowerCase().includes(phrase.toLowerCase()),`policy should explain ${phrase}`);

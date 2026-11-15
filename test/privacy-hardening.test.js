@@ -69,16 +69,20 @@ test('login and recovery limits are isolated by normalized username before privi
   assert.ok(recovery.indexOf("reserve('recover'")<recovery.indexOf('await resolve(username)'));
 });
 
-test('AI quota reservation has an empty search path and service-role-only access',async()=>{
+test('AI request windows have no daily cap and remain service-role-only',async()=>{
   const quota=await read('../supabase/ai_quota.sql');
   const migration=await read('../supabase/privacy_hardening.sql');
   for(const source of [quota,migration]){
     const functionSql=source.match(/create or replace function public\.ai_reserve_request\(p_user_id uuid\)[\s\S]*?\$\$;/i)?.[0];
-    assert.ok(functionSql,'AI quota function should be present');
+    assert.ok(functionSql,'AI request limiter should be present');
     assert.match(functionSql,/security definer\s+set search_path\s*=\s*''/i);
-    assert.match(functionSql,/insert into public\.ai_daily_usage as usage_row/i);
-    assert.match(functionSql,/where usage_row\.used < 10/i);
+    assert.match(functionSql,/insert into public\.ai_request_limits as request_row/i);
+    assert.match(functionSql,/request_row\.used < 12/i);
+    assert.match(functionSql,/request_row\.window_start <= request_time - interval '1 minute'/i);
+    assert.match(source,/alter table public\.ai_request_limits enable row level security/i);
+    assert.match(source,/revoke all on table public\.ai_request_limits from public, anon, authenticated;/i);
     assert.match(source,/revoke all on function public\.ai_reserve_request\(uuid\) from public, anon, authenticated;/i);
     assert.match(source,/grant execute on function public\.ai_reserve_request\(uuid\) to service_role;/i);
+    assert.match(source,/drop table if exists public\.ai_daily_usage/i,'the replaced daily counter table is removed');
   }
 });

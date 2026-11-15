@@ -2417,3 +2417,18 @@ dialog::backdrop {
   .landing-details-guidance { grid-template-columns: 1fr; }
   .landing-details-grid { margin-bottom: 32px; }
 }
+
+/* Small local-first utilities added to the searchable launcher. */
+.password-generator-options { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px 16px; margin:18px 0; padding:16px; border:1px solid #d9ded9; border-radius:8px; }
+.password-generator-options legend { padding:0 6px; color:#334650; font-size:12px; font-weight:750; }
+.mini-panel .password-generator-options label,
+.mini-panel .password-generator-ambiguous { display:flex; align-items:flex-start; gap:8px; margin:0; color:#40544b; font-size:13px; line-height:1.5; }
+.mini-panel .password-generator-options input[type="checkbox"],
+.mini-panel .password-generator-ambiguous input[type="checkbox"] { flex:0 0 auto; width:16px; min-height:16px; margin:2px 0 0; }
+.password-generator #generatedPassword { max-width:620px; font-family:ui-monospace,"Cascadia Code",monospace; font-size:16px; letter-spacing:.025em; }
+.password-generator #copyGeneratedPassword { display:block; margin-top:10px; }
+.image-resizer #imageFile { display:block; max-width:100%; }
+.image-resizer-preview-frame { display:grid; justify-items:start; gap:12px; margin-top:20px; padding:14px; border:1px solid #d9ded9; border-radius:8px; background:#f7f8f4; }
+.image-resizer-preview { display:block; max-width:100%; max-height:420px; object-fit:contain; }
+.image-resizer-preview-frame .btn { min-height:42px; padding:10px 14px; }
+@media(max-width:560px) { .password-generator-options { grid-template-columns:1fr; } }
