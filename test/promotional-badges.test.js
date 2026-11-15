@@ -43,6 +43,7 @@ test('both landing pages show all three accessible, responsive promotional badge
       assert.equal(link.target,'_blank');
       assert.match(link.rel,/noopener/);
       assert.match(link.rel,/noreferrer/);
+      assert.match(link.rel,/nofollow/,'promotional directory links do not pass link equity');
       const image=link.querySelector('img');
       assert.ok(image,`${className} contains an image`);
       assert.equal(image.src,details.src);
