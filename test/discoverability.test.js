@@ -71,3 +71,8 @@ test('robots and sitemap advertise the canonical overview and privacy page and s
  assert.equal(image.readUInt32BE(16),1200);
  assert.equal(image.readUInt32BE(20),630);
 });
+
+test('repository README links directly to the canonical live site',async()=>{
+ const readme=await read('../README.md');
+ assert.match(readme,/\[Everything Hub\]\(https:\/\/everythinginahub\.github\.io\/\)/);
+});

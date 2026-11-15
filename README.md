@@ -1,5 +1,7 @@
 # Everything Hub
 
+**Live site:** [Everything Hub](https://everythinginahub.github.io/)
+
 A free-to-host personal workspace on GitHub Pages, with Supabase accounts and progress sync. Visitors can try a sample starter question without an account; saved workspace tools and progress require sign-in. The sample answer is not saved. The searchable home screen brings together everyday lists, habits, saved links, tasks, notes, books, timers and calculators alongside the existing school timetable, revision, games, rewards and shared community chat. Existing accounts, progress, revision routes and deep links remain in place. Selecting school subjects is no longer required for signup; people can select subjects when they first open revision tools.
 
 ## Web security headers
