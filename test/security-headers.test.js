@@ -62,7 +62,9 @@ test('static-host response-header configuration and GitHub Pages meta limits are
   assert.doesNotMatch(pages[0],/<meta[^>]*http-equiv="refresh"/i,'the root must not recreate the soft redirect');
   assert.match(pages[0],/rel="canonical" href="https:\/\/everythinginahub\.github\.io\/"/);
   assert.match(pages[1],/rel="canonical" href="https:\/\/everythinginahub\.github\.io\/"/);
-  assert.match(pages[0],/default-src 'self'; img-src 'self' data: https:\/\/launchorbit\.co; script-src 'self'/);
+  assert.match(pages[0],/default-src 'self'; img-src 'self' data: https:\/\/launchorbit\.co https:\/\/www\.betterlaunch\.co https:\/\/www\.codehype\.ai; script-src 'self'/);
+  assert.match(pages[1],/img-src 'self' data: blob: https:\/\/launchorbit\.co https:\/\/www\.betterlaunch\.co https:\/\/www\.codehype\.ai/);
+  for(const policy of [CSP_SITE,CSP_APP])for(const host of ['https://www.betterlaunch.co','https://www.codehype.ai'])assert.match(policy,new RegExp(host.replaceAll('.','\\.')+'(?:\\s|;)'));
   assert.match(pages[1],/connect-src 'self' https:\/\/tytcagbeucbugwjwgiog\.supabase\.co wss:\/\/tytcagbeucbugwjwgiog\.supabase\.co/);
   assert.match(pages[5],/rel="canonical" href="https:\/\/everythinginahub\.github\.io\/privacy\/"/);
   for(const page of pages)assert.match(page,/Content-Security-Policy/);

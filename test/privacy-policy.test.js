@@ -44,7 +44,7 @@ test('privacy policy reflects the current accounts, progress, activity and third
   for(const phrase of [
     'Supabase Auth','100,000 bytes','not end-to-end encrypted','random browser identifier',
     'older than one day','no automatic expiry','Google Gemini 3.5 Flash-Lite','may use content to improve its products',
-    'Launch Orbit','YouTube','Internet Archive','24 hours','two hours',
+    'Launch Orbit','Better Launch','CodeHype','YouTube','Internet Archive','24 hours','two hours',
     'does not store page paths','ordinary request metadata','self-service account deletion control','GitHub issues are public'
   ])assert.ok(policy.toLowerCase().includes(phrase.toLowerCase()),`policy should explain ${phrase}`);
 });
