@@ -7,7 +7,7 @@ const responseHeaders = {
  'X-Content-Type-Options':'nosniff',
  'Referrer-Policy':'no-referrer'
 };
-const json=(request,status,body)=>new Response(JSON.stringify(body),{status,headers:corsResponseHeaders(request,responseHeaders)});
+const json=(request,status,body,extraHeaders={})=>new Response(JSON.stringify(body),{status,headers:corsResponseHeaders(request,{...responseHeaders,...extraHeaders})});
 async function readLimited(request){
  const reader=request.body?.getReader(); if(!reader)throw Error('empty');
  let total=0;const parts=[];
@@ -29,15 +29,15 @@ export function createHandler({authenticate,reserve,generate,configured=true}){
    if(!user?.id||!user.email_confirmed_at||user.is_anonymous)return json(request,401,{error:'Sign in with a confirmed account to use AI chat.'});
    let body;try{body=await readLimited(request);}catch{return json(request,400,{error:'Invalid request.'});}
    if(!body || typeof body.message!=='string' || !body.message.trim() || body.message.length>4000)return json(request,400,{error:'Enter a question of up to 4,000 characters.'});
-   const used=await reserve(user.id);
-   if(used===null)return json(request,429,{error:'You have used your 10 questions for today. Your allowance resets at midnight UTC.'});
+   const reserved=await reserve(user.id);
+   if(!reserved)return json(request,429,{error:'You have sent too many AI requests in a short period. Please wait for the rate limit to reset and try again.'});
    const answer=await generate(body.message.trim());
-   if(typeof answer!=='string'||!answer.trim())return json(request,502,{error:'The AI could not provide an answer. This attempt counts towards your daily allowance.'});
-   return json(request,200,{answer:answer.slice(0,20000),remaining:10-used});
+   if(typeof answer!=='string'||!answer.trim())return json(request,502,{error:'The AI could not provide an answer. This attempt counts towards the short-term rate limit.'});
+   return json(request,200,{answer:answer.slice(0,20000)});
   }catch(error){
    // Never expose upstream responses, credentials or user prompts in logs or errors.
-   if(error?.name==='ProviderError')return json(request,error.status,{error:error.message+' This attempt counts towards your daily allowance.'});
-   return json(request,503,{error:'AI chat is unavailable right now. If your request reached the AI, the attempt counts towards your daily allowance.'});
+   if(error?.name==='ProviderError')return json(request,error.status,{error:error.message+' This attempt may count towards the short-term rate limit.'},error.retryAfter?{'Retry-After':error.retryAfter}:{});
+   return json(request,503,{error:'AI chat is unavailable right now. If your request reached the AI, the attempt may count towards the short-term rate limit.'});
   }
  };
 }

@@ -60,12 +60,45 @@ test('public entry and root overview have a keyword H1 and substantive, structur
  assert.ok(application.featureList.includes('Flashcards, quizzes and practice tests'));
 });
 
+test('SEO guides target distinct tasks with self-canonicals, useful copy and internal links',async()=>{
+ const guides=[
+  ['study-planner','study planner',/study planner/i],
+  ['revision-tools','revision tools',/revision tools|flashcards/i],
+  ['student-timetable','student timetable',/student timetable/i],
+  ['everyday-tools','everyday tools',/everyday/i]
+ ];
+ for(const [slug,label,target] of guides){
+  const html=await read(`../${slug}/index.html`);
+  const doc=new JSDOM(html,{url:`${canonical}${slug}/`}).window.document;
+  const expectedUrl=`${canonical}${slug}/`;
+  const main=doc.querySelector('main');
+  assert.equal(doc.querySelector('meta[name="robots"]').content,'index,follow',`${label} should be indexable`);
+  assert.equal(doc.querySelector('link[rel="canonical"]').href,expectedUrl,`${label} should self-canonicalize`);
+  assert.equal(doc.querySelector('meta[property="og:url"]').content,expectedUrl);
+  assert.match(doc.title,target);
+  assert.match(doc.querySelector('meta[name="description"]').content,target);
+  assert.equal(main.querySelectorAll('h1').length,1,`${label} should have exactly one H1`);
+  assert.match(main.querySelector('h1').textContent,target);
+  assert.ok(visibleWordCount(main)>=350,`${label} should have substantive copy (found ${visibleWordCount(main)} words)`);
+  assert.ok(main.querySelectorAll('h2').length>=3,`${label} should have useful sections`);
+  assert.ok(doc.querySelector('nav[aria-label] a[href="/"]')||doc.querySelector('.seo-brand[href="/"]'),`${label} should link back to the root overview`);
+  const internalGuideLinks=[...doc.querySelectorAll('a[href^="/"]')].map(link=>link.getAttribute('href')).filter(href=>guides.some(([path])=>href===`/${path}/`)&&href!==`/${slug}/`);
+  assert.ok(internalGuideLinks.length>=2,`${label} should link to related guides`);
+  assert.ok([...doc.querySelectorAll('a[href^="/public/"]')].length>=1,`${label} should link to the interactive workspace`);
+  assert.match(doc.querySelector('footer').innerHTML,/href="\/privacy\/"/);
+  const webPage=structuredData(doc).find(schema=>schema['@type']==='WebPage');
+  assert.ok(webPage,`${label} should have WebPage structured data`);
+  assert.equal(webPage.url,expectedUrl);
+  assert.equal(webPage.isPartOf.url,canonical);
+ }
+});
+
 test('robots and sitemap advertise the canonical overview and privacy page and social image is valid',async()=>{
  const [robots,sitemap,image]=await Promise.all([read('../robots.txt'),read('../sitemap.xml'),readFile(new URL('../public/social-preview.png',import.meta.url))]);
  assert.match(robots,/^User-agent: \*\s+Allow: \/\s+/);
  assert.match(robots,/Sitemap: https:\/\/everythinginahub\.github\.io\/sitemap\.xml/);
  assert.match(sitemap,/<loc>https:\/\/everythinginahub\.github\.io\/<\/loc>/);
- assert.match(sitemap,/<loc>https:\/\/everythinginahub\.github\.io\/privacy\/<\/loc>/);
+ for(const path of ['study-planner','revision-tools','student-timetable','everyday-tools','privacy'])assert.match(sitemap,new RegExp(`<loc>https:\\/\\/everythinginahub\\.github\\.io\\/${path}\\/</loc>`));
  assert.doesNotMatch(sitemap,/public\/|status|login|#/i);
  assert.equal(image.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
  assert.equal(image.readUInt32BE(16),1200);
