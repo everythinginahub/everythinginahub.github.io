@@ -1,5 +1,6 @@
 import {miniApps,miniAppView,mountMiniApp} from '../public/mini-apps.js';
 import {youtubeWorkspace,mountYouTubeWorkspace} from '../public/youtube-player.js';
+import {mountFeedback} from '../public/feedback.js';
 import {aiChatWorkspace,mountAiChat} from '../public/ai-chat.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -37,7 +38,7 @@ const account={id:'b9248376-5088-4298-889f-3227c6105a21',email:'learner@example.
 const defaultProgress={completed:{biology:true},reviews:{},tasks:[],activity:[],subjects:['Biology','Mathematics']};
 function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
   const log={saved:null,created:null,signup:null,login:null,signOut:0,sets:[],nickname:session?.user_metadata?.nickname||null};
-  const client={functions:{invoke:async(_slug,{body})=>{log.request=body;if(body.action==='signup'){log.signup=body;return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}if(body.action==='login')return {data:{session:{access_token:'access-token',refresh_token:'refresh-token'}}};if(body.action==='recover'){log.recover=body;return {data:{ok:true}};}if(body.action==='codes')return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}},rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
+  const client={supabaseUrl:'https://example.supabase.co',supabaseKey:'sb_publishable_test',functions:{invoke:async(_slug,{body})=>{log.request=body;if(_slug==='site-feedback'){log.feedback=body;return {data:{ok:true}};}if(body.action==='signup'){ log.signup=body;return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}if(body.action==='login')return {data:{session:{access_token:'access-token',refresh_token:'refresh-token'}}};if(body.action==='recover'){log.recover=body;return {data:{ok:true}};}if(body.action==='codes')return {data:{codes:Array(5).fill('ABCD1234-ABCD1234-ABCD1234-ABCD1234')}};}},rpc:async(name,args)=>{if(name==='community_nickname_get')return {data:log.nickname};if(name==='community_nickname_set'){log.nickname=args.p_nickname;return {data:log.nickname};}if(name==='community_chat_list')return {data:[]};return {data:null};},auth:{
     getSession:async()=>({data:{session:session?{user:session}:null}}),
     setSession:async input=>(log.session=input,{data:{user:account}}),
     signInWithPassword:async input=>(log.login=input,{data:{user:account}}),
@@ -59,7 +60,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,mountFeedback,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -585,10 +586,22 @@ test('signed-in account can request replacement recovery codes',async()=>{
  const {client,log}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('#topAccount').click();q('#openRecoveryCodes').click();await wait();assert.equal(log.request.action,'codes');assert.match(q('#modal').textContent,/Each code works once/);assert.equal(q('.recovery-codes').closest('[data-clarity-mask]').getAttribute('data-clarity-mask'),'true');}finally{dom.window.close();}
 });
 
-test('YouTube player is accessible without subjects and stops when leaving',async()=>{
+test('visitors can submit private feedback without signing in',async()=>{
+ const {client,log}=mockClient();const {dom,w,run}=setup(client);try{
+  await run();const q=s=>w.document.querySelector(s);let request=null;
+  w.fetch=async(url,options)=>{request={url,options};log.feedback=JSON.parse(options.body);return new Response(JSON.stringify({ok:true}),{status:200,headers:{'content-type':'application/json'}});};
+  q('.site-footer [data-open-feedback]').click();assert.equal(q('#feedbackDialog').open,true);
+  q('#feedbackCategory').value='problem';q('#feedbackMessage').value='The planner button does not respond on my phone.';q('#feedbackForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(request.url,'https://example.supabase.co/functions/v1/site-feedback');assert.deepEqual(request.options.headers,{ 'Content-Type':'application/json',apikey:'sb_publishable_test' });assert.equal(request.options.credentials,'omit');
+  assert.deepEqual(log.feedback,{category:'problem',message:'The planner button does not respond on my phone.',page:'website',website:''});assert.match(q('#feedbackStatus').textContent,/sent privately/);assert.equal(q('#feedbackDialog').open,true);
+ }finally{dom.window.close();}
+});
+
+test('Bing Videos remains available without subjects and the separate player panel is gone',async()=>{
  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);try{
-  await run();const q=s=>w.document.querySelector(s);assert.ok(q('.home-directory a[href="#youtube"]'));go(w,'#youtube');assert.equal(q('#crumb').textContent,'Bing Videos');assert.ok(q('#bingVideosSearchForm'));assert.ok(q('#bingVideosFrame'));assert.ok(q('#youtubeLibrarySearchForm'));assert.ok(q('#youtubePlayForm'));assert.equal(q('#subjectsForm'),null);
-  q('#youtubeLink').value='https://youtu.be/vCJVXYmXkzM';q('#youtubePlayForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#youtubePlayer iframe').src,/youtube-nocookie\.com\/embed\/vCJVXYmXkzM/);go(w,'#home');assert.equal(q('#youtubePlayer iframe'),null);
+  await run();const q=s=>w.document.querySelector(s);assert.ok(q('.home-directory a[href="#youtube"]'));go(w,'#youtube');assert.equal(q('#crumb').textContent,'Bing Videos');assert.ok(q('#bingVideosSearchForm'));assert.ok(q('#bingVideosFrame'));assert.ok(q('#youtubeLibrarySearchForm'));assert.equal(q('#youtubePlayForm'),null);assert.equal(q('#youtubePlayer'),null);assert.equal(q('#subjectsForm'),null);
+  q('#youtubeLibraryQuery').value='osmosis';q('#youtubeLibrarySearchForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));const result=q('#youtubeLibraryResults a');assert.equal(result.href,'https://www.youtube.com/watch?v=vCJVXYmXkzM');assert.equal(result.target,'_blank');assert.equal(q('#youtubePlayer'),null);
+  q('#bingVideosQuery').value='study skills';q('#bingVideosSearchForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.equal(q('#bingVideosFrame').src,'https://www.bing.com/videos/search?q=study+skills&mkt=en-GB');const bingFrame=q('#bingVideosFrame');go(w,'#home');assert.equal(bingFrame.src,'about:blank');
  }finally{dom.window.close();}
 });
 
