@@ -587,7 +587,7 @@ test('signed-in account can request replacement recovery codes',async()=>{
 
 test('YouTube player is accessible without subjects and stops when leaving',async()=>{
  const noSubjects={...account,user_metadata:{name:'Alex',subjects:[]}};const {client}=mockClient({session:noSubjects,progress:{...defaultProgress,subjects:[]}});const {dom,w,run}=setup(client);try{
-  await run();const q=s=>w.document.querySelector(s);assert.ok(q('.home-directory a[href="#youtube"]'));go(w,'#youtube');assert.equal(q('#crumb').textContent,'YouTube player');assert.ok(q('#youtubeSearchForm'));assert.ok(q('#youtubeLibrarySearchForm'));assert.ok(q('#youtubePlayForm'));assert.equal(q('#subjectsForm'),null);
+  await run();const q=s=>w.document.querySelector(s);assert.ok(q('.home-directory a[href="#youtube"]'));go(w,'#youtube');assert.equal(q('#crumb').textContent,'Bing Videos');assert.ok(q('#bingVideosSearchForm'));assert.ok(q('#bingVideosFrame'));assert.ok(q('#youtubeLibrarySearchForm'));assert.ok(q('#youtubePlayForm'));assert.equal(q('#subjectsForm'),null);
   q('#youtubeLink').value='https://youtu.be/vCJVXYmXkzM';q('#youtubePlayForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));assert.match(q('#youtubePlayer iframe').src,/youtube-nocookie\.com\/embed\/vCJVXYmXkzM/);go(w,'#home');assert.equal(q('#youtubePlayer iframe'),null);
  }finally{dom.window.close();}
 });
