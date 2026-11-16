@@ -3,6 +3,19 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
 const sql=await readFile(new URL('../supabase/site_feedback.sql',import.meta.url),'utf8');
+const ownerReadSql=await readFile(new URL('../supabase/site_feedback_owner_read.sql',import.meta.url),'utf8');
+
+test('owner feedback reader verifies the authenticated site owner on the server and keeps the table private',()=>{
+ assert.match(ownerReadSql,/create or replace function public\.site_feedback_admin_list\(p_limit integer default 100\)/i);
+ assert.match(ownerReadSql,/security definer\s+set search_path = ''/i);
+ assert.match(ownerReadSql,/auth\.uid\(\)/i);
+ assert.match(ownerReadSql,/public\.chat_is_owner\(v_user\)/i);
+ assert.match(ownerReadSql,/raise exception using errcode = '42501', message = 'not_authorized'/i);
+ assert.match(ownerReadSql,/from public\.site_feedback as feedback\s+order by feedback\.created_at desc, feedback\.id desc\s+limit v_limit/i);
+ assert.match(ownerReadSql,/revoke all on function public\.site_feedback_admin_list\(integer\) from public, anon, authenticated, service_role/i);
+ assert.match(ownerReadSql,/grant execute on function public\.site_feedback_admin_list\(integer\) to authenticated/i);
+ assert.doesNotMatch(ownerReadSql,/grant\s+select\s+on\s+public\.site_feedback\s+to\s+(?:public|anon|authenticated)/i);
+});
 
 test('feedback database storage is private, constrained and guarded by an atomic rate limit',()=>{
  assert.match(sql,/create table if not exists public\.site_feedback/i);
