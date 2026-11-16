@@ -2432,3 +2432,20 @@ dialog::backdrop {
 .image-resizer-preview { display:block; max-width:100%; max-height:420px; object-fit:contain; }
 .image-resizer-preview-frame .btn { min-height:42px; padding:10px 14px; }
 @media(max-width:560px) { .password-generator-options { grid-template-columns:1fr; } }
+
+/* Search the selected video lessons in place and launch a result in the player. */
+.youtube-search-status { margin:10px 0 0; color:#647376; font-size:11px; line-height:1.55; }
+.youtube-library-results { display:grid; gap:8px; max-height:54vh; margin-top:12px; overflow:auto; overscroll-behavior:contain; }
+.youtube-library-results:empty { display:none; }
+.youtube-result-card { display:grid; grid-template-columns:104px minmax(0,1fr); align-items:center; gap:10px; width:100%; padding:8px; border:1px solid #d9ded9; border-radius:5px; background:#fff; color:#263039; text-align:left; cursor:pointer; transition:border-color 140ms ease,transform 140ms ease; }
+.youtube-result-card:hover { transform:translateY(-1px); border-color:#78958a; box-shadow:0 5px 14px #23352d15; }
+.youtube-result-card:focus-visible { outline:2px solid #315f77; outline-offset:2px; }
+.youtube-result-card img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:3px; background:#172630; }
+.youtube-result-copy { display:flex; min-width:0; flex-direction:column; gap:4px; }
+.youtube-result-copy strong { display:-webkit-box; overflow:hidden; color:#263039; font-size:11px; line-height:1.35; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.youtube-result-details,.youtube-result-copy small { display:-webkit-box; overflow:hidden; color:#647376; font-size:9px; line-height:1.35; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.youtube-all-search { margin-top:20px; padding-top:17px; border-top:1px solid #e0e4de; }
+.youtube-all-search h3 { margin:0; color:#334650; font-size:14px; }
+.youtube-all-search>p { margin:6px 0 14px; color:#647376; font-size:11px; line-height:1.55; }
+@media(max-width:550px) { .youtube-library-results { max-height:50vh; } .youtube-result-card { grid-template-columns:94px minmax(0,1fr); } }
+@media(prefers-reduced-motion:reduce) { .youtube-result-card { transition:none; } .youtube-result-card:hover { transform:none; } }
