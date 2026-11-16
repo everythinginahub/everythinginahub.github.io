@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createKindleHubGenerator,KINDLEHUB_API_BASE,DEFAULT_KINDLEHUB_MODEL} from '../supabase/functions/ai-chat/kindlehub.js';
+import {createAssistantIdentityPrompt} from '../supabase/functions/ai-chat/identity.js';
 
 const success=payload=>({ok:true,status:200,json:async()=>payload});
 const failure=(status,code,retryAfter='')=>({
@@ -21,7 +22,10 @@ test('uses the documented OpenAI-compatible KindleHub endpoint, bearer auth and 
  assert.equal(call.options.headers['Content-Type'],'application/json');
  assert.deepEqual(JSON.parse(call.options.body),{
   model:DEFAULT_KINDLEHUB_MODEL,
-  messages:[{role:'user',content:'Hello'}],
+  messages:[
+   {role:'system',content:createAssistantIdentityPrompt('KindleHub API',DEFAULT_KINDLEHUB_MODEL)},
+   {role:'user',content:'Hello'}
+  ],
   max_tokens:1024
  });
  assert.equal(call.options.signal,signal);
@@ -35,6 +39,7 @@ test('allows an account-accessible model override and reads text-block response 
  }});
  assert.equal(await generate('question'),'Hello there');
  assert.equal(body.model,'another-model');
+ assert.equal(body.messages[0].content,createAssistantIdentityPrompt('KindleHub API','another-model'));
 });
 
 test('maps documented provider errors safely and preserves numeric Retry-After',async()=>{

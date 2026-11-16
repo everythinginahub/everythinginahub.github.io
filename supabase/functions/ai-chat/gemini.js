@@ -1,4 +1,5 @@
 import {providerError} from './handler.js';
+import {createAssistantIdentityPrompt} from './identity.js';
 
 // Google restricts Gemini 2.5 to existing users. Use the current Flash-Lite model
 // recommended for new projects and its default minimal thinking level.
@@ -7,7 +8,7 @@ export function createGeminiGenerator({key,fetcher=fetch,timeout=()=>AbortSignal
  return async message=>{
   const response=await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,{
    method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},
-   body:JSON.stringify({contents:[{role:'user',parts:[{text:message}]}],generationConfig:{maxOutputTokens:1024}}),
+   body:JSON.stringify({contents:[{role:'user',parts:[{text:message}]}],generationConfig:{maxOutputTokens:1024},systemInstruction:{parts:[{text:createAssistantIdentityPrompt('Google Gemini',GEMINI_MODEL)}]}}),
    signal:timeout()
   });
   if(!response.ok)throw providerError(response.status);

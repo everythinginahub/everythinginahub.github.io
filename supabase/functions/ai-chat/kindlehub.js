@@ -1,5 +1,8 @@
+import {createAssistantIdentityPrompt} from './identity.js';
+
 export const KINDLEHUB_API_BASE='https://kindlehub-api.arancool3000.workers.dev/v1';
 export const DEFAULT_KINDLEHUB_MODEL='gemini-3.1-flash-lite';
+
 function providerError(status,code,retryAfter){
  const messages={
   'model_not_found':'KindleHub does not offer the configured model for this key. Check KINDLEHUB_MODEL or the models available to your account.',
@@ -43,7 +46,7 @@ export function createKindleHubGenerator({key,model=DEFAULT_KINDLEHUB_MODEL,fetc
   const response=await fetcher(`${KINDLEHUB_API_BASE}/chat/completions`,{
    method:'POST',
    headers:{'Content-Type':'application/json',Authorization:`Bearer ${key}`},
-   body:JSON.stringify({model:selectedModel,messages:[{role:'user',content:message}],max_tokens:1024}),
+   body:JSON.stringify({model:selectedModel,messages:[{role:'system',content:createAssistantIdentityPrompt('KindleHub API',selectedModel)},{role:'user',content:message}],max_tokens:1024}),
    signal:timeout()
   });
   await assertOk(response);
