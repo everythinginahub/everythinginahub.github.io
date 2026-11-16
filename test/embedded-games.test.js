@@ -33,7 +33,7 @@ test('featured games use real local screenshots while older games remain text ca
 test('original adventures are discoverable and playable from Games home; study/live modes use icons',async()=>{
  const originals=arcadeView(),study=gameChooser({id:'test',subject:'Subject',title:'Set'},3),live=liveHub([]);
  for(const slug of ['skyline','orbit','reef']){assert.match(originals,new RegExp(`#arcade/${slug}`));assert.match(originals,new RegExp(`assets/game-screenshots/${slug}\\.png`));const file=await readFile(`public/assets/game-screenshots/${slug}.png`);assert.equal(file.subarray(0,8).toString('hex'),'89504e470d0a1a0a');}
- assert.match(originals,/#arcade\/voxelcraft-survival/);assert.match(originals,/#arcade\/skypark-obby/);assert.match(arcadeView('voxelcraft-survival'),/id="voxelcraftFrame"/);assert.doesNotMatch(arcadeView('block-world'),/blockWorldCanvas/);assert.match(arcadeView('skypark-obby'),/obbyCanvas/);
+ assert.match(originals,/#arcade\/dungeon-quest-3d/);assert.match(originals,/#arcade\/voxelcraft-survival/);assert.match(originals,/#arcade\/skypark-obby/);assert.match(arcadeView('voxelcraft-survival'),/id="voxelcraftFrame"/);assert.doesNotMatch(arcadeView('block-world'),/blockWorldCanvas/);assert.match(arcadeView('skypark-obby'),/obbyCanvas/);
  assert.doesNotMatch(study,/assets\/game-thumbnails/);assert.doesNotMatch(live,/assets\/game-thumbnails/);assert.match(study,/study-game-icon/);assert.match(live,/live-mode-icon/);
 });
 

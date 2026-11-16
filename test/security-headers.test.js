@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {CSP_APP,CSP_PRIVACY,CSP_REPORT_ONLY,CSP_SITE,CSP_STATUS,SECURITY_HEADERS,securityHeadersForRequest} from '../scripts/security-headers.js';
+import {CSP_APP,CSP_DUNGEON,CSP_PRIVACY,CSP_REPORT_ONLY,CSP_SITE,CSP_STATUS,SECURITY_HEADERS,securityHeadersForRequest} from '../scripts/security-headers.js';
 
 const read=path=>readFile(new URL(path,import.meta.url),'utf8');
 
@@ -56,6 +56,15 @@ test('static-host response-header configuration and GitHub Pages meta limits are
   assert.match(headers,/\/public\/voxelcraft-survival\.html[\s\S]*?Content-Security-Policy: [^\n]*frame-ancestors 'self'/);
   assert.match(headers,/\/public\/voxelcraft-survival\.html[\s\S]*?Content-Security-Policy-Report-Only: [^\n]*frame-ancestors 'self'/);
   assert.match(headers,/\/public\/voxelcraft-survival\.html[\s\S]*?X-Frame-Options: SAMEORIGIN/);
+  assert.match(headers,/\/public\/dungeon-quest-3d\.html[\s\S]*?Content-Security-Policy: [^\n]*frame-ancestors 'self'/);
+  assert.match(headers,/\/public\/dungeon-quest-3d\.html[\s\S]*?Content-Security-Policy-Report-Only: [^\n]*frame-ancestors 'self'/);
+  assert.match(headers,/\/public\/dungeon-quest-3d\.html[\s\S]*?X-Frame-Options: SAMEORIGIN/);
+  const dungeonHeaderCsp=headers.match(/\/public\/dungeon-quest-3d\.html\n\s+Content-Security-Policy: ([^\n]+)/);
+  assert.equal(dungeonHeaderCsp?.[1],CSP_DUNGEON,'static hosts use the same enforceable game policy as the self-hosted server');
+  const dungeonPage=await read('../public/dungeon-quest-3d.html');
+  const dungeonMetaCsp=dungeonPage.match(/<meta http-equiv="Content-Security-Policy" content="([^"]*)">/);
+  assert.ok(dungeonMetaCsp,'the standalone page has a fallback CSP for hosts that do not set response headers');
+  assert.equal(dungeonMetaCsp[1],CSP_DUNGEON.replace("frame-ancestors 'self'; ",''),'meta CSP mirrors the response policy except for the header-only framing directive');
   assert.match(headers,/^\s+Strict-Transport-Security: max-age=31536000\s*$/m);
   assert.doesNotMatch(headers,/includeSubDomains/i);
   assert.doesNotMatch(headers,/Content-Security-Policy-Report-Only:[^\n]*(?:unsafe-inline|unsafe-eval)/i);

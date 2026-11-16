@@ -5,6 +5,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:net';
+import {CSP_DUNGEON} from '../scripts/security-headers.js';
 let server, dir, base, port;
 async function startServer() {
   server=spawn(process.execPath,['server.js'],{env:{...process.env,PORT:String(port),DATA_DIR:dir},stdio:['ignore','pipe','pipe']});
@@ -30,6 +31,9 @@ test('static app and full account flow',async()=>{
   const sitemap=await fetch(base+'/sitemap.xml');assert.equal(sitemap.status,200);assert.match(sitemap.headers.get('content-type'),/application\/xml/);const sitemapMarkup=await sitemap.text();assert.match(sitemapMarkup,/<loc>https:\/\/everythinginahub\.github\.io\/<\/loc>/);assert.match(sitemapMarkup,/<loc>https:\/\/everythinginahub\.github\.io\/privacy\/<\/loc>/);for(const slug of ['study-planner','revision-tools','student-timetable','everyday-tools'])assert.match(sitemapMarkup,new RegExp(`<loc>https:\\/\\/everythinginahub\\.github\\.io\\/${slug}\\/</loc>`));
   assert.equal(home.headers.get('x-content-type-options'),'nosniff');assert.equal(home.headers.get('x-frame-options'),'DENY');assert.equal(home.headers.get('referrer-policy'),'strict-origin-when-cross-origin');assert.match(home.headers.get('content-security-policy'),/object-src 'none'/);assert.equal(home.headers.get('strict-transport-security'),null);
   const voxelcraft=await fetch(base+'/voxelcraft-survival.html');assert.equal(voxelcraft.status,200);assert.equal(voxelcraft.headers.get('x-frame-options'),'SAMEORIGIN');assert.match(voxelcraft.headers.get('content-security-policy'),/frame-ancestors 'self'/);const voxelMarkup=await voxelcraft.text();assert.match(voxelMarkup,/VoxelCraft Survival/);assert.match(voxelMarkup,/\.\/vendor\/three-r128\.min\.js/);assert.doesNotMatch(voxelMarkup,/sites\.google\.com|cdnjs\.cloudflare\.com/);
+  const dungeon=await fetch(base+'/dungeon-quest-3d.html');assert.equal(dungeon.status,200);assert.equal(dungeon.headers.get('x-frame-options'),'SAMEORIGIN');assert.equal(dungeon.headers.get('content-security-policy'),CSP_DUNGEON);const dungeonMarkup=await dungeon.text();assert.match(dungeonMarkup,/Dungeon Quest 3D/);assert.match(dungeonMarkup,/assets\/dungeon-quest-hero\.jpg/);
+  const embeddedDungeon=await fetch(base+'/public/dungeon-quest-3d.html');assert.equal(embeddedDungeon.status,200);assert.equal(embeddedDungeon.headers.get('x-frame-options'),'SAMEORIGIN');assert.equal(embeddedDungeon.headers.get('content-security-policy'),CSP_DUNGEON);
+  const dungeonArt=await fetch(base+'/assets/dungeon-quest-hero.jpg');assert.equal(dungeonArt.status,200);assert.match(dungeonArt.headers.get('content-type'),/image\/jpeg/);
   const voxelThree=await fetch(base+'/vendor/three-r128.min.js');assert.equal(voxelThree.status,200);assert.match(voxelThree.headers.get('content-type'),/javascript/);
   const secure=await fetch(base+'/api/health',{headers:{'x-forwarded-proto':'https'}});assert.match(secure.headers.get('strict-transport-security'),/max-age=31536000/);assert.equal(secure.headers.get('x-content-type-options'),'nosniff');assert.deepEqual(await secure.json(),{ok:true});
   assert.equal((await fetch(base+'/hero-art.jpg')).status,404);

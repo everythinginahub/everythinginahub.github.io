@@ -17,6 +17,7 @@ function mockFrames(win) {
 test('the Games hub features VoxelCraft Survival instead of the local Blockbound game',()=>{
   const home=arcadeView();
   assert.match(home,/#arcade\/voxelcraft-survival/);
+  assert.match(home,/Dungeon Quest 3D/,'the uploaded fantasy RPG is included alongside the existing games');
   assert.match(home,/VoxelCraft Survival/);
   assert.match(home,/EMBEDDED/);
   assert.doesNotMatch(home,/Blockbound 3D|blockWorldCanvas|data-world-action/);
