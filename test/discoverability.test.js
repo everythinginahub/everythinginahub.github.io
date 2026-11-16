@@ -58,12 +58,20 @@ test('public entry and root overview have a keyword H1 and substantive, structur
  assert.ok(application,'the existing WebApplication schema is preserved');
  assert.equal(application.url,canonical);
  assert.ok(application.featureList.includes('Flashcards, quizzes and practice tests'));
+ assert.ok(application.featureList.includes('Weekly meal planner'));
+ assert.ok(application.featureList.includes('Study and everyday Life Hacks'));
+ assert.match(doc.querySelector('#landing').textContent,/weekly meal planner/i);
+ assert.match(doc.querySelector('#landing').textContent,/Life Hacks/i);
+ assert.match(rootDoc.querySelector('main').textContent,/weekly meal planner/i);
+ assert.match(rootDoc.querySelector('main').textContent,/Life Hacks/i);
 });
 
 test('SEO guides target distinct tasks with self-canonicals, useful copy and internal links',async()=>{
  const guides=[
   ['study-planner','study planner',/study planner/i],
   ['revision-tools','revision tools',/revision tools|flashcards/i],
+  ['revision-timetable-gcse','GCSE revision timetable',/revision timetable.*GCSE|how do i make/i],
+  ['life-hacks','life hacks',/life hacks/i],
   ['student-timetable','student timetable',/student timetable/i],
   ['everyday-tools','everyday tools',/everyday/i]
  ];
@@ -79,6 +87,10 @@ test('SEO guides target distinct tasks with self-canonicals, useful copy and int
   assert.match(doc.querySelector('meta[name="description"]').content,target);
   assert.equal(main.querySelectorAll('h1').length,1,`${label} should have exactly one H1`);
   assert.match(main.querySelector('h1').textContent,target);
+  if(slug==='revision-timetable-gcse'){
+   assert.match(main.textContent,/how do i make a revision timetable for gcses/i);
+   assert.match(main.textContent,/revision timetable gcse/i);
+  }
   assert.ok(visibleWordCount(main)>=350,`${label} should have substantive copy (found ${visibleWordCount(main)} words)`);
   assert.ok(main.querySelectorAll('h2').length>=3,`${label} should have useful sections`);
   assert.ok(doc.querySelector('nav[aria-label] a[href="/"]')||doc.querySelector('.seo-brand[href="/"]'),`${label} should link back to the root overview`);
@@ -86,10 +98,19 @@ test('SEO guides target distinct tasks with self-canonicals, useful copy and int
   assert.ok(internalGuideLinks.length>=2,`${label} should link to related guides`);
   assert.ok([...doc.querySelectorAll('a[href^="/public/"]')].length>=1,`${label} should link to the interactive workspace`);
   assert.match(doc.querySelector('footer').innerHTML,/href="\/privacy\/"/);
+  if(slug==='life-hacks'){
+   const privacy=await read('../privacy/index.html');
+   assert.match(privacy,/Meal Planner stores the ideas you enter in this browser/i);
+   assert.match(privacy,/not synced to Supabase/i);
+  }
   const webPage=structuredData(doc).find(schema=>schema['@type']==='WebPage');
   assert.ok(webPage,`${label} should have WebPage structured data`);
   assert.equal(webPage.url,expectedUrl);
   assert.equal(webPage.isPartOf.url,canonical);
+  if(['revision-timetable-gcse','life-hacks'].includes(slug)){
+   assert.equal(webPage.breadcrumb['@type'],'BreadcrumbList');
+   assert.equal(webPage.breadcrumb.itemListElement.at(-1).item,expectedUrl);
+  }
  }
 });
 
@@ -98,7 +119,7 @@ test('robots and sitemap advertise the canonical overview and privacy page and s
  assert.match(robots,/^User-agent: \*\s+Allow: \/\s+/);
  assert.match(robots,/Sitemap: https:\/\/everythinginahub\.github\.io\/sitemap\.xml/);
  assert.match(sitemap,/<loc>https:\/\/everythinginahub\.github\.io\/<\/loc>/);
- for(const path of ['study-planner','revision-tools','student-timetable','everyday-tools','privacy'])assert.match(sitemap,new RegExp(`<loc>https:\\/\\/everythinginahub\\.github\\.io\\/${path}\\/</loc>`));
+ for(const path of ['study-planner','revision-tools','revision-timetable-gcse','life-hacks','student-timetable','everyday-tools','privacy'])assert.match(sitemap,new RegExp(`<loc>https:\\/\\/everythinginahub\\.github\\.io\\/${path}\\/</loc>`));
  assert.doesNotMatch(sitemap,/public\/|status|login|#/i);
  assert.equal(image.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
  assert.equal(image.readUInt32BE(16),1200);

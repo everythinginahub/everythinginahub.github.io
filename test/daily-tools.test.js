@@ -94,9 +94,11 @@ test('image-resizer accepts only bounded image files and keeps processing local'
 });
 
 test('local-first tools are in the app catalogue and render privacy and usage notes',()=>{
- assert.equal(Object.keys(miniApps).length,16);
+ assert.equal(Object.keys(miniApps).length,18);
  assert.equal(miniApps['password-generator'].name,'Password generator');
  assert.equal(miniApps['image-resizer'].name,'Image resizer');
+ assert.equal(miniApps['life-hacks'].name,'Life Hacks');
+ assert.equal(miniApps['meal-planner'].name,'Meal planner');
  const password=new JSDOM(`<main>${miniAppView('password-generator')}</main>`).window.document;
  const image=new JSDOM(`<main>${miniAppView('image-resizer')}</main>`).window.document;
  assert.match(password.querySelector('.mini-privacy').textContent,/not saved or sent/i);
