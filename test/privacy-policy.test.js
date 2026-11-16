@@ -39,6 +39,20 @@ test('root is the canonical landing URL and sitemap avoids the public alias',asy
   assert.doesNotMatch(sitemap,/https:\/\/everythinginahub\.github\.io\/public\//);
 });
 
+test('anonymous feedback disclosures match the form and private storage behavior',async()=>{
+  const [policy,app,script]=await Promise.all([text('privacy/index.html'),text('public/index.html'),text('public/feedback.js')]);
+  for(const phrase of [
+    'Website feedback','without signing in','category you select, your message and the app section','does not attach your signed-in account credentials, ask for or store your email address',
+    'private to the site team','source IP address','keyed, one-way hash','five submissions per hour','more than 24 hours old',
+    'kept in the project until the site operator deletes them','does not promise a personal response'
+  ])assert.ok(policy.toLowerCase().includes(phrase.toLowerCase()),`policy should explain feedback: ${phrase}`);
+  assert.match(app,/feedbackPrivacyNote/);
+  assert.match(app,/maxlength="3000"/,'the client allows 1,500 supplementary Unicode characters by UTF-16 code units');
+  assert.match(script,/\/functions\/v1\/site-feedback/);
+  assert.match(script,/credentials:'omit'/);
+  assert.doesNotMatch(script,/Authorization/i,'the anonymous feedback client does not transmit signed-in authorization');
+});
+
 test('privacy policy reflects the current accounts, progress, activity and third-party implementations',async()=>{
   const policy=await text('privacy/index.html');
   for(const phrase of [

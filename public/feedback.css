@@ -1,0 +1,316 @@
+/* Feedback dialog and the player-free video search layout. */
+#feedbackDialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(760px, calc(100dvh - 32px));
+  padding: clamp(20px, 4vw, 30px);
+  overflow: auto;
+}
+
+.feedback-dialog-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.feedback-dialog-heading p {
+  margin: 0 0 7px;
+  color: #5149ad;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.feedback-dialog-heading h2 {
+  margin: 0;
+  font-size: clamp(25px, 5vw, 32px);
+  letter-spacing: -.04em;
+}
+
+.feedback-dialog-heading > button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #dadeed;
+  border-radius: 10px;
+  background: #f4f3ff;
+  color: #5149ad;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.feedback-form {
+  display: grid;
+  gap: 14px;
+}
+
+.feedback-form > label {
+  display: grid;
+  gap: 7px;
+  color: #303a53;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.feedback-form select,
+.feedback-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 1px solid #dadeed;
+  border-radius: 10px;
+  background: #fff;
+  color: #202546;
+  font: inherit;
+  font-size: 14px;
+}
+
+.feedback-form textarea {
+  min-height: 150px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.feedback-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -8px;
+  color: #737b91;
+  font-size: 11px;
+}
+
+.feedback-privacy {
+  margin: 0;
+  color: #69718a;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.feedback-status {
+  margin: 0;
+  color: #276754;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.feedback-status:empty {
+  display: none;
+}
+
+.feedback-status-error {
+  color: #a23628;
+}
+
+.feedback-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.feedback-actions .btn {
+  min-height: 42px;
+}
+
+.feedback-actions .btn:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.feedback-cancel {
+  min-height: 42px;
+  padding: 9px 13px;
+  border: 1px solid #dadeed;
+  border-radius: 10px;
+  background: #fff;
+  color: #4c5470;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feedback-trap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.site-footer [data-open-feedback] {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Selected lessons are outbound links; Bing remains the only embedded search. */
+.youtube-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.youtube-main {
+  min-width: 0;
+}
+
+.youtube-panel-heading {
+  margin-bottom: 10px;
+}
+
+.youtube-main > .youtube-hint {
+  margin: 0 0 18px;
+}
+
+.youtube-library-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.youtube-library-results:empty {
+  display: none;
+}
+
+.youtube-result-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d9ded9;
+  border-radius: 5px;
+  background: #fff;
+  color: #263f42;
+  text-decoration: none;
+}
+
+.youtube-result-card:hover {
+  border-color: #8ca5a0;
+  background: #f7faf8;
+}
+
+.youtube-result-card img {
+  display: block;
+  flex: none;
+  width: 112px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 3px;
+  background: #e9eeeb;
+}
+
+.youtube-result-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.youtube-result-copy strong {
+  color: #263f42;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.youtube-result-details {
+  color: #526b6a;
+  font-size: 11px;
+}
+
+.youtube-result-copy small {
+  color: #697879;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.youtube-search-status {
+  color: #647376;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.youtube-all-search {
+  margin-top: 20px;
+  padding: clamp(18px, 3vw, 24px);
+  border: 1px solid #d9ded9;
+  border-radius: 5px;
+  background: #fffefa;
+}
+
+.youtube-all-search > h2 {
+  margin: 5px 0 10px;
+  color: #263942;
+  font-size: 22px;
+}
+
+.youtube-all-search > p:not(.eyebrow):not(.youtube-search-status) {
+  max-width: 760px;
+  color: #647376;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.youtube-all-search form {
+  max-width: 780px;
+}
+
+.youtube-all-search .youtube-search-status {
+  margin: 15px 0 8px;
+}
+
+.bing-videos-open {
+  display: inline-block;
+  margin: 0 0 12px;
+  color: #315f77;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bing-videos-open[hidden],
+.bing-videos-frame-wrap[hidden] {
+  display: none !important;
+}
+
+.bing-videos-frame-wrap {
+  min-height: 420px;
+  height: min(78dvh, 760px);
+  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid #d9ded9;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.bing-videos-frame-wrap iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border: 0;
+}
+
+@media (max-width: 550px) {
+  .feedback-meta {
+    font-size: 10px;
+  }
+
+  .youtube-library-results {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .youtube-result-card img {
+    width: 92px;
+  }
+
+  .bing-videos-frame-wrap,
+  .bing-videos-frame-wrap iframe {
+    min-height: 360px;
+  }
+}
