@@ -6,6 +6,7 @@ export const CSP_PRIVACY = "default-src 'self'; img-src 'self' data:; script-src
 export const CSP_APP = "default-src 'self'; img-src 'self' data: blob: https://launchorbit.co https://www.betterlaunch.co https://www.codehype.ai https://i.ytimg.com https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data: https://cdn.jsdelivr.net; connect-src 'self' https://tytcagbeucbugwjwgiog.supabase.co wss://tytcagbeucbugwjwgiog.supabase.co https://cdn.jsdelivr.net; media-src 'self' data: blob: https://cdn.jsdelivr.net; frame-src 'self' https://www.youtube-nocookie.com https://www.geometrydash.com https://www.twoplayergames.org https://sausi-7.github.io https://archive.org; worker-src 'self' blob:; object-src 'none'; base-uri 'self' https://cdn.jsdelivr.net; form-action 'self' https://www.youtube.com; frame-ancestors 'none'; upgrade-insecure-requests";
 
 export const CSP_STATUS = "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; connect-src 'self' https://tytcagbeucbugwjwgiog.supabase.co wss://tytcagbeucbugwjwgiog.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests";
+export const CSP_DUNGEON = "default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://0.peerjs.com wss://0.peerjs.com; media-src 'self' data: blob:; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests";
 export const CSP_REPORT_ONLY = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; media-src 'self' data: blob: https:; frame-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'self' https://cdn.jsdelivr.net; form-action 'self' https://www.youtube.com; frame-ancestors 'none'; upgrade-insecure-requests";
 
 export const SECURITY_HEADERS = Object.freeze({
@@ -35,7 +36,11 @@ export function securityHeadersForRequest(request) {
   const pathname = new URL(request.url || '/', 'http://localhost').pathname;
   const policy = policyForPath(pathname);
   if (policy) headers['Content-Security-Policy'] = policy;
-  if (pathname === '/voxelcraft-survival.html' || pathname === '/public/voxelcraft-survival.html') {
+  if (pathname === '/dungeon-quest-3d.html' || pathname === '/public/dungeon-quest-3d.html') {
+    headers['Content-Security-Policy'] = CSP_DUNGEON;
+    headers['Content-Security-Policy-Report-Only'] = headers['Content-Security-Policy-Report-Only'].replace("frame-ancestors 'none'", "frame-ancestors 'self'");
+    headers['X-Frame-Options'] = 'SAMEORIGIN';
+  } else if (pathname === '/voxelcraft-survival.html' || pathname === '/public/voxelcraft-survival.html') {
     headers['Content-Security-Policy'] = headers['Content-Security-Policy'].replace("frame-ancestors 'none'", "frame-ancestors 'self'");
     headers['Content-Security-Policy-Report-Only'] = headers['Content-Security-Policy-Report-Only'].replace("frame-ancestors 'none'", "frame-ancestors 'self'");
     headers['X-Frame-Options'] = 'SAMEORIGIN';

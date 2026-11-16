@@ -1,4 +1,5 @@
 export const VOXELCRAFT_SURVIVAL_PATH = './voxelcraft-survival.html';
+export const DUNGEON_QUEST_3D_PATH = './dungeon-quest-3d.html';
 
 const OBBY_3D_STAR_COUNT = 5;
 
@@ -12,6 +13,19 @@ export function voxelcraftSurvivalView() {
     <p class="external-note">The game is hosted with the hub. If the embedded screen stays blank, your browser may not support WebGL; try <strong>Open in new tab</strong>.</p>
     <div class="embedded-frame voxelcraft-survival-frame"><iframe id="voxelcraftFrame" title="VoxelCraft Survival — Complete Sandbox Edition" src="${VOXELCRAFT_SURVIVAL_PATH}" loading="eager" sandbox="allow-scripts allow-pointer-lock" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; gamepad; pointer-lock" allowfullscreen></iframe></div>
     <p class="external-note">The game and its Three.js renderer are served from this site; it no longer depends on Google Sites framing.</p>
+  </div>`;
+}
+
+export function dungeonQuest3DView() {
+  return `<div class="embedded-play dungeon-quest-3d">
+    <a class="arcade-back" href="#arcade">← Games home</a>
+    <header class="embedded-play-heading">
+      <div><p class="game-eyebrow">FANTASY ACTION RPG · 3D ADVENTURE</p><h1>Dungeon Quest 3D</h1><p>Choose a hero, explore a living world, descend into the crypts and face the Lich King.</p></div>
+      <div class="embedded-game-actions"><a class="adventure-utility" href="${DUNGEON_QUEST_3D_PATH}" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>
+    </header>
+    <p class="external-note">Move with W A S D, use F or click to attack, and press E to interact. Touch controls are available. Browser privacy may block saves in the embedded sandbox; open in a new tab to use the game’s local Continue save.</p>
+    <div class="embedded-frame dungeon-quest-frame"><iframe id="dungeonQuestFrame" title="Dungeon Quest 3D fantasy action RPG" src="${DUNGEON_QUEST_3D_PATH}" loading="eager" sandbox="allow-scripts allow-pointer-lock" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; gamepad; pointer-lock" allowfullscreen></iframe></div>
+    <p class="external-note">The game is served locally by Everything Hub. The optional online co-op feature connects to PeerJS; the single-player quest works offline.</p>
   </div>`;
 }
 
