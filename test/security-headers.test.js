@@ -23,7 +23,8 @@ test('self-hosted server applies page-specific CSP, report-only and HTTPS-only H
   const app=securityHeadersForRequest({url:'/public/',headers:{},socket:{encrypted:false}});
   assert.equal(app['Content-Security-Policy'],CSP_APP);
   assert.match(CSP_APP,/script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https:\/\/cdn\.jsdelivr\.net/);
-  assert.match(CSP_APP,/form-action 'self' https:\/\/www\.youtube\.com/,'the app CSP allows its intentional YouTube search form');
+  assert.match(CSP_APP,/form-action 'self' https:\/\/www\.youtube\.com https:\/\/www\.bing\.com/,'the app CSP allows the Bing Videos search form and YouTube links');
+  assert.match(CSP_APP,/frame-src[^;]*https:\/\/www\.bing\.com/,'the app CSP allows the in-page Bing Videos frame');
   const privacy=securityHeadersForRequest({url:'/privacy/',headers:{},socket:{encrypted:false}});
   assert.equal(privacy['Content-Security-Policy'],CSP_PRIVACY);
   const status=securityHeadersForRequest({url:'/status/',headers:{},socket:{encrypted:false}});
@@ -38,13 +39,16 @@ test('self-hosted server applies page-specific CSP, report-only and HTTPS-only H
   assert.match(SECURITY_HEADERS['Permissions-Policy'],/camera=\(\), microphone=\(\), geolocation=\(\)/);
 });
 
-test('interactive CSP preserves the app’s intentional YouTube search submission',async()=>{
+test('interactive CSP permits the Bing Videos search form and in-page result frame',async()=>{
   const [headers,appMarkup,youtube]=await Promise.all([read('../_headers'),read('../public/index.html'),read('../public/youtube-player.js')]);
   const appRules=headers.split(/\n\s*\n/).filter(rule=>rule.startsWith('/public/\n')||rule.startsWith('/public/index.html\n'));
   assert.equal(appRules.length,2);
-  for(const rule of appRules)assert.match(rule,/form-action 'self' https:\/\/www\.youtube\.com/);
-  assert.match(appMarkup,/form-action 'self' https:\/\/www\.youtube\.com/);
-  assert.match(youtube,/action="https:\/\/www\.youtube\.com\/results"/);
+  for(const rule of appRules){assert.match(rule,/form-action 'self' https:\/\/www\.youtube\.com https:\/\/www\.bing\.com/);const policy=rule.match(/Content-Security-Policy: ([^\n]+)/)?.[1];assert.match(policy,/frame-src[^;]*https:\/\/www\.bing\.com/);}
+  assert.match(appMarkup,/form-action 'self' https:\/\/www\.youtube\.com https:\/\/www\.bing\.com/);
+  assert.match(appMarkup,/frame-src 'self' https:\/\/www\.youtube-nocookie\.com https:\/\/www\.bing\.com/);
+  assert.match(youtube,/action="https:\/\/www\.bing\.com\/videos\/search"/);
+  assert.match(youtube,/name="bingVideosFrame"/);
+  assert.doesNotMatch(youtube,/action="https:\/\/www\.youtube\.com\/results"/);
   assert.doesNotMatch(CSP_SITE,/form-action 'self' https:/,'the root overview does not need the app’s external form allowance');
 });
 
