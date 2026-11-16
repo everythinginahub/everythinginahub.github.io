@@ -5,7 +5,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:net';
-import {CSP_DUNGEON} from '../scripts/security-headers.js';
+import {CSP_DUNGEON,CSP_FEEDBACK} from '../scripts/security-headers.js';
 let server, dir, base, port;
 async function startServer() {
   server=spawn(process.execPath,['server.js'],{env:{...process.env,PORT:String(port),DATA_DIR:dir},stdio:['ignore','pipe','pipe']});
@@ -22,7 +22,7 @@ after(async()=>{await stopServer(); if(dir)await rm(dir,{recursive:true,force:tr
 const post=(path,data,cookie)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(cookie?{cookie}:{})},body:JSON.stringify(data)});
 test('static app and full account flow',async()=>{
   const home=await fetch(base+'/');assert.equal(home.status,200);const homeMarkup=await home.text();assert.match(homeMarkup,/public overview/);assert.doesNotMatch(homeMarkup,/<meta[^>]*http-equiv="refresh"/i);
-  const privacy=await fetch(base+'/privacy/');assert.equal(privacy.status,200);assert.match(await privacy.text(),/Privacy Policy/);assert.match(privacy.headers.get('content-security-policy'),/frame-ancestors 'none'/);
+  const privacy=await fetch(base+'/privacy/');assert.equal(privacy.status,200);assert.match(await privacy.text(),/Privacy Policy/);assert.match(privacy.headers.get('content-security-policy'),/frame-ancestors 'none'/);const feedback=await fetch(base+'/feedback/');assert.equal(feedback.status,200);assert.match(await feedback.text(),/verified site-owner account/);assert.equal(feedback.headers.get('content-security-policy'),CSP_FEEDBACK);const feedbackNoSlash=await fetch(base+'/feedback');assert.equal(feedbackNoSlash.status,200);
   for(const slug of ['study-planner','revision-tools','student-timetable','everyday-tools']){const guide=await fetch(`${base}/${slug}/`);assert.equal(guide.status,200,slug);assert.match(await guide.text(),/rel="canonical"/);}
   const appAlias=await fetch(base+'/public?from=landing',{redirect:'manual'});assert.equal(appAlias.status,308);assert.equal(appAlias.headers.get('location'),'/public/?from=landing');
   const app=await fetch(base+'/public/');assert.equal(app.status,200);assert.match(await app.text(),/YOUR STUDY &amp; EVERYDAY HUB/);assert.match(app.headers.get('content-security-policy'),/https:\/\/tytcagbeucbugwjwgiog\.supabase\.co/);

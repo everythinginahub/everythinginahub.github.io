@@ -1,6 +1,7 @@
 import {miniApps,miniAppView,mountMiniApp} from '../public/mini-apps.js';
 import {youtubeWorkspace,mountYouTubeWorkspace} from '../public/youtube-player.js';
 import {mountFeedback} from '../public/feedback.js';
+import {feedbackAdminView,mountFeedbackAdmin} from '../public/feedback-admin.js';
 import {aiChatWorkspace,mountAiChat} from '../public/ai-chat.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -60,13 +61,30 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,mountFeedback,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,mountFeedback,feedbackAdminView,mountFeedbackAdmin,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
   return {dom,w,run:()=>w.eval(`(async()=>{${app}\n})()`)};
 }
 const go=(w,hash)=>{w.location.hash=hash;w.dispatchEvent(new w.HashChangeEvent('hashchange'));};
+
+test('verified owner can open the private feedback inbox and feedback text is rendered safely',async()=>{
+  const owner={...account,app_metadata:{site_owner:true}}, {client}=mockClient({session:owner});let calls=0;
+  const rpc=client.rpc;client.rpc=async(name,args)=>{if(name==='site_feedback_admin_list'){calls++;assert.deepEqual(args,{p_limit:100});return {data:[{id:'feedback-1',created_at:'2026-11-06T10:00:00Z',category:'problem',message:'<img src=x onerror=alert(1)> The page would not load.',page:'planner'}],error:null};}return rpc(name,args);};
+  const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);
+    q('#topAccount').click();assert.equal(q('.feedback-owner-link')?.getAttribute('href'),'#feedback');q('#modal .close').click();
+    w.history.replaceState(null,'','#feedback');w.dispatchEvent(new w.HashChangeEvent('hashchange'));await wait();assert.equal(calls,1);assert.match(q('#crumb').textContent,/Feedback inbox/);assert.match(q('#feedbackInboxStatus').textContent,/Showing 1/);
+    assert.equal(q('.feedback-inbox-item img'),null);assert.match(q('.feedback-inbox-message').textContent,/<img src=x onerror=alert\(1\)>/);assert.match(q('.feedback-inbox-page').textContent,/planner/);
+  }finally{dom.window.close();}
+});
+
+test('ordinary learner is denied the feedback inbox in the app and never invokes the owner reader',async()=>{
+  const impersonator={...account,user_metadata:{...account.user_metadata,site_owner:true}}, {client}=mockClient({session:impersonator});let calls=0;const rpc=client.rpc;client.rpc=async(name,args)=>{if(name==='site_feedback_admin_list'){calls++;return {data:[],error:null};}return rpc(name,args);};
+  const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);q('#topAccount').click();assert.equal(q('.feedback-owner-link'),null);q('#modal .close').click();
+    go(w,'#feedback');assert.match(q('#app').textContent,/Owner access required/);assert.equal(calls,0);
+  }finally{dom.window.close();}
+});
 
 test('logged-out visitors see the study-and-everyday landing and cannot access guest workspace',async()=>{
   const {dom,w,run}=setup(null,{configured:false,url:'https://example.test/public/#flashcards'});try{await run();
