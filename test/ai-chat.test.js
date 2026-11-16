@@ -13,6 +13,14 @@ function setup(ask,extra={}){
  return{dom,win,root,query,controller,submit};
 }
 
+test('chat branding introduces the assistant as Everything Hub AI',()=>{
+ const view=setup(async()=>({answer:'ok'}));
+ try{
+  assert.match(view.root.querySelector('.ai-chat-identity h3').textContent,/Everything Hub AI/);
+  assert.doesNotMatch(view.root.querySelector('.ai-chat-identity h3').textContent,/KindleHub AI/);
+ }finally{view.controller.destroy();view.dom.window.close();}
+});
+
 test('calls the authenticated edge function without sending conversation history',async()=>{
  let args;
  const client={functions:{invoke:async(...values)=>(args=values,{data:{answer:'ok'}})}};
