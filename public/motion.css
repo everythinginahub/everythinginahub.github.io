@@ -107,7 +107,7 @@
     animation: hub-entry-card-arrive 980ms cubic-bezier(.16, 1, .3, 1) 150ms backwards;
   }
 
-  /* Every route enters on render, not when a scroll position changes. */
+  /* Routes enter on render; separate reveals animate selected sections as they scroll into view. */
   .app-shell:not([hidden]) .topbar {
     animation: hub-topbar-arrive 560ms cubic-bezier(.16, 1, .3, 1) backwards;
   }
@@ -332,12 +332,17 @@
     animation: hub-answer-nudge 460ms cubic-bezier(.36, .07, .19, .97);
   }
 
+  #app .match-tile.selected {
+    transform-style: preserve-3d;
+    animation: hub-match-turn 520ms cubic-bezier(.16, 1, .3, 1);
+  }
+
   #app :is(.game-result, .practice-summary, .feedback:not(:empty), .game-feedback:not(:empty),
     .mini-result:not(:empty), .school-result:not(:empty)):not([hidden]) {
     animation: hub-result-arrive 560ms cubic-bezier(.16, 1, .3, 1) both;
   }
 
-  /* Dialogs and live status messages get their own entrance; no scroll listener is involved. */
+  /* Dialog and live-status entrances run independently of the viewport reveals. */
   dialog[open] {
     animation: hub-dialog-arrive 360ms cubic-bezier(.16, 1, .3, 1) both;
   }
@@ -395,6 +400,119 @@
     transform: translateX(430%) skewX(-20deg);
   }
 
+  /* Hovering a lesson thumbnail gives it a little video-like camera drift. */
+  #app .video-card,
+  #app .book-card,
+  #app .game-set-card {
+    transform-style: preserve-3d;
+  }
+
+  #app .video-card-art {
+    perspective: 900px;
+  }
+
+  #app .video-thumbnail {
+    transform-origin: center;
+    transition: transform 700ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  #app .video-card-art::after {
+    display: block;
+    top: 50%;
+    right: -24px;
+    width: 130px;
+    height: 130px;
+    z-index: 1;
+    border-color: #ffffff9c;
+    box-shadow: 0 0 0 16px #ffffff12, 0 0 0 32px #ffffff0a;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-50%) rotateX(68deg);
+  }
+
+  #app .book-cover {
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    transition: transform 480ms cubic-bezier(.16, 1, .3, 1);
+  }
+
+  #app .book-cover-art {
+    transform-style: preserve-3d;
+  }
+
+  #app .flashcard-face {
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    animation: hub-flashcard-flip 620ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    #app .video-card:hover,
+    #app .video-card:focus-visible {
+      transform: perspective(1000px) translateY(-8px) rotateX(4deg) rotateY(-2deg) scale(1.025);
+    }
+
+    #app .video-card:hover .video-thumbnail,
+    #app .video-card:focus-visible .video-thumbnail {
+      animation: hub-video-preview 3.6s ease-in-out infinite alternate;
+    }
+
+    #app .video-card:hover .video-card-art::after,
+    #app .video-card:focus-visible .video-card-art::after {
+      opacity: .76;
+      animation: hub-video-orbit 5s linear infinite;
+    }
+
+    #app .video-card:hover .video-play,
+    #app .video-card:focus-visible .video-play {
+      animation: hub-play-pulse 1.3s ease-in-out infinite;
+    }
+
+    #app .book-card:hover,
+    #app .book-card:focus-visible {
+      transform: perspective(1000px) translateY(-6px) rotateY(-4deg) scale(1.02);
+    }
+
+    #app .book-card:hover .book-cover,
+    #app .book-card:focus-visible .book-cover {
+      transform: perspective(800px) rotateY(-12deg) translateZ(8px);
+    }
+
+    #app .book-card:hover .book-cover-art,
+    #app .book-card:focus-visible .book-cover-art {
+      display: block;
+      animation: hub-book-orbit 6s linear infinite;
+    }
+
+    #app .game-set-card:hover,
+    #app .game-set-card:focus-visible {
+      transform: perspective(900px) translateY(-9px) rotateX(4deg) rotateY(-3deg) scale(1.025);
+    }
+
+    #app .game-set-card:hover .game-set-mark,
+    #app .game-set-card:focus-visible .game-set-mark,
+    #app .game-mode-card:hover .mode-icon,
+    #app .game-intro-grid > div:hover .game-intro-icon,
+    #app .live-modes article:hover .live-mode-icon,
+    #app .reward-card:hover .reward-badge,
+    #app .reward-card:focus-within .reward-badge {
+      animation: hub-spin-3d 820ms cubic-bezier(.16, 1, .3, 1);
+    }
+
+    #app .flashcard-face:hover {
+      transform: perspective(1000px) rotateX(3deg) rotateY(-3deg) scale(1.015);
+    }
+  }
+
+  @supports (animation-timeline: view()) {
+    #landing .landing-details-grid article,
+    #landing .landing-details-guidance > p {
+      animation: hub-scroll-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 22%;
+    }
+  }
+
   @media (hover: hover) and (pointer: fine) {
     .entry-actions .btn:hover:not(:disabled),
     #app .btn:hover:not(:disabled) {
@@ -450,6 +568,22 @@
 
     #app button:not(:disabled):not(.btn):hover {
       transform: translateY(-3px) scale(1.035);
+    }
+
+    #app .video-card:hover {
+      transform: perspective(1000px) translateY(-8px) rotateX(4deg) rotateY(-2deg) scale(1.025);
+    }
+
+    #app .book-card:hover {
+      transform: perspective(1000px) translateY(-6px) rotateY(-4deg) scale(1.02);
+    }
+
+    #app .game-set-card:hover {
+      transform: perspective(900px) translateY(-9px) rotateX(4deg) rotateY(-3deg) scale(1.025);
+    }
+
+    #app .flashcard-face:hover {
+      transform: perspective(1000px) rotateX(3deg) rotateY(-3deg) scale(1.015);
     }
 
     .app-shell .topbar :is(button, a[href]):hover,
@@ -560,6 +694,49 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes hub-flashcard-flip {
+  0% { opacity: .4; transform: perspective(900px) rotateY(-26deg) scale(.96); }
+  72% { opacity: 1; transform: perspective(900px) rotateY(7deg) scale(1.015); }
+  100% { opacity: 1; transform: perspective(900px) rotateY(0) scale(1); }
+}
+
+@keyframes hub-video-preview {
+  from { transform: scale(1) translateX(0); }
+  to { transform: scale(1.09) translateX(-1.3%); }
+}
+
+@keyframes hub-video-orbit {
+  from { transform: translateY(-50%) rotateX(68deg) rotateZ(0deg); }
+  to { transform: translateY(-50%) rotateX(68deg) rotateZ(360deg); }
+}
+
+@keyframes hub-play-pulse {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.16; }
+}
+
+@keyframes hub-book-orbit {
+  from { transform: rotateX(56deg) rotateZ(0deg) scale(.86); }
+  to { transform: rotateX(56deg) rotateZ(360deg) scale(.86); }
+}
+
+@keyframes hub-spin-3d {
+  0% { transform: perspective(500px) rotateY(0) scale(1); }
+  52% { transform: perspective(500px) rotateY(190deg) scale(1.16); }
+  100% { transform: perspective(500px) rotateY(360deg) scale(1); }
+}
+
+@keyframes hub-match-turn {
+  0% { transform: perspective(700px) rotateY(0) scale(1); }
+  50% { transform: perspective(700px) rotateY(90deg) scale(1.06); }
+  100% { transform: perspective(700px) rotateY(0) scale(1); }
+}
+
+@keyframes hub-scroll-reveal {
+  from { opacity: 0; transform: translateY(34px) scale(.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 @keyframes hub-heading-pop {
   from { opacity: 0; transform: translateY(32px) scale(.88) rotateX(7deg); }
   to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
@@ -645,6 +822,25 @@
   #app :is(.quiz-choice.incorrect, .practice-review.is-incorrect),
   #app :is(.game-result, .practice-summary, .feedback:not(:empty), .game-feedback:not(:empty),
     .mini-result:not(:empty), .school-result:not(:empty)):not([hidden]),
+  #app .flashcard-face,
+  #app .match-tile.selected,
+  #app .video-card:hover .video-thumbnail,
+  #app .video-card:focus-visible .video-thumbnail,
+  #app .video-card:hover .video-card-art::after,
+  #app .video-card:focus-visible .video-card-art::after,
+  #app .video-card:hover .video-play,
+  #app .video-card:focus-visible .video-play,
+  #app .book-card:hover .book-cover-art,
+  #app .book-card:focus-visible .book-cover-art,
+  #app .game-set-card:hover .game-set-mark,
+  #app .game-set-card:focus-visible .game-set-mark,
+  #app .game-mode-card:hover .mode-icon,
+  #app .game-intro-grid > div:hover .game-intro-icon,
+  #app .live-modes article:hover .live-mode-icon,
+  #app .reward-card:hover .reward-badge,
+  #app .reward-card:focus-within .reward-badge,
+  #landing .landing-details-grid article,
+  #landing .landing-details-guidance > p,
   #app .home-featured,
   #app .home-quick-access,
   #app .app-discovery-footer,

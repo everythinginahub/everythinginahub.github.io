@@ -35,8 +35,11 @@ test('the motion layer provides entrances and interactions while respecting redu
   assert.match(motion,/@keyframes hub-item-arrive/);
   assert.match(motion,/@keyframes hub-dialog-arrive/);
   assert.match(motion,/@keyframes hub-toast-arrive/);
-  assert.doesNotMatch(motion,/animation-timeline\s*:\s*view\(\)/,'motion should not depend on scrolling');
-  assert.doesNotMatch(motionScript,/IntersectionObserver/,'interaction motion should not observe the viewport');
+  assert.match(motion,/@keyframes hub-scroll-reveal/);
+  assert.match(motion,/@keyframes hub-video-preview/);
+  assert.match(motion,/@keyframes hub-spin-3d/);
+  assert.match(motion,/@supports\s*\(animation-timeline:\s*view\(\)\)/);
+  assert.match(motionScript,/IntersectionObserver/,'selected offscreen sections should regain progressive scroll reveals');
   assert.doesNotMatch(motion,/will-change\s*:/);
   assert.doesNotMatch(motion,/backdrop-filter\s*:/);
   const keyframes=[...motion.matchAll(/@keyframes\s+([\w-]+)/g)].map(match=>match[1]);
