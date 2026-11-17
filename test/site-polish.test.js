@@ -2,10 +2,11 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
-const [html,css,motion]=await Promise.all([
+const [html,css,motion,motionScript]=await Promise.all([
   readFile(new URL('../public/index.html',import.meta.url),'utf8'),
   readFile(new URL('../public/site-polish.css',import.meta.url),'utf8'),
-  readFile(new URL('../public/motion.css',import.meta.url),'utf8')
+  readFile(new URL('../public/motion.css',import.meta.url),'utf8'),
+  readFile(new URL('../public/motion.js',import.meta.url),'utf8')
 ]);
 
 test('shared visual layer loads after structural styles and honors motion preferences',()=>{
@@ -14,11 +15,11 @@ test('shared visual layer loads after structural styles and honors motion prefer
   const polish=html.indexOf('href="site-polish.css?');
   const finalStyle=html.indexOf('href="seo-pages.css"');
   const motionLink=html.indexOf('href="motion.css?');
-  const revealScript=html.indexOf('src="motion.js?');
+  const motionScriptTag=html.indexOf('src="motion.js?');
   const appScript=html.indexOf('src="app.js?');
   assert.ok(base>=0&&structure>base&&polish>structure,'visual layers should load after the base app stylesheet');
   assert.ok(finalStyle>polish&&motionLink>finalStyle,'motion overrides should load after all component styles');
-  assert.ok(revealScript>0&&appScript>revealScript,'scroll reveals should be active on /public before app views render');
+  assert.ok(motionScriptTag>0&&appScript>motionScriptTag,'interaction motion should initialize before app views render');
   assert.match(css,/:where\([^)]*\):focus-visible/);
   assert.match(css,/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(css,/scroll-behavior:\s*auto/);
@@ -31,8 +32,11 @@ test('the motion layer provides entrances and interactions while respecting redu
   assert.match(motion,/@media\s*\(prefers-reduced-motion:\s*no-preference\)/);
   assert.match(motion,/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(motion,/@keyframes hub-workspace-arrive/);
-  assert.match(motion,/@keyframes hub-card-arrive/);
-  assert.match(motion,/@supports\s*\(animation-timeline:\s*view\(\)\)/);
+  assert.match(motion,/@keyframes hub-item-arrive/);
+  assert.match(motion,/@keyframes hub-dialog-arrive/);
+  assert.match(motion,/@keyframes hub-toast-arrive/);
+  assert.doesNotMatch(motion,/animation-timeline\s*:\s*view\(\)/,'motion should not depend on scrolling');
+  assert.doesNotMatch(motionScript,/IntersectionObserver/,'interaction motion should not observe the viewport');
   assert.doesNotMatch(motion,/will-change\s*:/);
   assert.doesNotMatch(motion,/backdrop-filter\s*:/);
   const keyframes=[...motion.matchAll(/@keyframes\s+([\w-]+)/g)].map(match=>match[1]);
