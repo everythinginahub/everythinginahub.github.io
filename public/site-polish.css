@@ -2480,3 +2480,29 @@ dialog::backdrop {
 .bing-videos-frame-wrap iframe { display:block; width:100%; height:100%; min-height:480px; border:0; background:#fff; }
 @media(max-width:550px) { .youtube-library-results { max-height:50vh; } .youtube-result-card { grid-template-columns:94px minmax(0,1fr); } .bing-videos-search { padding:18px; } .bing-videos-frame-wrap { min-height:380px; height:min(72vh,700px); } .bing-videos-frame-wrap iframe { min-height:380px; } }
 @media(prefers-reduced-motion:reduce) { .youtube-result-card { transition:none; } .youtube-result-card:hover { transform:none; } }
+
+/* Local-first study, unit-price, and safe Markdown mini apps. */
+.word-counter-actions { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:8px; color:#71817f; font-size:11px; }
+.word-counter-actions .school-text-button { min-height:34px; }
+.unit-price-controls { max-width:220px; margin-bottom:16px; }
+.unit-price-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin:0 0 18px; }
+.mini-panel .unit-price-grid fieldset { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; min-width:0; margin:0; padding:16px; border:1px solid #d9ded9; border-radius:5px; }
+.unit-price-grid legend { padding:0 6px; color:#334650; font-size:13px; font-weight:750; }
+.mini-panel .unit-price-grid label { min-width:0; margin:0; color:#52666d; font-size:11px; }
+.mini-panel .unit-price-grid input,.mini-panel .unit-price-grid select { box-sizing:border-box; max-width:none; min-width:0; margin-top:5px; }
+.markdown-workspace { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:12px; }
+.markdown-workspace>div { min-width:0; }
+.mini-panel .markdown-workspace label,.markdown-preview-heading { display:block; margin:0 0 8px; color:#344b56; font-size:13px; font-weight:750; }
+.mini-panel .markdown-workspace textarea { box-sizing:border-box; display:block; width:100%; max-width:none; min-height:300px; resize:vertical; padding:14px; border:1px solid #cbd4d0; border-radius:4px; background:#fffefa; color:#293941; font:13px/1.65 ui-monospace,"Cascadia Code",monospace; }
+.mini-panel .markdown-workspace textarea:focus-visible { outline:3px solid #a9c0c4; outline-offset:2px; }
+.markdown-preview { box-sizing:border-box; min-height:300px; max-height:60vh; overflow:auto; padding:16px; border:1px solid #d9ded9; border-radius:4px; background:#fff; color:#344b56; overflow-wrap:anywhere; line-height:1.65; }
+.markdown-preview>:first-child { margin-top:0; }
+.markdown-preview h2,.markdown-preview h3,.markdown-preview h4 { color:#283f49; line-height:1.3; }
+.markdown-preview blockquote { margin:14px 0; padding:4px 14px; border-left:3px solid #8aa59b; color:#536a67; }
+.markdown-preview pre { overflow:auto; padding:12px; border:1px solid #e0e4de; border-radius:4px; background:#f4f6f2; white-space:pre-wrap; }
+.markdown-preview code { padding:1px 4px; border-radius:3px; background:#edf1ee; font-family:ui-monospace,"Cascadia Code",monospace; font-size:.92em; }
+.markdown-preview pre code { padding:0; background:transparent; }
+.markdown-preview a { color:#315f77; text-underline-offset:2px; }
+.markdown-preview .markdown-empty { color:#7a8984; font-style:italic; }
+@media(max-width:700px) { .unit-price-grid,.markdown-workspace { grid-template-columns:1fr; } .mini-panel .unit-price-grid fieldset { grid-template-columns:repeat(2,minmax(0,1fr)); } .mini-panel .markdown-workspace textarea,.markdown-preview { min-height:220px; } }
+@media(max-width:420px) { .mini-panel .unit-price-grid fieldset { grid-template-columns:1fr; } }

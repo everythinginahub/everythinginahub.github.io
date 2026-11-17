@@ -1,6 +1,6 @@
 import { timetableImportPanel } from './timetable-import.js?v=20261114-18';
 import { everydayToolPanels, mountEverydayTools } from './everyday-tools.js?v=20261108-1';
-import { extraToolPanels, mountExtraTools } from './extra-tools.js?v=20261107-17';
+import { extraToolPanels, mountExtraTools } from './extra-tools.js?v=20261107-18';
 const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 export const schoolDays=days;
