@@ -1,6 +1,6 @@
-/* A lightweight, accessible motion system for the Everything Hub. */
+/* Bold, playful, accessible motion for the Everything Hub workspace at /public. */
 @media (prefers-reduced-motion: no-preference) {
-  /* Gentle colour drift gives the welcome screen a little life without moving its layout. */
+  /* Big ambient orbs add depth while staying behind the page content. */
   #landing.entry-screen {
     position: relative;
     isolation: isolate;
@@ -18,17 +18,21 @@
   }
 
   #landing.entry-screen::before {
-    top: 0;
-    right: 0;
-    background: radial-gradient(circle, #49d9ce35 0, #49d9ce19 34%, transparent 72%);
-    animation: hub-aurora-breathe 19s ease-in-out infinite alternate;
+    top: clamp(12px, 3vw, 40px);
+    right: clamp(12px, 3vw, 40px);
+    background: radial-gradient(circle, #49d9ce48 0, #49d9ce24 34%, transparent 72%);
+    animation: hub-aurora-float 16s ease-in-out infinite alternate;
   }
 
   #landing.entry-screen::after {
-    bottom: 0;
-    left: 0;
-    background: radial-gradient(circle, #9d80ff36 0, #9d80ff19 34%, transparent 72%);
-    animation: hub-aurora-breathe 23s ease-in-out -7s infinite alternate-reverse;
+    bottom: clamp(12px, 3vw, 40px);
+    left: clamp(12px, 3vw, 40px);
+    background: radial-gradient(circle, #9d80ff49 0, #9d80ff24 34%, transparent 72%);
+    animation: hub-aurora-float 21s ease-in-out -7s infinite alternate-reverse;
+  }
+
+  #landing .entry-layout {
+    perspective: 1200px;
   }
 
   #landing .entry-main {
@@ -37,7 +41,7 @@
   }
 
   .entry-intro > * {
-    animation: hub-content-arrive 620ms cubic-bezier(.2, .8, .2, 1) backwards;
+    animation: hub-hero-arrive 760ms cubic-bezier(.16, 1, .3, 1) backwards;
   }
 
   .entry-intro > :nth-child(1) { animation-delay: 30ms; }
@@ -61,6 +65,13 @@
 
   .entry-intro h1 {
     position: relative;
+    transform-origin: left center;
+    animation: hub-title-pop 920ms cubic-bezier(.16, 1, .3, 1) 150ms backwards;
+  }
+
+  .entry-intro .brand-mark {
+    transform-origin: center;
+    animation: hub-logo-float 3.2s ease-in-out 850ms infinite alternate;
   }
 
   .entry-intro h1::after {
@@ -93,22 +104,61 @@
 
   .entry-card {
     transform-origin: 70% 40%;
-    animation: hub-card-arrive 760ms cubic-bezier(.16, 1, .3, 1) 130ms backwards;
+    animation: hub-entry-card-arrive 980ms cubic-bezier(.16, 1, .3, 1) 150ms backwards;
   }
 
   #app > :is(.everything-home, .mini-app, .ai-page, .school-tools, .bookmarks-workspace, .timetable-workspace) {
     transform-origin: 50% 0;
-    animation: hub-workspace-arrive 460ms cubic-bezier(.2, .8, .2, 1) backwards;
+    animation: hub-workspace-arrive 620ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
+  #app .launcher-heading > div {
+    animation: hub-heading-pop 820ms cubic-bezier(.16, 1, .3, 1) 120ms backwards;
+  }
+
+  #app .launcher-search {
+    animation: hub-search-slide 820ms cubic-bezier(.16, 1, .3, 1) 200ms backwards;
   }
 
   #app .home-featured,
   #app .home-quick-access,
   #app .app-discovery-footer {
-    animation: hub-content-arrive 500ms cubic-bezier(.2, .8, .2, 1) 70ms backwards;
+    animation: hub-content-arrive 650ms cubic-bezier(.16, 1, .3, 1) 140ms backwards;
   }
 
   #app .home-daily-challenge {
-    animation: hub-card-arrive 560ms cubic-bezier(.2, .8, .2, 1) 90ms backwards;
+    animation: hub-card-arrive 720ms cubic-bezier(.16, 1, .3, 1) 180ms backwards;
+  }
+
+  /* Animated colour blooms on the signed-in home screen mirror the welcome page. */
+  #app > .everything-home {
+    position: relative;
+    isolation: isolate;
+  }
+
+  #app > .everything-home::before,
+  #app > .everything-home::after {
+    position: absolute;
+    z-index: -1;
+    width: min(58vw, 680px);
+    height: min(58vw, 680px);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+  }
+
+  #app > .everything-home::before {
+    top: 4px;
+    right: clamp(12px, 3vw, 40px);
+    background: radial-gradient(circle, #7770ed24 0, #46d5ce20 34%, transparent 72%);
+    animation: hub-aurora-float 18s ease-in-out infinite alternate;
+  }
+
+  #app > .everything-home::after {
+    top: 29%;
+    left: clamp(12px, 3vw, 40px);
+    background: radial-gradient(circle, #f18a7921 0, #7a76e81a 36%, transparent 72%);
+    animation: hub-aurora-float 22s ease-in-out -8s infinite alternate-reverse;
   }
 
   #app .home-daily-star::before {
@@ -119,42 +169,42 @@
   .home-directory-group,
   .os-widget-grid .os-widget,
   #app .set-mode-grid .set-mode {
-    animation: hub-card-arrive 460ms cubic-bezier(.2, .8, .2, 1) backwards;
+    animation: hub-card-arrive 620ms cubic-bezier(.16, 1, .3, 1) backwards;
   }
 
   .home-directory-group:nth-child(2),
   .os-widget-grid .os-widget:nth-child(2),
-  #app .set-mode-grid .set-mode:nth-child(2) { animation-delay: 55ms; }
+  #app .set-mode-grid .set-mode:nth-child(2) { animation-delay: 80ms; }
 
   .home-directory-group:nth-child(3),
   .os-widget-grid .os-widget:nth-child(3),
-  #app .set-mode-grid .set-mode:nth-child(3) { animation-delay: 110ms; }
+  #app .set-mode-grid .set-mode:nth-child(3) { animation-delay: 160ms; }
 
   .home-directory-group:nth-child(4),
   .os-widget-grid .os-widget:nth-child(4),
-  #app .set-mode-grid .set-mode:nth-child(4) { animation-delay: 165ms; }
+  #app .set-mode-grid .set-mode:nth-child(4) { animation-delay: 240ms; }
 
   .os-app-grid.home-directory .hub-tile {
-    animation: hub-tile-arrive 400ms cubic-bezier(.2, .8, .2, 1) backwards;
+    animation: hub-tile-arrive 520ms cubic-bezier(.16, 1, .3, 1) backwards;
   }
 
-  .os-app-grid.home-directory .hub-tile:nth-child(2) { animation-delay: 35ms; }
-  .os-app-grid.home-directory .hub-tile:nth-child(3) { animation-delay: 70ms; }
-  .os-app-grid.home-directory .hub-tile:nth-child(4) { animation-delay: 105ms; }
-  .os-app-grid.home-directory .hub-tile:nth-child(5) { animation-delay: 140ms; }
-  .os-app-grid.home-directory .hub-tile:nth-child(6) { animation-delay: 175ms; }
+  .os-app-grid.home-directory .hub-tile:nth-child(6n + 2) { animation-delay: 45ms; }
+  .os-app-grid.home-directory .hub-tile:nth-child(6n + 3) { animation-delay: 90ms; }
+  .os-app-grid.home-directory .hub-tile:nth-child(6n + 4) { animation-delay: 135ms; }
+  .os-app-grid.home-directory .hub-tile:nth-child(6n + 5) { animation-delay: 180ms; }
+  .os-app-grid.home-directory .hub-tile:nth-child(6n) { animation-delay: 225ms; }
 
   .entry-demo[open] .entry-demo-body {
     transform-origin: top center;
-    animation: hub-demo-open 340ms cubic-bezier(.2, .8, .2, 1) both;
+    animation: hub-demo-open 440ms cubic-bezier(.16, 1, .3, 1) both;
   }
 
   .entry-demo-option.is-correct {
-    animation: hub-answer-pop 460ms cubic-bezier(.16, 1, .3, 1);
+    animation: hub-answer-pop 520ms cubic-bezier(.16, 1, .3, 1);
   }
 
   .entry-demo-option.is-incorrect {
-    animation: hub-answer-nudge 360ms cubic-bezier(.36, .07, .19, .97);
+    animation: hub-answer-nudge 460ms cubic-bezier(.36, .07, .19, .97);
   }
 
   .entry-demo-toggle {
@@ -165,37 +215,45 @@
   #app .btn,
   .app-switcher-trigger,
   .top-brand img,
+  .entry-card,
   #app .home-category-filters button,
   #app .os-dock a {
-    transition: transform 220ms cubic-bezier(.16, 1, .3, 1), background-color 180ms ease, border-color 180ms ease;
+    transition: transform 280ms cubic-bezier(.16, 1, .3, 1), background-color 180ms ease, border-color 180ms ease;
   }
 
   #app :is(.hub-tile, .dashboard-action, .subject-card, .deck-card, .game-set-card, .video-card, .resource-card, .book-card, .reward-card, .everyday-card, .app-discovery-link, .quick-app-link, .set-mode),
-  #app .os-widget-grid > a.os-widget {
-    transition: transform 240ms cubic-bezier(.16, 1, .3, 1), border-color 180ms ease, background-color 180ms ease;
+  #app .os-widget-grid > a.os-widget,
+  #app .home-daily-challenge {
+    transition: transform 300ms cubic-bezier(.16, 1, .3, 1), border-color 180ms ease, background-color 180ms ease;
+  }
+
+  #app :is(.hub-tile-icon, .subject-icon, .deck-symbol, .game-set-mark, .mode-icon, .switcher-icon) {
+    transition: transform 320ms cubic-bezier(.16, 1, .3, 1);
   }
 
   #app :is(.hub-tile, .dashboard-action, .subject-card, .deck-card, .game-set-card, .video-card, .resource-card, .book-card, .reward-card, .everyday-card, .app-discovery-link, .quick-app-link, .set-mode):focus-visible,
   #app .os-widget-grid > a.os-widget:focus-visible {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
   }
 
   .entry-actions .btn:active:not(:disabled),
   #app .btn:active:not(:disabled) {
-    transform: translateY(0) scale(.975);
+    transform: translateY(1px) scale(.94);
   }
 
   #app .home-category-filters button:active {
-    transform: scale(.97);
+    transform: scale(.94);
   }
 
-  #app :is(.btn.dark, .home-daily-link) {
+  #app :is(.btn.dark, .home-daily-link),
+  .entry-actions .btn.dark {
     position: relative;
     isolation: isolate;
     overflow: hidden;
   }
 
-  #app :is(.btn.dark, .home-daily-link)::after {
+  #app :is(.btn.dark, .home-daily-link)::after,
+  .entry-actions .btn.dark::after {
     position: absolute;
     top: -40%;
     bottom: -40%;
@@ -208,51 +266,61 @@
     transition: transform 620ms cubic-bezier(.2, .8, .2, 1);
   }
 
-  #app :is(.btn.dark, .home-daily-link):focus-visible::after {
+  #app :is(.btn.dark, .home-daily-link):focus-visible::after,
+  .entry-actions .btn.dark:focus-visible::after {
     transform: translateX(430%) skewX(-20deg);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .entry-actions .btn:hover:not(:disabled),
     #app .btn:hover:not(:disabled) {
-      transform: translateY(-3px) scale(1.015);
+      transform: translateY(-5px) scale(1.04);
     }
 
     .entry-index > div:hover {
-      transform: translateX(6px);
+      transform: translateX(10px);
     }
 
     .entry-index > div:hover > span {
-      transform: scale(1.12) rotate(-5deg);
+      transform: scale(1.2) rotate(-8deg);
     }
 
     .entry-demo > summary:hover .entry-demo-toggle {
-      transform: rotate(45deg) scale(1.08);
-      background-color: #ffffff12;
+      transform: rotate(60deg) scale(1.16);
+      background-color: #ffffff18;
     }
 
     .top-brand:hover img {
-      transform: rotate(-7deg) scale(1.08);
+      transform: rotate(-10deg) scale(1.14);
     }
 
     .entry-card:hover {
-      transform: translateY(-4px) rotateX(1deg);
+      transform: translateY(-8px) rotateX(2deg);
     }
 
     #app :is(.hub-tile, .dashboard-action, .subject-card, .deck-card, .game-set-card, .video-card, .resource-card, .book-card, .reward-card, .everyday-card, .app-discovery-link, .quick-app-link, .set-mode):hover,
     #app .os-widget-grid > a.os-widget:hover {
-      transform: translateY(-5px) scale(1.012);
+      transform: translateY(-9px) scale(1.025);
+    }
+
+    #app :is(.hub-tile, .dashboard-action, .subject-card, .deck-card, .game-set-card, .video-card, .resource-card, .book-card, .reward-card, .everyday-card, .app-discovery-link, .quick-app-link, .set-mode):hover :is(.hub-tile-icon, .subject-icon, .deck-symbol, .game-set-mark, .mode-icon, .switcher-icon) {
+      transform: rotate(-8deg) scale(1.16);
+    }
+
+    #app .home-daily-challenge:hover {
+      transform: translateY(-6px) scale(1.01);
     }
 
     #app .os-dock a:hover {
-      transform: translateY(-3px);
+      transform: translateY(-5px);
     }
 
     #app .home-category-filters button:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px) scale(1.04);
     }
 
-    #app :is(.btn.dark, .home-daily-link):hover::after {
+    #app :is(.btn.dark, .home-daily-link):hover::after,
+    .entry-actions .btn.dark:hover::after {
       transform: translateX(430%) skewX(-20deg);
     }
   }
@@ -267,29 +335,59 @@
   }
 }
 
-@keyframes hub-aurora-breathe {
-  from { opacity: .48; }
-  to { opacity: .92; }
+@keyframes hub-aurora-float {
+  from { opacity: .34; transform: translate3d(-5%, 5%, 0) scale(.88) rotate(-6deg); }
+  to { opacity: .9; transform: translate3d(-2%, 2%, 0) scale(1.04) rotate(5deg); }
+}
+
+@keyframes hub-hero-arrive {
+  from { opacity: 0; transform: translateY(32px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes hub-title-pop {
+  from { opacity: 0; transform: translateY(46px) scale(.84) rotateX(-9deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+}
+
+@keyframes hub-logo-float {
+  from { transform: translateY(1px) rotate(-8deg); }
+  to { transform: translateY(-7px) rotate(8deg); }
+}
+
+@keyframes hub-entry-card-arrive {
+  from { opacity: 0; transform: translateY(42px) scale(.84) rotateX(12deg) rotateY(-5deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotateX(0) rotateY(0); }
 }
 
 @keyframes hub-content-arrive {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(26px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes hub-card-arrive {
-  from { opacity: 0; transform: translateY(20px) scale(.97) rotateX(3deg); }
+  from { opacity: 0; transform: translateY(32px) scale(.92) rotateX(8deg); }
   to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
 }
 
 @keyframes hub-workspace-arrive {
-  from { opacity: 0; transform: translateY(12px) scale(.993); }
+  from { opacity: 0; transform: translateY(24px) scale(.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes hub-heading-pop {
+  from { opacity: 0; transform: translateY(32px) scale(.88) rotateX(7deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+}
+
+@keyframes hub-search-slide {
+  from { opacity: 0; transform: translateX(34px) scale(.9); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
 @keyframes hub-tile-arrive {
-  from { opacity: 0; transform: translateY(10px) scale(.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(20px) scale(.88) rotate(-2deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
 }
 
 @keyframes hub-rule-reveal {
@@ -303,42 +401,47 @@
 }
 
 @keyframes hub-star-twinkle {
-  0%, 100% { transform: scale(.9) rotate(-5deg); }
-  50% { transform: scale(1.12) rotate(6deg); }
+  0%, 100% { transform: scale(.78) rotate(-16deg); }
+  50% { transform: scale(1.22) rotate(14deg); }
 }
 
 @keyframes hub-demo-open {
-  from { opacity: 0; transform: translateY(-6px) scaleY(.97); }
+  from { opacity: 0; transform: translateY(-14px) scaleY(.9); }
   to { opacity: 1; transform: translateY(0) scaleY(1); }
 }
 
 @keyframes hub-answer-pop {
   0% { transform: scale(1); }
-  44% { transform: scale(1.045); }
-  72% { transform: scale(.99); }
+  38% { transform: scale(1.12); }
+  72% { transform: scale(.97); }
   100% { transform: scale(1); }
 }
 
 @keyframes hub-answer-nudge {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-2px); }
+  20% { transform: translateX(-8px); }
+  42% { transform: translateX(7px); }
+  64% { transform: translateX(-5px); }
+  82% { transform: translateX(3px); }
 }
 
 @keyframes hub-scroll-reveal {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(32px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #landing.entry-screen::before,
   #landing.entry-screen::after,
+  #app > .everything-home::before,
+  #app > .everything-home::after,
   .entry-intro > *,
   .entry-index > div,
   .entry-card,
   .entry-intro h1::after,
   #app > :is(.everything-home, .mini-app, .ai-page, .school-tools, .bookmarks-workspace, .timetable-workspace),
+  #app .launcher-heading > div,
+  #app .launcher-search,
   #app .home-featured,
   #app .home-quick-access,
   #app .app-discovery-footer,
