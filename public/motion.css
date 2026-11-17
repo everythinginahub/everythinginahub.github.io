@@ -1,4 +1,7 @@
 /* Bold, playful, accessible motion for the Everything Hub workspace at /public. */
+/* Keep decorative geometry out of the layout when motion is reduced or unavailable. */
+#app .home-orbit-scene { display: none; }
+
 @media (prefers-reduced-motion: no-preference) {
   /* Big ambient orbs add depth while staying behind the page content. */
   #landing.entry-screen {
@@ -170,7 +173,90 @@
   }
 
   #app .home-daily-challenge {
+    isolation: isolate;
     animation: hub-card-arrive 720ms cubic-bezier(.16, 1, .3, 1) 180ms backwards;
+  }
+
+  #app .home-daily-challenge > :not(.home-orbit-scene) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* A glassy six-sided spinner with two intersecting, independently orbiting rings. */
+  #app .home-orbit-scene {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    top: 50%;
+    right: clamp(290px, 30%, 340px);
+    width: 104px;
+    height: 104px;
+    perspective: 620px;
+    transform: translateY(-50%);
+    transform-style: preserve-3d;
+    opacity: .88;
+    pointer-events: none;
+  }
+
+  #app .home-orbit-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 98px;
+    height: 38px;
+    border: 1px solid #7468df88;
+    border-radius: 50%;
+    box-shadow: 0 0 14px #7365eb24;
+    transform-style: preserve-3d;
+  }
+
+  #app .home-orbit-ring-a {
+    background: radial-gradient(circle at 3% 50%, #fff 0 2px, #8172ff 2.8px 4px, transparent 4.7px);
+    animation: hub-home-orbit-a 6.4s linear infinite;
+  }
+
+  #app .home-orbit-ring-b {
+    width: 80px;
+    height: 48px;
+    border-color: #37bdaa88;
+    background: radial-gradient(circle at 97% 50%, #edfffa 0 2px, #36c6b4 2.8px 4px, transparent 4.7px);
+    animation: hub-home-orbit-b 8.1s linear infinite reverse;
+  }
+
+  #app .home-orbit-cube {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    transform-style: preserve-3d;
+    animation: hub-home-cube-spin 8.4s linear infinite;
+  }
+
+  #app .home-orbit-cube > i {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid #ffffffd9;
+    border-radius: 4px;
+    color: #fff;
+    font: 800 10px/1 system-ui, sans-serif;
+    font-style: normal;
+    text-shadow: 0 1px 4px #29265e99;
+    box-shadow: inset 0 0 11px #ffffffb8, 0 0 12px #7065ee44;
+    backface-visibility: visible;
+  }
+
+  #app .home-orbit-cube .face-front { transform: translateZ(15px); background: linear-gradient(145deg, #ffffffef, #998affc9 58%, #6d60e9d9); }
+  #app .home-orbit-cube .face-back { transform: rotateY(180deg) translateZ(15px); background: linear-gradient(145deg, #d7fff5, #49cdb4d9 62%, #347cadc9); }
+  #app .home-orbit-cube .face-right { transform: rotateY(90deg) translateZ(15px); background: linear-gradient(145deg, #fff2d9, #ff9c84dc 62%, #bf63b9d9); }
+  #app .home-orbit-cube .face-left { transform: rotateY(-90deg) translateZ(15px); background: linear-gradient(145deg, #f7f1ff, #8171f3e8 62%, #4b58c5d9); }
+  #app .home-orbit-cube .face-top { transform: rotateX(90deg) translateZ(15px); background: linear-gradient(145deg, #fff, #b0f5e4 64%, #60c9da); }
+  #app .home-orbit-cube .face-bottom { transform: rotateX(-90deg) translateZ(15px); background: linear-gradient(145deg, #ffe4f4, #ca7ed3 64%, #7361d7); }
+
+  @media (max-width: 700px) {
+    #app .home-orbit-scene { display: none; }
   }
 
   /* Animated colour blooms on the signed-in home screen mirror the welcome page. */
@@ -721,9 +807,26 @@
 }
 
 @keyframes hub-spin-3d {
-  0% { transform: perspective(500px) rotateY(0) scale(1); }
-  52% { transform: perspective(500px) rotateY(190deg) scale(1.16); }
-  100% { transform: perspective(500px) rotateY(360deg) scale(1); }
+  0% { transform: perspective(560px) rotateX(0) rotateY(0) rotateZ(0) scale(1); }
+  34% { transform: perspective(560px) rotateX(22deg) rotateY(126deg) rotateZ(-12deg) scale(1.14); }
+  70% { transform: perspective(560px) rotateX(-16deg) rotateY(278deg) rotateZ(10deg) scale(1.16); }
+  100% { transform: perspective(560px) rotateX(0) rotateY(360deg) rotateZ(0) scale(1); }
+}
+
+@keyframes hub-home-cube-spin {
+  0% { transform: translate3d(-50%, -50%, 0) rotateX(-18deg) rotateY(0deg) rotateZ(-12deg); }
+  50% { transform: translate3d(-50%, calc(-50% - 5px), 0) rotateX(20deg) rotateY(180deg) rotateZ(10deg); }
+  100% { transform: translate3d(-50%, -50%, 0) rotateX(-18deg) rotateY(360deg) rotateZ(-12deg); }
+}
+
+@keyframes hub-home-orbit-a {
+  from { transform: translate(-50%, -50%) rotateX(68deg) rotateY(18deg) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(68deg) rotateY(18deg) rotateZ(360deg); }
+}
+
+@keyframes hub-home-orbit-b {
+  from { transform: translate(-50%, -50%) rotateX(18deg) rotateY(70deg) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(18deg) rotateY(70deg) rotateZ(360deg); }
 }
 
 @keyframes hub-match-turn {
