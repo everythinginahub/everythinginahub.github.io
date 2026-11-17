@@ -11,19 +11,20 @@ export function stepRunner(g,dt,random=Math.random){
  for(const ob of g.obstacles)ob.x-=g.speed*dt;for(const coin of g.coins)coin.x-=g.speed*dt;g.obstacles=g.obstacles.filter(o=>o.x+o.w>-20);g.coins=g.coins.filter(c=>c.x>-30);
  const player={x:126,y:g.y,w:36,h:65};if(!g.invulnerable&&g.obstacles.some(o=>intersects(player,o))){g.lives--;burst(g,144,g.y+35,'#ffc1a3');g.invulnerable=1.4;if(g.lives<=0)g.status='lost';}
  g.coins=g.coins.filter(c=>{if(intersects(player,{x:c.x-c.r,y:c.y-c.r,w:c.r*2,h:c.r*2})){g.coinsCollected=(g.coinsCollected||0)+1;if(g.coinsCollected%8===0)g.lives=Math.min(3,g.lives+1);burst(g,c.x,c.y,'#ffe28e');return false;}return true;});
+ if(g.status==='running'&&g.daily?.targetMeters&&g.distance>=g.daily.targetMeters*10)g.status='won';
 }
-function makeWave(wave){const out=[];for(let r=0;r<3;r++)for(let c=0;c<7;c++)out.push({x:170+c*90,y:72+r*53,baseX:170+c*90,w:42,h:30,hp:wave>=3&&r===0?2:1});return out;}
+function makeWave(wave){const out=[];for(let r=0;r<3;r++)for(let c=0;c<7;c++)out.push({x:170+c*90,y:72+r*53,baseX:170+c*90,w:42,h:30,hp:wave>=3&&r===0?2:1});if(wave%3===0){const hp=18+Math.floor(wave/3-1)*4;out.push({boss:true,x:WIDTH/2-70,y:42,baseX:WIDTH/2-70,w:140,h:66,hp,maxHp:hp});}return out;}
 export function newOrbit(){return {kind:'orbit',status:'ready',score:0,lives:3,wave:1,time:0,x:WIDTH/2,bullets:[],enemyBullets:[],enemies:makeWave(1),combo:0,comboTimer:0,shot:0,enemyShot:1.5,invulnerable:0};}
 export function stepOrbit(g,dt,input={},random=Math.random){
  if(g.status!=='running')return;g.time+=dt;g.invulnerable=Math.max(0,g.invulnerable-dt);g.comboTimer=Math.max(0,g.comboTimer-dt);if(!g.comboTimer)g.combo=0;g.x=clamp(g.x+((input.right?1:0)-(input.left?1:0))*420*dt,35,WIDTH-35);if(Number.isFinite(input.pointerX))g.x=clamp(input.pointerX,35,WIDTH-35);
  g.shot-=dt;if(g.shot<=0){if(g.wave>=2){g.bullets.push({x:g.x-15,y:460,w:6,h:17},{x:g.x+9,y:460,w:6,h:17});}else g.bullets.push({x:g.x-3,y:460,w:6,h:17});g.shot=.22;}
- for(const b of g.bullets)b.y-=610*dt;for(const b of g.enemyBullets)b.y+=200*dt;
- for(const e of g.enemies){e.x=e.baseX+Math.sin(g.time*.9)*55;e.y+=(5+g.wave*1.3)*dt;}
- g.enemyShot-=dt;if(g.enemyShot<=0&&g.enemies.length){const e=g.enemies[Math.floor(random()*g.enemies.length)];g.enemyBullets.push({x:e.x+e.w/2-4,y:e.y+e.h,w:8,h:15});g.enemyShot=Math.max(.3,1.0-g.wave*.06)+random()*.5;}
- for(const bullet of g.bullets){const hit=g.enemies.find(e=>intersects(bullet,e));if(hit){bullet.y=-100;hit.hp--;if(hit.hp<=0){burst(g,hit.x+hit.w/2,hit.y+hit.h/2,'#ffb09e');g.combo=Math.min(5,g.combo+1);g.comboTimer=2.5;g.score+=100+(g.combo-1)*25;g.enemies.splice(g.enemies.indexOf(hit),1);}}}
- const ship={x:g.x-22,y:466,w:44,h:38};if(!g.invulnerable&&(g.enemyBullets.some(b=>intersects(b,ship))||g.enemies.some(e=>e.y+e.h>=470))){g.lives--;g.combo=0;g.comboTimer=0;burst(g,g.x,480,'#aaffef');g.invulnerable=1.5;g.enemyBullets=[];if(g.enemies.some(e=>e.y+e.h>=470))for(const e of g.enemies)e.y-=80;if(g.lives<=0)g.status='lost';}
- g.bullets=g.bullets.filter(b=>b.y>-30);g.enemyBullets=g.enemyBullets.filter(b=>b.y<HEIGHT+20);
- if(!g.enemies.length){g.wave++;g.score+=500;g.enemies=makeWave(g.wave);g.enemyBullets=[];g.enemyShot=1.5;}
+ for(const b of g.bullets)b.y-=610*dt;for(const b of g.enemyBullets){b.x+=(b.vx||0)*dt;b.y+=(b.speed||200)*dt;}
+ for(const e of g.enemies){if(e.boss){e.x=clamp(WIDTH/2-e.w/2+Math.sin(g.time*.8)*250,35,WIDTH-e.w-35);e.y=48+Math.sin(g.time*2.2)*12;}else{e.x=e.baseX+Math.sin(g.time*.9)*55;e.y+=(5+g.wave*1.3)*dt;}}
+ g.enemyShot-=dt;if(g.enemyShot<=0&&g.enemies.length){const boss=g.enemies.find(e=>e.boss);if(boss&&random()<.52){for(const [offset,vx] of [[-34,-105],[0,0],[34,105]])g.enemyBullets.push({x:boss.x+boss.w/2+offset-4,y:boss.y+boss.h,w:8,h:15,vx,speed:250});}else{const targets=g.enemies.filter(e=>!e.boss),e=targets.length?targets[Math.floor(random()*targets.length)]:boss;g.enemyBullets.push({x:e.x+e.w/2-4,y:e.y+e.h,w:8,h:15});}g.enemyShot=Math.max(.3,(boss?0.72:1.0)-g.wave*.04)+random()*(boss?0.35:0.5);}
+ for(const bullet of g.bullets){const hit=g.enemies.find(e=>intersects(bullet,e));if(hit){bullet.y=-100;hit.hp--;if(hit.hp<=0){burst(g,hit.x+hit.w/2,hit.y+hit.h/2,hit.boss?'#ffd27a':'#ffb09e');g.combo=Math.min(5,g.combo+1);g.comboTimer=2.5;g.score+=(hit.boss?1000:100)+(g.combo-1)*25;g.enemies.splice(g.enemies.indexOf(hit),1);}}}
+ const ship={x:g.x-22,y:466,w:44,h:38};if(!g.invulnerable&&(g.enemyBullets.some(b=>intersects(b,ship))||g.enemies.some(e=>!e.boss&&e.y+e.h>=470))){g.lives--;g.combo=0;g.comboTimer=0;burst(g,g.x,480,'#aaffef');g.invulnerable=1.5;g.enemyBullets=[];if(g.enemies.some(e=>!e.boss&&e.y+e.h>=470))for(const e of g.enemies)if(!e.boss)e.y-=80;if(g.lives<=0)g.status='lost';}
+ g.bullets=g.bullets.filter(b=>b.y>-30);g.enemyBullets=g.enemyBullets.filter(b=>b.y<HEIGHT+20&&b.x>-20&&b.x<WIDTH+20);
+ if(!g.enemies.length){g.wave++;g.score+=500;g.enemyBullets=[];g.enemyShot=1.5;if(g.daily?.targetWave&&g.wave>=g.daily.targetWave)g.status='won';else g.enemies=makeWave(g.wave);}
 }
 function bricks(level){const result=[];const rows=level+2;for(let r=0;r<rows;r++)for(let c=0;c<9;c++){if(level===2&&r===1&&c===4)continue;result.push({x:76+c*90,y:92+r*35,w:80,h:24,color:(r+c+level)%5});}return result;}
 export function newReef(){return {kind:'reef',status:'ready',score:0,lives:3,level:1,time:0,paddle:WIDTH/2,ball:{x:WIDTH/2,y:453,vx:190,vy:-330,r:9},launched:false,bricks:bricks(1),combo:0,broken:0,pickups:[],wideTimer:0};}
@@ -35,6 +36,6 @@ export function stepReef(g,dt,input={}){
  for(let i=g.bricks.length-1;i>=0;i--){const a=g.bricks[i],cx=clamp(b.x,a.x,a.x+a.w),cy=clamp(b.y,a.y,a.y+a.h);if((b.x-cx)**2+(b.y-cy)**2<=b.r*b.r){if(b.x<a.x||b.x>a.x+a.w)b.vx=-b.vx;else b.vy=-b.vy;g.bricks.splice(i,1);g.broken++;g.combo=Math.min(4,g.combo+1);if(g.broken%7===0)g.pickups.push({x:a.x+a.w/2,y:a.y+a.h/2});burst(g,a.x+a.w/2,a.y+a.h/2,['#f5867f','#f9ca70','#73d7c8','#8fb2f0','#c19ee6'][a.color]);g.score+=25*g.combo;break;}}
  for(const p of g.pickups){p.y+=125*dt;if(p.y>=460&&p.y<=488&&Math.abs(p.x-g.paddle)<half){g.wideTimer=12;p.y=HEIGHT+30;burst(g,p.x,470,'#aaffef');}}g.pickups=g.pickups.filter(p=>p.y<HEIGHT+20);
  if(b.y-b.r>HEIGHT){g.lives--;g.combo=0;g.launched=false;if(g.lives<=0)g.status='lost';}
- if(!g.bricks.length){g.score+=250;if(g.level>=3){g.status='won';g.launched=false;}else{g.level++;g.bricks=bricks(g.level);g.pickups=[];g.combo=0;g.launched=false;b.vx=190;b.vy=-330;}}
+ if(!g.bricks.length){g.score+=250;if(g.level>=3){g.status='won';g.launched=false;}else{g.level++;g.launched=false;if(g.daily?.targetLevel&&g.level>=g.daily.targetLevel){g.status='won';g.pickups=[];}else{g.bricks=bricks(g.level);g.pickups=[];g.combo=0;b.vx=190;b.vy=-330;}}}
 }
 export function stepGame(game,dt,input={},random=Math.random){const step=Math.min(.05,Math.max(0,dt));const count=Math.max(1,Math.ceil(step/(1/120)));for(let i=0;i<count;i++){const d=step/count;if(game.kind==='skyline')stepRunner(game,d,random);else if(game.kind==='orbit')stepOrbit(game,d,input,random);else if(game.kind==='reef')stepReef(game,d,input);if(game.particles){for(const p of game.particles){p.x+=p.vx*d;p.y+=p.vy*d;p.vy+=100*d;p.life-=d;}game.particles=game.particles.filter(p=>p.life>0);}}}

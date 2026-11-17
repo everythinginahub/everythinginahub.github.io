@@ -1,4 +1,4 @@
-import {WIDTH as W,HEIGHT as H} from './arcade-engine.js?v=20261112-1';
+import {WIDTH as W,HEIGHT as H} from './arcade-engine.js?v=20261106-8';
 const fill=(c,color,x,y,w,h)=>{c.fillStyle=color;c.fillRect(x,y,w,h);};
 function gradient(c,top,bottom){const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,top);g.addColorStop(1,bottom);fill(c,g,0,0,W,H);}
 function circle(c,x,y,r,color){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fillStyle=color;c.fill();}
@@ -18,7 +18,7 @@ function orbit(c,g,bg){
  if(bg){c.drawImage(bg,0,0,W,H);}else{gradient(c,'#0c1537','#1f3660');for(let i=0;i<65;i++){const x=(i*137+67)%W,y=(i*97+g.time*(8+i%3*4))%H;circle(c,x,y,i%9===0?2:1,i%7===0?'#a0f7df':'#ffffff99');}
  circle(c,795,440,210,'#1e4672');circle(c,820,449,205,'#274f7c');c.strokeStyle='#79d9db33';c.lineWidth=3;c.beginPath();c.arc(815,445,206,3.5,5.1);c.stroke();}
  for(let i=0;i<32;i++)circle(c,(i*137+31)%W,(i*97+g.time*(10+i%4*6))%H,1+i%3*.5,'#ffffff88');
- for(const e of g.enemies){c.save();c.translate(e.x+e.w/2,e.y+e.h/2);c.shadowColor='#ff8f9a';c.shadowBlur=12;polygon(c,[[-21,-6],[-11,-15],[11,-15],[21,-6],[15,12],[5,9],[0,15],[-5,9],[-15,12]],e.hp>1?'#fac878':'#f67887');rounded(c,-8,-8,16,8,4,'#432d5a');c.restore();}
+ for(const e of g.enemies){c.save();if(e.boss){c.translate(e.x+e.w/2,e.y+e.h/2);c.shadowColor='#ff7f9e';c.shadowBlur=20;polygon(c,[[-70,-3],[-53,-28],[-24,-25],[0,-36],[24,-25],[53,-28],[70,-3],[55,22],[29,17],[0,33],[-29,17],[-55,22]],'#e36a91');polygon(c,[[-46,-2],[-27,-13],[27,-13],[46,-2],[32,12],[0,7],[-32,12]],'#67366c');for(const eye of [-27,27])circle(c,eye,-2,6,'#ffe18c');c.restore();c.fillStyle='#1b274f';c.fillRect(e.x,e.y-11,e.w,5);fill(c,'#ffcc79',e.x,e.y-11,e.w*Math.max(0,e.hp/e.maxHp),5);}else{c.translate(e.x+e.w/2,e.y+e.h/2);c.shadowColor='#ff8f9a';c.shadowBlur=12;polygon(c,[[-21,-6],[-11,-15],[11,-15],[21,-6],[15,12],[5,9],[0,15],[-5,9],[-15,12]],e.hp>1?'#fac878':'#f67887');rounded(c,-8,-8,16,8,4,'#432d5a');c.restore();}}
  c.save();c.shadowBlur=12;c.shadowColor='#70f7e0';for(const b of g.bullets)rounded(c,b.x,b.y,b.w,b.h,3,'#b9fff2');c.shadowColor='#ff7b91';for(const b of g.enemyBullets)rounded(c,b.x,b.y,b.w,b.h,4,'#ff9c98');c.restore();
  if(!g.invulnerable||Math.floor(g.invulnerable*10)%2){c.save();c.translate(g.x,485);c.shadowColor='#75fff0';c.shadowBlur=20;polygon(c,[[0,-27],[12,-7],[26,15],[10,11],[0,20],[-10,11],[-26,15],[-12,-7]],'#7ce6dc');polygon(c,[[0,-19],[7,0],[0,5],[-7,0]],'#d8fffb');polygon(c,[[-8,15],[0,29+Math.sin(g.time*20)*3],[8,15]],'#ffd492');c.restore();}
 }
