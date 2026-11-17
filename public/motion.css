@@ -107,10 +107,20 @@
     animation: hub-entry-card-arrive 980ms cubic-bezier(.16, 1, .3, 1) 150ms backwards;
   }
 
-  #app > :is(.everything-home, .mini-app, .ai-page, .school-tools, .bookmarks-workspace, .timetable-workspace) {
+  /* Every route enters on render, not when a scroll position changes. */
+  .app-shell:not([hidden]) .topbar {
+    animation: hub-topbar-arrive 560ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
+  #app > :not([hidden]) {
     transform-origin: 50% 0;
     animation: hub-workspace-arrive 620ms cubic-bezier(.16, 1, .3, 1) backwards;
   }
+
+  #app > :nth-child(2):not([hidden]) { animation-delay: 55ms; }
+  #app > :nth-child(3):not([hidden]) { animation-delay: 110ms; }
+  #app > :nth-child(4):not([hidden]) { animation-delay: 165ms; }
+  #app > :nth-child(5):not([hidden]) { animation-delay: 220ms; }
 
   #app .launcher-heading > div {
     animation: hub-heading-pop 820ms cubic-bezier(.16, 1, .3, 1) 120ms backwards;
@@ -118,6 +128,39 @@
 
   #app .launcher-search {
     animation: hub-search-slide 820ms cubic-bezier(.16, 1, .3, 1) 200ms backwards;
+  }
+
+  /* Repeated pieces animate when a view is rendered or a result is updated. */
+  #app :is(
+    .stat, .subject-card, .topic-row, .deck-card, .task, .resource-card,
+    .video-card, .book-card, .reward-card, .reward-task, .everyday-card,
+    .bookmark-row, .note-card, .school-day, .school-panel, .school-lesson,
+    .practice-question, .practice-option, .practice-review, .practice-summary,
+    .game-mode-card, .game-set-card, .live-panel, .quiz-choice, .match-tile,
+    .card-list-item, .quick-app-link, .app-discovery-link, .os-dock a
+  ):not([hidden]) {
+    animation: hub-item-arrive 560ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
+  #app :is(.stats, .subjects, .deck-grid, .resource-grid, .reward-grid, .notes-grid,
+    .school-tool-grid, .directory-grid, .game-mode-grid, .game-set-grid, .quiz-choices,
+    .match-column, .card-list, .app-discovery-links) > :nth-child(6n + 2):not([hidden]) { animation-delay: 55ms; }
+  #app :is(.stats, .subjects, .deck-grid, .resource-grid, .reward-grid, .notes-grid,
+    .school-tool-grid, .directory-grid, .game-mode-grid, .game-set-grid, .quiz-choices,
+    .match-column, .card-list, .app-discovery-links) > :nth-child(6n + 3):not([hidden]) { animation-delay: 110ms; }
+  #app :is(.stats, .subjects, .deck-grid, .resource-grid, .reward-grid, .notes-grid,
+    .school-tool-grid, .directory-grid, .game-mode-grid, .game-set-grid, .quiz-choices,
+    .match-column, .card-list, .app-discovery-links) > :nth-child(6n + 4):not([hidden]) { animation-delay: 165ms; }
+  #app :is(.stats, .subjects, .deck-grid, .resource-grid, .reward-grid, .notes-grid,
+    .school-tool-grid, .directory-grid, .game-mode-grid, .game-set-grid, .quiz-choices,
+    .match-column, .card-list, .app-discovery-links) > :nth-child(6n + 5):not([hidden]) { animation-delay: 220ms; }
+  #app :is(.stats, .subjects, .deck-grid, .resource-grid, .reward-grid, .notes-grid,
+    .school-tool-grid, .directory-grid, .game-mode-grid, .game-set-grid, .quiz-choices,
+    .match-column, .card-list, .app-discovery-links) > :nth-child(6n):not([hidden]) { animation-delay: 275ms; }
+
+  #app :is(.hub-page-head h1, .view-intro h1, .everyday-head h1,
+    .books-heading h2, .timetable-header h1, .bookmarks-header h1) {
+    animation: hub-title-pop 760ms cubic-bezier(.16, 1, .3, 1) 80ms backwards;
   }
 
   #app .home-featured,
@@ -245,6 +288,87 @@
     transform: scale(.94);
   }
 
+  /* A little bounce makes button presses, keyboard focus, and selected filters feel tactile. */
+  #app :is(button, a[href], [role="button"]),
+  .app-shell .topbar :is(button, a[href]),
+  .entry-actions .entry-register {
+    transition: transform 260ms cubic-bezier(.16, 1, .3, 1), background-color 180ms ease,
+      border-color 180ms ease, color 180ms ease, outline-offset 180ms ease;
+  }
+
+  #app :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]), textarea, select) {
+    transition: transform 200ms cubic-bezier(.16, 1, .3, 1), background-color 180ms ease,
+      border-color 180ms ease, color 180ms ease, outline-offset 180ms ease;
+  }
+
+  #app :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]), textarea, select):focus-visible {
+    transform: translateY(-1px) scale(1.005);
+  }
+
+  #app :is(button, a[href], [role="button"]):focus-visible,
+  .app-shell .topbar :is(button, a[href]):focus-visible {
+    transform: translateY(-3px) scale(1.025);
+  }
+
+  #app button:active:not(:disabled),
+  #app a[href]:active,
+  #app [role="button"]:active:not([aria-disabled="true"]),
+  .app-shell .topbar button:active:not(:disabled),
+  .app-shell .topbar a[href]:active,
+  .entry-actions .entry-register:active {
+    transform: translateY(1px) scale(.92) rotate(-.5deg);
+  }
+
+  #app :is(.filter-chip.selected, .notes-nav button[aria-pressed="true"],
+    .home-category-filters button[aria-pressed="true"], .task-filters button[aria-pressed="true"]) {
+    animation: hub-selected-pop 420ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
+  #app :is(.quiz-choice.correct, .practice-review.is-correct, .reward-task.is-claimed, .match-tile.matched) {
+    animation: hub-success-pop 520ms cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  #app :is(.quiz-choice.incorrect, .practice-review.is-incorrect) {
+    animation: hub-answer-nudge 460ms cubic-bezier(.36, .07, .19, .97);
+  }
+
+  #app :is(.game-result, .practice-summary, .feedback:not(:empty), .game-feedback:not(:empty),
+    .mini-result:not(:empty), .school-result:not(:empty)):not([hidden]) {
+    animation: hub-result-arrive 560ms cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  /* Dialogs and live status messages get their own entrance; no scroll listener is involved. */
+  dialog[open] {
+    animation: hub-dialog-arrive 360ms cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  dialog[open]::backdrop {
+    animation: hub-backdrop-arrive 260ms ease-out both;
+  }
+
+  #modal[open] .modal-inner,
+  #appSwitcher[open] .switcher-head,
+  #feedbackDialog[open] .feedback-dialog-heading {
+    animation: hub-dialog-content-arrive 480ms cubic-bezier(.16, 1, .3, 1) 40ms backwards;
+  }
+
+  #appSwitcher[open] .switcher-row {
+    animation: hub-item-arrive 420ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
+  #appSwitcher[open] .switcher-row:nth-child(2) { animation-delay: 45ms; }
+  #appSwitcher[open] .switcher-row:nth-child(3) { animation-delay: 90ms; }
+  #appSwitcher[open] .switcher-row:nth-child(4) { animation-delay: 135ms; }
+
+  #toast.show {
+    animation: hub-toast-arrive 380ms cubic-bezier(.16, 1, .3, 1) both;
+  }
+
+  #app :is(.bar, .reader-progress) span {
+    transform-origin: left center;
+    animation: hub-progress-arrive 760ms cubic-bezier(.16, 1, .3, 1) backwards;
+  }
+
   #app :is(.btn.dark, .home-daily-link),
   .entry-actions .btn.dark {
     position: relative;
@@ -323,14 +447,22 @@
     .entry-actions .btn.dark:hover::after {
       transform: translateX(430%) skewX(-20deg);
     }
-  }
 
-  @supports (animation-timeline: view()) {
-    #landing .landing-details-grid article,
-    #landing .landing-details-guidance > p {
-      animation: hub-scroll-reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 22%;
+    #app button:not(:disabled):not(.btn):hover {
+      transform: translateY(-3px) scale(1.035);
+    }
+
+    .app-shell .topbar :is(button, a[href]):hover,
+    .app-switcher-trigger:hover {
+      transform: translateY(-3px) scale(1.04);
+    }
+
+    .app-shell .top-avatar:hover {
+      transform: translateY(-2px) rotate(10deg) scale(1.09);
+    }
+
+    .entry-actions .entry-register:hover {
+      transform: translateY(-3px) scale(1.035);
     }
   }
 }
@@ -372,6 +504,59 @@
 
 @keyframes hub-workspace-arrive {
   from { opacity: 0; transform: translateY(24px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes hub-topbar-arrive {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes hub-item-arrive {
+  from { opacity: 0; transform: translateY(20px) scale(.95) rotateX(3deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+}
+
+@keyframes hub-dialog-arrive {
+  from { opacity: 0; transform: translateY(20px) scale(.94) rotateX(4deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); }
+}
+
+@keyframes hub-dialog-content-arrive {
+  from { opacity: 0; transform: translateY(15px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes hub-backdrop-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hub-toast-arrive {
+  0% { opacity: 0; transform: translateY(18px) scale(.92); }
+  72% { opacity: 1; transform: translateY(-3px) scale(1.025); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes hub-progress-arrive {
+  from { transform: scaleX(.12); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes hub-selected-pop {
+  0% { transform: scale(.92); }
+  60% { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+@keyframes hub-success-pop {
+  0%, 100% { transform: scale(1); }
+  34% { transform: scale(1.12) rotate(-1deg); }
+  68% { transform: scale(.98) rotate(.4deg); }
+}
+
+@keyframes hub-result-arrive {
+  from { opacity: 0; transform: translateY(16px) scale(.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -425,11 +610,6 @@
   82% { transform: translateX(3px); }
 }
 
-@keyframes hub-scroll-reveal {
-  from { opacity: 0; transform: translateY(32px) scale(.94); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   #landing.entry-screen::before,
   #landing.entry-screen::after,
@@ -439,9 +619,32 @@
   .entry-index > div,
   .entry-card,
   .entry-intro h1::after,
-  #app > :is(.everything-home, .mini-app, .ai-page, .school-tools, .bookmarks-workspace, .timetable-workspace),
+  .app-shell:not([hidden]) .topbar,
+  #app > :not([hidden]),
+  #app :is(.stat, .subject-card, .topic-row, .deck-card, .task, .resource-card,
+    .video-card, .book-card, .reward-card, .reward-task, .everyday-card, .bookmark-row,
+    .note-card, .school-day, .school-panel, .school-lesson, .practice-question,
+    .practice-option, .practice-review, .practice-summary, .game-mode-card,
+    .game-set-card, .live-panel, .quiz-choice, .match-tile, .card-list-item,
+    .quick-app-link, .app-discovery-link, .os-dock a),
   #app .launcher-heading > div,
   #app .launcher-search,
+  #app :is(.hub-page-head h1, .view-intro h1, .everyday-head h1,
+    .books-heading h2, .timetable-header h1, .bookmarks-header h1),
+  dialog[open],
+  dialog[open]::backdrop,
+  #modal[open] .modal-inner,
+  #appSwitcher[open] .switcher-head,
+  #feedbackDialog[open] .feedback-dialog-heading,
+  #appSwitcher[open] .switcher-row,
+  #toast.show,
+  #app :is(.bar, .reader-progress) span,
+  #app :is(.filter-chip.selected, .notes-nav button[aria-pressed="true"],
+    .home-category-filters button[aria-pressed="true"], .task-filters button[aria-pressed="true"]),
+  #app :is(.quiz-choice.correct, .practice-review.is-correct, .reward-task.is-claimed, .match-tile.matched),
+  #app :is(.quiz-choice.incorrect, .practice-review.is-incorrect),
+  #app :is(.game-result, .practice-summary, .feedback:not(:empty), .game-feedback:not(:empty),
+    .mini-result:not(:empty), .school-result:not(:empty)):not([hidden]),
   #app .home-featured,
   #app .home-quick-access,
   #app .app-discovery-footer,
