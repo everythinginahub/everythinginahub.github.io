@@ -11,6 +11,7 @@ import {normalizeProfilePicture,prepareProfilePicture} from '../public/profile-p
 import * as utils from '../public/study-utils.js';
 import {restrictedNickname} from '../public/nickname-policy.js';
 import {isHabitDue} from '../public/habit-utils.js';
+import {createQuickCapture} from '../public/quick-capture.js';
 import { createAccountBackend, validateConfig } from '../public/account-backend.js';
 import { extraDecks, searchDecks } from '../public/decks.js';
 import { subjects, starterDecks } from '../public/starter-decks.js';
@@ -61,7 +62,7 @@ function mockClient({session=null,progress=defaultProgress,failSync=false}={}) {
 }
 function setup(mock, {configured=true,url='https://example.test/public/'}={}) {
   const dom=new JSDOM(html,{url,runScripts:'outside-only'});const w=dom.window;
-  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,mountFeedback,feedbackAdminView,mountFeedbackAdmin,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
+  Object.assign(w,utils,{normalizeProfilePicture,prepareProfilePicture,startSiteAnalytics:()=>({destroy(){}}),youtubeWorkspace,mountYouTubeWorkspace,miniApps,miniAppView,mountMiniApp,aiChatWorkspace,mountAiChat,isHabitDue,createQuickCapture,restrictedNickname,extraDecks,searchDecks,subjects,starterDecks,videos,filterVideos,youtubeThumbnail,youtubeEmbed,youtubeVideoId,videoPracticeDecks,uniqueGameCards,createMatch,selectMatch,createQuiz,answerQuiz,advanceQuiz,createRecall,revealRecall,markRecall,gamesHub,gameSetCards,gameChooser,gameView,createPractice,submitPractice,practiceChooser,practiceView,rewardsCatalog,normalizeRewards,awardDaily,chooseReward,shopView,parseCardLines,mountLive,mountCommunityChat,ebookLibrary,ebookReader,mountEbookLibrary,mountEbookReader,revisionHub,schoolNotes,schoolTimetable,schoolToolkit,mountSchoolToolkit,mountNotes,mountTimetableImport,arcadeView,mountArcade,listsView,habitsView,bookmarksView,mountEveryday,localDay,subjectCatalog,cleanSubjects,mountLandingDemo,mountFeedback,feedbackAdminView,mountFeedbackAdmin,createAccountBackend,validateConfig,supabaseConfig:configured?{url:'https://example.supabase.co',publishableKey:'sb_publishable_test'}:{},createClient:()=>mock});
   w.scrollTo=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:true,text:async()=>('Project Gutenberg text.\n\n'+ 'A reading page. '.repeat(400))});
   w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
   w.localStorage.setItem('revisepro-state',JSON.stringify({completed:{maths:true},reviews:{},tasks:[],activity:[]}));
@@ -528,6 +529,35 @@ test('featured games route opens the selected local game and cleans up on naviga
 
 test('an open note flushes before navigation and sign out without losing unrelated progress',async()=>{
  const progress={...defaultProgress,schoolNotes:[{title:'Existing',body:'Old'}],schoolLessons:[{title:'Maths',day:0,time:'09:00'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#notes');q('[data-note-edit="0"]').click();q('[data-note-form=edit] [name=body]').value='Saved when leaving';go(w,'#home');await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Saved when leaving');assert.equal(log.saved.progress.schoolLessons[0].title,'Maths');go(w,'#notes');q('#noteNew').click();q('[data-note-form=compose] [name=body]').value='Saved before logout';q('#topAccount').click();q('#logout').click();await wait();assert.equal(log.saved.progress.schoolNotes[0].body,'Saved before logout');assert.equal(log.signOut,1);}finally{dom.window.close();}
+});
+
+test('home task widget distinguishes overdue, due today, future work and an all-clear state',async()=>{
+ const shift=days=>{const date=new Date();date.setDate(date.getDate()+days);return utils.localDate(date);};
+ const progress={...defaultProgress,tasks:[{title:'Late submission',date:shift(-2),done:false},{title:'Today review',date:shift(0),done:false},{title:'Plan next week',date:shift(3),done:false}]};
+ const {client}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);let widget=q('.os-widget.os-tasks');assert.match(widget.textContent,/1 overdue/);assert.match(widget.textContent,/Late submission/);assert.ok(widget.classList.contains('is-overdue'));
+  go(w,'#planner');q('[data-task="0"]').click();await wait();go(w,'#home');widget=q('.os-widget.os-tasks');assert.match(widget.textContent,/1 due today/);assert.equal(widget.classList.contains('is-overdue'),false);
+  go(w,'#planner');q('[data-task="1"]').click();await wait();go(w,'#home');widget=q('.os-widget.os-tasks');assert.match(widget.textContent,/1 open task/);assert.match(widget.textContent,/Plan next week/);
+  go(w,'#planner');q('[data-task="2"]').click();await wait();go(w,'#home');assert.match(q('.os-widget.os-tasks').textContent,/All caught up/);
+ }finally{dom.window.close();}
+});
+
+test('Quick add creates a task globally without discarding an in-progress task form',async()=>{
+ const progress={...defaultProgress,tasks:[{title:'Existing task',date:'',done:false}],schoolLessons:[{title:'Maths',day:0,time:'09:00'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);w.history.replaceState(null,'','#planner');w.dispatchEvent(new w.HashChangeEvent('hashchange'));q('#taskAddButton').click();q('#taskTitle').value='A draft I have not saved';q('#taskDate').value=utils.localDate();
+  q('#openQuickCapture').click();assert.equal(q('#quickCaptureDialog').open,true);assert.equal(w.document.activeElement.id,'quickTaskTitle');q('#quickTaskTitle').value='Pick up library books';q('#quickTaskDate').value=utils.localDate();q('#quickCaptureTaskForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(q('#quickCaptureDialog').open,false);assert.equal(q('#taskTitle').value,'A draft I have not saved');assert.equal(q('#taskDate').value,utils.localDate());assert.ok([...w.document.querySelectorAll('[data-planner-task]')].some(row=>row.textContent.includes('Pick up library books')));assert.equal(log.saved.progress.tasks.at(-1).title,'Pick up library books');assert.equal(JSON.stringify(log.saved.progress.schoolLessons),JSON.stringify(progress.schoolLessons));
+ }finally{dom.window.close();}
+});
+
+test('quick add saves notes and checklists in Notes and safely refreshes its search',async()=>{
+ const progress={...defaultProgress,schoolNotes:[{title:'Old note',body:'Keep this'}]};const {client,log}=mockClient({session:account,progress});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s),type=(input,value)=>{input.value=value;input.dispatchEvent(new w.Event('input',{bubbles:true}));};go(w,'#notes');type(q('#schoolNoteSearch'),'no match');q('#openQuickCapture').click();q('[data-quick-kind="note"]').click();q('#quickNoteTitle').value='<img src=x onerror=alert(1)>';q('#quickNoteBody').value='Remember the lab coat';q('#quickCaptureNoteForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(q('#schoolNoteSearch').value,'');assert.equal(q('#notesGrid img'),null);assert.match(q('#notesGrid').textContent,/<img src=x/);assert.equal(log.saved.progress.schoolNotes[0].body,'Remember the lab coat');assert.equal(q('#noteCount').textContent,'2 / 30 notes');
+  q('#openQuickCapture').click();q('[data-quick-kind="checklist"]').click();q('#quickChecklistTitle').value='Pack for class';q('#quickChecklistItems').value='Notebook\nPens';q('#quickCaptureChecklistForm').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();
+  assert.equal(log.saved.progress.schoolNotes[0].kind,'checklist');assert.equal(JSON.stringify(log.saved.progress.schoolNotes[0].items),JSON.stringify([{text:'Notebook',done:false},{text:'Pens',done:false}]));assert.match(q('#notesGrid').textContent,/Pack for class/);assert.equal(q('#noteCount').textContent,'3 / 30 notes');
+ }finally{dom.window.close();}
+});
+
+test('quick add shortcut works outside fields and is ignored while typing',async()=>{
+ const {client}=mockClient({session:account});const {dom,w,run}=setup(client);try{await run();const q=s=>w.document.querySelector(s);go(w,'#home');q('#directorySearch').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,shiftKey:true,bubbles:true}));assert.equal(q('#quickCaptureDialog').open,false);w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,shiftKey:true,bubbles:true}));assert.equal(q('#quickCaptureDialog').open,true);q('#closeQuickCapture').click();q('#openAppSwitcher').click();q('#openQuickCaptureFromSwitcher').click();assert.equal(q('#appSwitcher').open,false);assert.equal(q('#quickCaptureDialog').open,true);q('#closeQuickCapture').click();q('.feedback-site-trigger').click();assert.equal(q('#feedbackDialog').open,true);w.document.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,shiftKey:true,bubbles:true}));assert.equal(q('#quickCaptureDialog').open,false);q('#closeFeedback').click();}finally{dom.window.close();}
 });
 
 test('app switcher searches, pins and navigates without changing synced progress',async()=>{
