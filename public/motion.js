@@ -1,6 +1,8 @@
 // Progressive enhancement: content remains visible if motion is unsupported.
 const revealTargets = [
   '.landing-feature-head', '.landing-feature-grid article',
+  '.home-daily-challenge', '.home-featured', '.home-quick-access', '.home-directory-group',
+  '.os-widget-grid > .os-widget', '.app-discovery-footer', '.app-discovery-link',
   '.dashboard-action', '.stat', '.streak-panel', '.dashboard-grid > section',
   '.subject-card', '.topic-row', '.deck-card', '.set-mode', '.set-preview-card',
   '.game-intro-grid > div', '.game-set-card', '.game-mode-card',
@@ -47,8 +49,11 @@ export function initScrollReveals(doc = document, win = window) {
         observed.delete(element);
         if (!element.isConnected || element.contains(doc.activeElement) || typeof element.animate !== 'function') continue;
         const animation = element.animate(
-          [{ opacity: 0.48, transform: 'translateY(32px)' }, { opacity: 1, transform: 'translateY(0)' }],
-          { duration: 650, easing: 'cubic-bezier(.2,.7,.2,1)' }
+          [
+            { opacity: 0.08, transform: 'translateY(44px) scale(.92) rotateX(5deg)' },
+            { opacity: 1, transform: 'translateY(0) scale(1) rotateX(0)' }
+          ],
+          { duration: 760, easing: 'cubic-bezier(.16,1,.3,1)' }
         );
         animations.add(animation);
         animation.onfinish = animation.oncancel = () => animations.delete(animation);

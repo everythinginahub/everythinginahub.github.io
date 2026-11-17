@@ -14,8 +14,11 @@ test('shared visual layer loads after structural styles and honors motion prefer
   const polish=html.indexOf('href="site-polish.css?');
   const finalStyle=html.indexOf('href="seo-pages.css"');
   const motionLink=html.indexOf('href="motion.css?');
+  const revealScript=html.indexOf('src="motion.js?');
+  const appScript=html.indexOf('src="app.js?');
   assert.ok(base>=0&&structure>base&&polish>structure,'visual layers should load after the base app stylesheet');
   assert.ok(finalStyle>polish&&motionLink>finalStyle,'motion overrides should load after all component styles');
+  assert.ok(revealScript>0&&appScript>revealScript,'scroll reveals should be active on /public before app views render');
   assert.match(css,/:where\([^)]*\):focus-visible/);
   assert.match(css,/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(css,/scroll-behavior:\s*auto/);
