@@ -38,6 +38,10 @@ test('the motion layer provides entrances and interactions while respecting redu
   assert.match(motion,/@keyframes hub-scroll-reveal/);
   assert.match(motion,/@keyframes hub-video-preview/);
   assert.match(motion,/@keyframes hub-spin-3d/);
+  assert.match(motion,/@keyframes hub-home-cube-spin/);
+  assert.match(motion,/@keyframes hub-home-orbit-a/);
+  assert.match(motion,/@keyframes hub-home-orbit-b/);
+  assert.match(motion,/#app\s+\.home-orbit-scene\s*\{\s*display:\s*none/,'decorative 3D geometry stays hidden when motion is unavailable or reduced');
   assert.match(motion,/@supports\s*\(animation-timeline:\s*view\(\)\)/);
   assert.match(motionScript,/IntersectionObserver/,'selected offscreen sections should regain progressive scroll reveals');
   assert.doesNotMatch(motion,/will-change\s*:/);
