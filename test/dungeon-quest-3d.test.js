@@ -51,7 +51,7 @@ test('Dungeon Quest boots into its title menu and activates the upgraded artwork
  }finally{dom.window.close();}
 });
 
-test('Dungeon Quest is featured in the Games hub and opens inside a safe local game frame',()=>{
+test('Dungeon Quest is featured in the Games hub and opens inside a safe local game frame',async()=>{
  const home=arcadeView();
  assert.match(home,/#arcade\/dungeon-quest-3d/);
  assert.match(home,/Dungeon Quest 3D/);
@@ -70,7 +70,7 @@ test('Dungeon Quest is featured in the Games hub and opens inside a safe local g
   const fallback=root.querySelector('.embedded-game-actions a');
   assert.equal(fallback.href,frame.src);assert.equal(fallback.target,'_blank');assert.match(fallback.rel,/noopener/);
   const controller=mountArcade({root,id:'dungeon-quest-3d',win:dom.window});
-  controller.destroy();assert.equal(root.querySelector('#dungeonQuestFrame'),null);
+  controller.destroy();await new Promise(resolve=>dom.window.setTimeout(resolve,120));assert.equal(root.querySelector('#dungeonQuestFrame'),null);
  }finally{dom.window.close();}
 });
 

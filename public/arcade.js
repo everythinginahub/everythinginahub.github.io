@@ -1,3 +1,4 @@
+import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
 import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-3';
 import {spotlightView, mountSpotlight} from './featured-games.js?v=20261114-8';
 import {geometryDashView, mountGeometryDash} from './geometry-dash.js?v=20261114-7';
@@ -5,7 +6,7 @@ import {libraryView, embedView, mountLibrary, mountEmbeddedGame} from './embedde
 import {newRunner,newOrbit,newReef,jumpRunner,slideRunner,activateNova,launchReef,stepGame,WIDTH,HEIGHT} from './arcade-engine.js?v=20261106-9';
 import {drawArcade} from './arcade-render.js?v=20261106-9';
 import {dailyArcadeChallenge,seededRandom} from './arcade-challenge.js?v=20261106-1';
-import {voxelcraftSurvivalView,skyparkObby3DView,dungeonQuest3DView} from './arcade-3d-views.js?v=20261106-7';
+import {voxelcraftSurvivalView,skyparkObby3DView,dungeonQuest3DView} from './arcade-3d-views.js?v=20261106-8';
 
 const originalGames=[
  {slug:'skyline',name:'Skyline Sprint',category:'ENDLESS RUNNER',description:'Double-jump, slide beneath laser gates and scoop up power-ups.',image:'assets/game-screenshots/skyline.png'},
@@ -53,7 +54,7 @@ function mountLazySkyparkObby({root,...options}){
   }
  };
  root.addEventListener('click',capture,true);
- import('./arcade-3d-game.js?v=20261106-5').then(module=>{
+ import('./arcade-3d-game.js?v=20261106-6').then(module=>{
   if(destroyed)return;
   root.removeEventListener('click',capture,true);
   controller=module.mountSkyparkObby3D({...options,root});
@@ -73,8 +74,20 @@ export function mountArcade({root,id,view,userId,playerName,state,save,toast,onR
  if(id==='library')return mountLibrary(root);
  if(id==='spotlight')return mountSpotlight(root);
  if(id==='classroom')return mountClassroom(root,view,win);
- if(id==='voxelcraft-survival'||id==='block-world')return {destroy(){}};
- if(id==='dungeon-quest-3d'){const frame=root.querySelector('#dungeonQuestFrame');return {destroy(){frame?.remove();}};}
+ if(['voxelcraft-survival','block-world','dungeon-quest-3d'].includes(id)){
+  const frame=root.querySelector('iframe'),kind=id==='dungeon-quest-3d'?'dungeon':'voxelcraft';
+  const key=deviceSaveKey(kind,userId);let storage;try{storage=win.localStorage;}catch{}
+  const send=data=>frame?.contentWindow?.postMessage(data,'*');
+  const valid=data=>data&&typeof data==='object'&&!Array.isArray(data)&&Object.keys(data).length<=20&&Object.values(data).every(value=>typeof value==='string')&&JSON.stringify(data).length<=2000000;
+  const init=()=>{const data=readDeviceSave(storage,key,2100000);send({type:'hub-game-init',data:valid(data)?data:{}});};
+  const receive=event=>{
+   if(!frame||event.source!==frame.contentWindow||event.origin!=='null')return;
+   if(event.data?.type==='hub-game-ready')init();
+   if(event.data?.type==='hub-game-write'&&valid(event.data.data)&&!writeDeviceSave(storage,key,event.data.data,2100000))send({type:'hub-game-save-error'});
+  };
+  win.addEventListener('message',receive);frame?.addEventListener('load',init);
+  return {destroy(){send({type:'hub-game-flush'});frame?.removeEventListener('load',init);win.setTimeout(()=>{win.removeEventListener('message',receive);frame?.remove();},100);}};
+ }
  if(id==='skypark-obby')return mountLazySkyparkObby({root,userId,playerName,onReward,win});
  if(id==='play')return mountEmbeddedGame(root,view,win);
  let daily=null;
@@ -82,6 +95,11 @@ export function mountArcade({root,id,view,userId,playerName,state,save,toast,onR
  if(!games[id])return {destroy(){}};
  const q=s=>root.querySelector(s),canvas=q('#gameCanvas'),overlay=q('#gameOverlay'),score=q('#arcadeScore'),bestEl=q('#arcadeBest'),bestLabel=q('#arcadeBestLabel'),lives=q('#arcadeLives'),progress=q('#arcadeProgress'),progressLabel=q('#arcadeProgressLabel'),status=q('#gameStatus'),pause=q('[data-action=pause]'),overlayTitle=q('#overlayTitle'),overlayText=q('#overlayText'),start=q('[data-action=start]'),novaButton=q('[data-action=nova]');
  const key=daily?`everything-arcade-daily-v1-${daily.date}-${id}-${userId}`:`everything-arcade-v2-${id}-${userId}`;let best=0;try{best=Math.max(0,Number(win.localStorage.getItem(key))||0);}catch{}let gameRandom=Math.random;function newGame(){const next=factory[id]();if(daily){next.daily={...daily};gameRandom=seededRandom(daily.seed);}else gameRandom=Math.random;return next;}let game=newGame(),frame=null,last=null,input={left:false,right:false,slide:false,pointerX:null},pointerId=null,lastMessage='';const background=new win.Image();background.src=`assets/arcade/${id}-bg.jpg`;background.onload=()=>draw();
+ const runKey=deviceSaveKey(`arcade-${daily?daily.date+'-':''}${id}`,userId);
+ let storage;try{storage=win.localStorage;}catch{}
+ const resume=readDeviceSave(storage,runKey,300000);
+ if(resume?.kind===id&&['running','paused'].includes(resume.status)&&Number.isFinite(resume.score)&&Number.isFinite(resume.lives)&&Object.keys(newGame()).every(key=>Array.isArray(newGame()[key])?Array.isArray(resume[key]):typeof resume[key]===typeof newGame()[key]))game={...resume,status:'paused'};
+ const persistRun=()=>writeDeviceSave(storage,runKey,game,300000);
  const saveBest=()=>{best=Math.max(best,game.score);};
  const persistBest=()=>{saveBest();try{win.localStorage.setItem(key,String(best));}catch{}};
  function update(){
@@ -94,11 +112,11 @@ export function mountArcade({root,id,view,userId,playerName,state,save,toast,onR
   if(message!==lastMessage){status.textContent=message;lastMessage=message;}if(shown){overlayTitle.textContent=game.status==='ready'?'Ready to play?':game.status==='paused'?'Paused':game.status==='won'?(daily?'Daily challenge cleared!':id==='reef'?'You cleared the reef!':'You win!'):'Game over';overlayText.textContent=message;start.textContent=game.status==='paused'?'Resume →':game.status==='ready'?'Start game →':'Play again →';}
  }
  function draw(){try{drawArcade(canvas,game,background);}catch(error){if(!/not implemented/i.test(String(error)))throw error;}}
- function stop(){persistBest();if(frame!==null)win.cancelAnimationFrame(frame);frame=null;last=null;input={left:false,right:false,slide:false,pointerX:null};pointerId=null;}
+ function stop(){persistRun();persistBest();if(frame!==null)win.cancelAnimationFrame(frame);frame=null;last=null;input={left:false,right:false,slide:false,pointerX:null};pointerId=null;}
  function loop(t){if(game.status!=='running'){stop();update();draw();return;}if(last!==null)stepGame(game,(t-last)/1000,input,gameRandom);last=t;draw();update();if(game.status==='running')frame=win.requestAnimationFrame(loop);else{stop();if(game.status==='lost'||game.status==='won')onReward('arcade');}}
  function run(){if(game.status==='lost'||game.status==='won')game=newGame();if(game.status==='ready'||game.status==='paused'){game.status='running';if(id==='reef'&&!game.launched)launchReef(game);update();canvas.focus({preventScroll:true});if(frame===null)frame=win.requestAnimationFrame(loop);}}
  function pauseGame(){if(game.status==='running'){game.status='paused';stop();update();draw();}else if(game.status==='paused')run();}
- function restart(){stop();game=newGame();lastMessage='';update();draw();}
+ function restart(){stop();game=newGame();persistRun();lastMessage='';update();draw();}
  function click(e){const b=e.target.closest('button');if(!b)return;const action=b.dataset.action;if(action==='start')run();else if(action==='pause')pauseGame();else if(action==='restart')restart();else if(action==='jump'){jumpRunner(game);canvas.focus({preventScroll:true});}else if(action==='slide'){slideRunner(game);canvas.focus({preventScroll:true});}else if(action==='nova'){if(activateNova(game)){update();draw();}}else if(action==='launch'){launchReef(game);update();canvas.focus({preventScroll:true});}else if(b.dataset.hold&&e.detail===0&&game.status==='running'){const delta=b.dataset.hold==='left'?-65:65;if(id==='orbit')game.x=Math.max(35,Math.min(WIDTH-35,game.x+delta));else game.paddle=Math.max(82,Math.min(WIDTH-82,game.paddle+delta));draw();}}
  function keyDown(e){const k=e.key.toLowerCase();if(e.target.closest?.('input,textarea,select,[contenteditable=true]'))return;if(k==='x'&&game.status==='running'&&!e.repeat&&(!e.target.closest?.('a,button')||e.target.closest?.('[data-action=nova]'))){e.preventDefault();if(activateNova(game)){update();draw();}return;}if(e.target.closest?.('a,button:not([data-hold])'))return;if(['arrowleft','a','arrowright','d','arrowup','arrowdown',' ','s','p'].includes(k)&&game.status==='running'){if(k!=='p')e.preventDefault();if(k==='arrowleft'||k==='a')input.left=true;if(k==='arrowright'||k==='d')input.right=true;if((k==='arrowdown'||k==='s')&&id==='skyline')input.slide=true;if((k===' '||k==='arrowup')&&!e.repeat){if(id==='skyline')jumpRunner(game);if(id==='reef')launchReef(game);}if(k==='p'&&!e.repeat)pauseGame();}}
  function keyUp(e){const k=e.key.toLowerCase();if(k==='arrowleft'||k==='a')input.left=false;if(k==='arrowright'||k==='d')input.right=false;if((k==='arrowdown'||k==='s')&&id==='skyline')input.slide=false;}
@@ -108,5 +126,5 @@ export function mountArcade({root,id,view,userId,playerName,state,save,toast,onR
  function up(e){const hold=e.target.closest('[data-hold]');if(hold)input[hold.dataset.hold]=false;if(pointerId===e.pointerId){pointerId=null;input.pointerX=null;}}
  function visibility(){if(win.document.hidden&&game.status==='running')pauseGame();}
  function blur(){if(game.status==='running')pauseGame();}
- root.addEventListener('click',click);root.addEventListener('pointerdown',down);root.addEventListener('pointermove',move);root.addEventListener('pointerup',up);root.addEventListener('pointercancel',up);win.addEventListener('keydown',keyDown);win.addEventListener('keyup',keyUp);win.document.addEventListener('visibilitychange',visibility);win.addEventListener('blur',blur);update();draw();return {destroy(){background.onload=null;stop();root.removeEventListener('click',click);root.removeEventListener('pointerdown',down);root.removeEventListener('pointermove',move);root.removeEventListener('pointerup',up);root.removeEventListener('pointercancel',up);win.removeEventListener('keydown',keyDown);win.removeEventListener('keyup',keyUp);win.document.removeEventListener('visibilitychange',visibility);win.removeEventListener('blur',blur);}};
+ root.addEventListener('click',click);root.addEventListener('pointerdown',down);root.addEventListener('pointermove',move);root.addEventListener('pointerup',up);root.addEventListener('pointercancel',up);win.addEventListener('keydown',keyDown);win.addEventListener('keyup',keyUp);win.document.addEventListener('visibilitychange',visibility);win.addEventListener('blur',blur);win.addEventListener('pagehide',persistRun);const saveTimer=win.setInterval(persistRun,3000);update();draw();return {destroy(){win.clearInterval(saveTimer);win.removeEventListener('pagehide',persistRun);background.onload=null;stop();root.removeEventListener('click',click);root.removeEventListener('pointerdown',down);root.removeEventListener('pointermove',move);root.removeEventListener('pointerup',up);root.removeEventListener('pointercancel',up);win.removeEventListener('keydown',keyDown);win.removeEventListener('keyup',keyUp);win.document.removeEventListener('visibilitychange',visibility);win.removeEventListener('blur',blur);}};
 }

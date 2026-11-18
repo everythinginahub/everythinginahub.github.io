@@ -76,3 +76,16 @@ test('Reef Breaker adds armored crystals, chain scoring and three distinct drops
  const g=newReef();g.status='running';g.launched=true;g.bricks=[{x:300,y:100,w:80,h:24,color:0,hp:2},{x:700,y:100,w:80,h:24,color:1,hp:1}];g.ball={x:310,y:129,vx:0,vy:-100,r:9};stepReef(g,.001);assert.equal(g.bricks[0].hp,1);assert.equal(g.broken,0);g.ball={x:310,y:129,vx:0,vy:-100,r:9};stepReef(g,.001);assert.equal(g.bricks.length,1);assert.equal(g.bricks[0].x,700);assert.equal(g.broken,1);
  const pickups=newReef();pickups.status='running';pickups.launched=true;pickups.lives=2;pickups.pickups=[{x:pickups.paddle,y:463,type:'life'}];stepReef(pickups,.01);assert.equal(pickups.lives,3);assert.match(pickups.powerNotice,/BONUS HEART/);pickups.pickups=[{x:pickups.paddle,y:463,type:'slow'}];stepReef(pickups,.01);assert.ok(pickups.slowTimer>6.9);assert.match(pickups.powerNotice,/SLOW-MO/);
 });
+
+test('all original games restore paused runs after remount and isolate accounts',()=>{
+ const dom=new JSDOM('<main></main>',{url:'https://example.test/'}),win=dom.window,root=win.document.querySelector('main');win.HTMLCanvasElement.prototype.getContext=()=>null;win.requestAnimationFrame=()=>1;win.cancelAnimationFrame=()=>{};
+ try{
+  for(const id of ['skyline','orbit','reef']){
+   const mount=userId=>{root.innerHTML=arcadeView(id);return mountArcade({root,id,userId,win});};
+   let controller=mount('owner');root.querySelector('[data-action=start]').click();win.dispatchEvent(new win.Event('pagehide'));controller.destroy();
+   controller=mount('owner');assert.match(root.querySelector('#overlayTitle').textContent,/Paused/);controller.destroy();
+   controller=mount('other');assert.match(root.querySelector('#overlayTitle').textContent,/Ready/);controller.destroy();
+   controller=mount('owner');root.querySelector('[data-action=restart]').click();controller.destroy();controller=mount('owner');assert.match(root.querySelector('#overlayTitle').textContent,/Ready/);controller.destroy();
+  }
+ }finally{win.close();}
+});

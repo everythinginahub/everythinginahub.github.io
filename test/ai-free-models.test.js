@@ -9,8 +9,8 @@ test('no Groq token means no Groq calls or advertised models; Horde is excluded'
 });
 test('only supported live Groq models are shown and catalogs are cached',async()=>{
  let calls=0;
- const service=createFreeModelService({runner,groqKey:'private',fetcher:async(url,options)=>{calls++;assert.equal(options.headers.Authorization,'Bearer private');return json({data:[{id:'openai/gpt-oss-120b'},{id:'openai/gpt-oss-20b',active:false},{id:'unreviewed'}]});}});
- const models=await service.listModels();await service.listModels();assert.equal(calls,1);assert.equal(models[0].id,'gpt-oss:20b');assert.equal(models.find(model=>model.provider==='groq').id,'openai/gpt-oss-120b');assert.equal(models.some(model=>model.id==='unreviewed'),false);
+ const service=createFreeModelService({runner,groqKey:'private',fetcher:async(url,options)=>{calls++;assert.equal(options.headers.Authorization,'Bearer private');return json({data:[{id:'openai/gpt-oss-120b'},{id:'openai/gpt-oss-20b'},{id:'unreviewed'}]});}});
+ const models=await service.listModels();await service.listModels();assert.equal(calls,1);assert.equal(models[0].id,'gpt-oss:20b');assert.equal(models.find(model=>model.provider==='groq').id,'openai/gpt-oss-20b');assert.equal(models.some(model=>model.id==='unreviewed'),false);
 });
 test('GPT-OSS completions use server credentials and return truthful attribution',async()=>{
  const service=createFreeModelService({runner,groqKey:'secret',fetcher:async(url,options)=>{assert.equal(url,'https://api.groq.com/openai/v1/chat/completions');const body=JSON.parse(options.body);assert.equal(body.model,'openai/gpt-oss-20b');assert.equal(body.max_completion_tokens,1024);assert.equal(options.headers.Authorization,'Bearer secret');return json({choices:[{message:{content:'answer'}}]});}});

@@ -1,3 +1,4 @@
+import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
 import {askAi,fetchLocalModels,listAiModels} from './ai-chat.js?v=20261106-27';
 
 const sparkle = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c.7 5.4 3.1 7.8 8.5 8.5-5.4.7-7.8 3.1-8.5 8.5-.7-5.4-3.1-7.8-8.5-8.5C8.9 10.3 11.3 7.9 12 2.5Z" fill="currentColor"/><path d="M19 16.5c.25 1.8 1.05 2.6 2.8 2.8-1.75.25-2.55 1.05-2.8 2.8-.25-1.75-1.05-2.55-2.8-2.8 1.75-.2 2.55-1 2.8-2.8Z" fill="currentColor"/></svg>`;
@@ -23,10 +24,10 @@ export function aiStudioWorkspace(){return `<div class="ai-studio-layout" id="ai
  <aside class="ai-studio-rail" aria-label="AI Studio conversations">
   <div class="ai-studio-brand"><span class="ai-studio-brand-mark">${sparkle}</span><span><small>EVERYTHING HUB</small><strong>AI STUDIO</strong></span></div>
   <button type="button" class="ai-new-chat" id="aiNewSession"><span aria-hidden="true">＋</span> New chat</button>
-  <label class="ai-history-search" for="aiHistorySearch">Search this session<input id="aiHistorySearch" type="search" maxlength="80" placeholder="Find a conversation…" autocomplete="off"></label>
+  <label class="ai-history-search" for="aiHistorySearch">Search saved chats<input id="aiHistorySearch" type="search" maxlength="80" placeholder="Find a conversation…" autocomplete="off"></label>
   <div class="ai-history-heading"><span>RECENT CHATS</span><button type="button" id="aiClearHistory" title="Clear in-memory chat history" hidden>Clear</button></div>
-  <nav class="ai-history-list" id="aiHistory" aria-label="Conversations in this session"></nav>
-  <p class="ai-session-note">Chats stay in memory while this app is open. They are not saved to your account.</p>
+  <nav class="ai-history-list" id="aiHistory" aria-label="Saved conversations"></nav>
+  <p class="ai-session-note">Chats are saved on this device for your account. They are not synced online.</p>
  </aside>
  <section class="ai-studio-main" aria-label="AI assistant workspace">
   <header class="ai-api-heading"><div class="ai-chat-identity"><span class="ai-chat-mark">${sparkle}</span><div><h2>Everything Hub AI</h2><p>Choose a live model, or connect a local server</p></div></div><div class="ai-studio-mode"><label for="aiMode">Response style</label><select id="aiMode">${Object.entries(modes).map(([id,mode])=>`<option value="${id}">${mode.label}</option>`).join('')}</select><p id="aiModeHint">${modes.everyday.hint}</p></div></header>
@@ -37,7 +38,7 @@ export function aiStudioWorkspace(){return `<div class="ai-studio-layout" id="ai
   <section class="ai-web-studio" id="aiWebStudio" aria-labelledby="aiStudioTitle" hidden><div class="ai-web-studio-heading"><div><p class="ai-aside-label">LOCAL PROTOTYPE · SANDBOXED</p><h3 id="aiStudioTitle">Web Studio</h3></div><button type="button" id="aiCloseStudio" class="ai-close-studio" aria-label="Close Web Studio">×</button></div><label for="aiStudioCode">HTML prototype <span>Up to ${AI_STUDIO_LIMIT.toLocaleString('en-GB')} characters</span></label><textarea id="aiStudioCode" rows="10" maxlength="${AI_STUDIO_LIMIT}" spellcheck="false" autocomplete="off" placeholder="Choose Web Studio build style and describe a small page, or paste HTML here…"></textarea><div class="ai-studio-preview-actions"><button type="button" class="ai-studio-action ai-preview-button" id="aiStudioPreview">Run safe preview</button><button type="button" class="ai-studio-action" id="aiStudioCopy">Copy code</button></div><p id="aiStudioStatus" class="ai-studio-status" role="status" aria-live="polite">Nothing runs until you choose Run safe preview.</p><iframe id="aiStudioFrame" title="Locally sandboxed HTML prototype preview" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe><p class="ai-studio-safety">The opaque-origin frame cannot read Everything Hub data; its policy blocks network connections and external resources. Browser navigation controls can vary, so do not follow external links. Inline scripts can run; inspect code first.</p></section>
   <p class="ai-api-footnote">AI can make mistakes. Check important answers and do not include personal or sensitive information.</p>
  </section>
- <aside class="ai-studio-aside" aria-label="About AI Studio"><div class="ai-aside-card ai-allowance"><span class="ai-aside-label">USAGE</span><div class="ai-allowance-number">No daily cap</div><p>Remote AI requests allow up to 12 attempts per account per minute. Provider limits and live capacity still apply; the model list is only a snapshot. LLM7 is attempted without a key; other providers may require one. All enforce their own quotas.</p><div class="ai-aside-divider"></div><p>If a cloud model fails, the server may send the same prompt to other available models, then Gemini if configured, and finally KindleHub only if nothing else answers. Local-server requests go directly to your selected loopback server and bypass the site quota.</p></div><div class="ai-aside-card ai-guide"><span class="ai-aside-label">GOOD TO KNOW</span><h3>Built for thoughtful use.</h3><p>Up to eight recent messages are included with each new question for context. The current chat stays in memory only and is cleared when you leave AI Studio.</p><p>Cloud questions go to the selected third-party model provider, and a failover may use another provider. Optional web search sends only your current question to DuckDuckGo. Local-model prompts go directly to the loopback server you scan. Answers can be wrong or unsuitable; check important claims. Not for unsupervised children.</p></div><div class="ai-studio-credit"><a href="https://github.com/socks275/abliterated.ai" target="_blank" rel="noopener noreferrer">Inspired by Abliterated AI Runner ↗</a><small>Independent Everything Hub implementation · no model keys in the browser.</small></div></aside>
+ <aside class="ai-studio-aside" aria-label="About AI Studio"><div class="ai-aside-card ai-allowance"><span class="ai-aside-label">USAGE</span><div class="ai-allowance-number">No daily cap</div><p>Remote AI requests allow up to 12 attempts per account per minute. Provider limits and live capacity still apply; the model list is only a snapshot. LLM7 is attempted without a key; other providers may require one. All enforce their own quotas.</p><div class="ai-aside-divider"></div><p>If a cloud model fails, the server may send the same prompt to other available models, then Gemini if configured, and finally KindleHub only if nothing else answers. Local-server requests go directly to your selected loopback server and bypass the site quota.</p></div><div class="ai-aside-card ai-guide"><span class="ai-aside-label">GOOD TO KNOW</span><h3>Built for thoughtful use.</h3><p>Up to eight recent messages are included with each new question for context. Chats and drafts are saved on this device. Use Clear history to remove them; avoid sensitive information on shared devices.</p><p>Cloud questions go to the selected third-party model provider, and a failover may use another provider. Optional web search sends only your current question to DuckDuckGo. Local-model prompts go directly to the loopback server you scan. Answers can be wrong or unsuitable; check important claims. Not for unsupervised children.</p></div><div class="ai-studio-credit"><a href="https://github.com/socks275/abliterated.ai" target="_blank" rel="noopener noreferrer">Inspired by Abliterated AI Runner ↗</a><small>Independent Everything Hub implementation · no model keys in the browser.</small></div></aside>
 </div>`;}
 
 export function buildAiPrompt(history,message,mode='everyday'){
@@ -79,11 +80,31 @@ function extractHtml(answer){
  return full?.[0]?.trim()||'';
 }
 
-export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listAiModels,scanLocal=fetchLocalModels,timeoutMs=90000}={}){
+export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listAiModels,scanLocal=fetchLocalModels,userId,timeoutMs=90000}={}){
  let disposed=false,busy=false,sequence=0,abort=null,timer=null,pendingChatId=null,nextId=0,catalogAbort=null,localScanAbort=null,catalogSequence=0,localSequence=0,remoteModels=[],localModels=[];
  const q=selector=>root.querySelector(selector),form=q('#aiApiForm'),thread=q('#aiApiThread'),status=q('#aiApiStatus'),input=q('#aiMessage'),send=q('#aiSend'),stop=q('#aiStop'),count=q('#aiCharCount'),history=q('#aiHistory'),historySearch=q('#aiHistorySearch'),modeSelect=q('#aiMode'),modeHint=q('#aiModeHint'),modelSelect=q('#aiModelSelect'),modelStatus=q('#aiModelStatus'),refreshModels=q('#aiRefreshModels'),localBase=q('#aiLocalBase'),scanLocalButton=q('#aiScanLocal'),localStatus=q('#aiLocalStatus'),webSearch=q('#aiWebSearch'),studio=q('#aiWebStudio'),studioCode=q('#aiStudioCode'),studioFrame=q('#aiStudioFrame'),studioStatus=q('#aiStudioStatus'),openStudioButton=q('#aiOpenStudio'),clearHistory=q('#aiClearHistory');
  const createChat=()=>({id:`ai-${Date.now()}-${++nextId}`,title:'New conversation',mode:'everyday',messages:[],draft:'',studioCode:'',studioOpen:false,notice:'',modelKey:'',webSearch:false});
  let chats=[createChat()],activeId=chats[0].id;
+ const storageKey=userId?deviceSaveKey('ai-chats',userId):null;
+ let storage;try{storage=win.localStorage;}catch{}
+ const restored=storageKey?readDeviceSave(storage,storageKey):null;
+ if(Array.isArray(restored?.chats)){
+  const saved=restored.chats.slice(0,AI_SESSION_LIMIT).filter(chat=>chat&&typeof chat.id==='string').map(chat=>({
+   ...createChat(),id:chat.id.slice(0,100),title:String(chat.title||'Conversation').slice(0,100),mode:modes[chat.mode]?chat.mode:'everyday',
+   modelKey:typeof chat.modelKey==='string'&&!chat.modelKey.startsWith('local:')?chat.modelKey.slice(0,300):'',webSearch:chat.webSearch===true,
+   draft:String(chat.draft||'').slice(0,AI_PROMPT_LIMIT),studioCode:String(chat.studioCode||'').slice(0,AI_STUDIO_LIMIT),
+   messages:(Array.isArray(chat.messages)?chat.messages:[]).filter(message=>message&&['user','assistant'].includes(message.role)&&typeof message.text==='string').slice(-AI_TURN_LIMIT).map(message=>({role:message.role,text:message.text.slice(0,20000),modelInfo:String(message.modelInfo||'').slice(0,500),sources:Array.isArray(message.sources)?message.sources.slice(0,5):[]}))
+  }));
+  if(saved.length){chats=saved;activeId=saved.some(chat=>chat.id===restored.activeId)?restored.activeId:saved[0].id;}
+ }
+ function persist(){
+  if(!storageKey)return;
+  const data={activeId,chats:chats.map(({id,title,mode,draft,studioCode,messages,modelKey,webSearch})=>({id,title,mode,draft,studioCode,messages,modelKey,webSearch}))};
+  const note=q('.ai-session-note');
+  if(!writeDeviceSave(storage,storageKey,data)){if(note)note.textContent='Could not save chats on this device (storage blocked or full). Copy important replies before leaving.';}
+  else if(note)note.textContent='Chats are saved on this device for your account, not synced online. Clear history removes this device’s saved chats.';
+ }
+
  const current=()=>chats.find(chat=>chat.id===activeId)||chats[0];
  function updateCount(){count.textContent=`${input.value.length.toLocaleString('en-GB')} / ${AI_PROMPT_LIMIT.toLocaleString('en-GB')}`;}
  function updateStudioButton(){openStudioButton.setAttribute('aria-expanded',String(!studio.hidden));}
@@ -91,7 +112,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  const allModels=()=>[automatic,...remoteModels.filter(model=>model.provider!=='auto'&&model.provider!=='hub'),...localModels];
  const modelKey=model=>`${model.provider}:${model.id}${model.provider==='local'?`@${model.baseUrl}`:''}`;
  const providerName=model=>({auto:'Automatic routing',gemini:'Google Gemini',kindlehub:'KindleHub (last-resort fallback)',groq:'Groq',hub:'Everything Hub',aihorde:'AI Horde',llm7:'LLM7',local:'Local server'})[model?.provider]||'AI model';
- function defaultModel(){return automatic;}
+ function defaultModel(){return remoteModels.find(model=>model.provider==='llm7'&&model.id==='gpt-oss:20b')||automatic;}
  function selectedModel(chat=current()){return allModels().find(model=>modelKey(model)===chat.modelKey)||null;}
  function ensureModelSelection(chat=current()){
   let model=selectedModel(chat);if(!model){model=defaultModel();chat.modelKey=model?modelKey(model):'';}
@@ -127,7 +148,8 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   try{
    const models=await Promise.race([listModels(client,{refresh,signal:controller.signal}),new Promise((_,reject)=>{catalogTimer=win.setTimeout(()=>{controller.abort();reject(new Error('Model discovery timed out. Automatic is still available; retry discovery or connect a local server.'));},12000);})]);
    if(disposed||request!==catalogSequence)return;
-   remoteModels=Array.isArray(models)?models.filter(model=>model&&['auto','hub','aihorde','llm7','groq'].includes(model.provider)&&typeof model.id==='string'&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)):[];
+   remoteModels=Array.isArray(models)?models.filter(model=>model&&['auto','hub','aihorde','llm7','groq'].includes(model.provider)&&typeof model.id==='string'&&!/gpt-oss[:/-]120b/i.test(model.id)&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)):[];
+   if(!restored?.chats?.length&&current().modelKey==='auto:automatic'&&remoteModels.some(model=>model.provider==='llm7'&&model.id==='gpt-oss:20b'))current().modelKey='llm7:gpt-oss:20b';
    modelStatus.textContent=liveModelStatus();renderModelOptions();renderHistory();if(!busy)renderConversation();
   }catch(error){
    if(disposed||request!==catalogSequence)return;
@@ -149,6 +171,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   finally{win.clearTimeout(timeout);if(request===localSequence){localScanAbort=null;renderModelOptions();}}
  }
  function renderHistory(){
+  persist();
   const term=historySearch.value.trim().toLocaleLowerCase(),items=chats.filter(chat=>chat.messages.length&&(!term||chat.title.toLocaleLowerCase().includes(term)||chat.messages.some(message=>message.text.toLocaleLowerCase().includes(term))));history.replaceChildren();
   if(!items.length){const empty=win.document.createElement('p');empty.className='ai-history-empty';empty.textContent=term?'No chats match that search.':'Your conversations will appear here.';history.append(empty);}
   for(const chat of items){
@@ -195,7 +218,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   chat=createChat();chats.unshift(chat);if(chats.length>AI_SESSION_LIMIT)chats.length=AI_SESSION_LIMIT;activeId=chat.id;renderHistory();renderConversation();input.focus();
  }
  function clearChats(){
-  cancelPending();chats=[createChat()];activeId=chats[0].id;historySearch.value='';renderHistory();renderConversation();status.textContent='This session’s chat history was cleared. Request limits are unchanged.';input.focus();
+  cancelPending();chats=[createChat()];activeId=chats[0].id;historySearch.value='';renderHistory();renderConversation();status.textContent='Saved chat history on this device was cleared. Request limits are unchanged.';input.focus();
  }
  function switchChat(id){
   if(id===activeId)return;cancelPending();if(!chats.some(chat=>chat.id===id))return;activeId=id;renderHistory();renderConversation();input.focus();
@@ -253,14 +276,16 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   if(event.target===input){current().draft=input.value;updateCount();resizeInput();}
   if(event.target===historySearch)renderHistory();
   if(event.target===studioCode)current().studioCode=studioCode.value;
+  if(event.target===input||event.target===studioCode)persist();
  }
  function change(event){
   if(event.target===modeSelect){current().mode=modes[modeSelect.value]?modeSelect.value:'everyday';modeHint.textContent=modes[current().mode].hint;renderHistory();return;}
   if(event.target===modelSelect){const model=allModels().find(item=>modelKey(item)===modelSelect.value);if(!model)return;current().modelKey=modelKey(model);if(model.provider==='local'){current().webSearch=false;webSearch.checked=false;modelStatus.textContent='Local model selected. Its prompt is sent directly to your loopback server; web search is unavailable for local models.';}else modelStatus.textContent=liveModelStatus();renderHistory();renderConversation();return;}
-  if(event.target===webSearch){const model=selectedModel();current().webSearch=Boolean(webSearch.checked&&model&&model.provider!=='local');webSearch.checked=current().webSearch;}
+  if(event.target===webSearch){const model=selectedModel();current().webSearch=Boolean(webSearch.checked&&model&&model.provider!=='local');webSearch.checked=current().webSearch;persist();}
  }
  function keydown(event){if(event.target!==input)return;if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}}
- function destroy(){disposed=true;sequence++;catalogSequence++;localSequence++;if(timer!==null)win.clearTimeout(timer);timer=null;abort?.abort();abort=null;catalogAbort?.abort();catalogAbort=null;localScanAbort?.abort();localScanAbort=null;busy=false;root.removeEventListener('submit',submit);root.removeEventListener('click',click);root.removeEventListener('input',inputEvent);root.removeEventListener('change',change);root.removeEventListener('keydown',keydown);thread.replaceChildren();input.value='';status.textContent='';modelStatus.textContent='';localStatus.textContent='';studioFrame.removeAttribute('srcdoc');}
+ function destroy(){persist();win.removeEventListener('pagehide',persist);disposed=true;sequence++;catalogSequence++;localSequence++;if(timer!==null)win.clearTimeout(timer);timer=null;abort?.abort();abort=null;catalogAbort?.abort();catalogAbort=null;localScanAbort?.abort();localScanAbort=null;busy=false;root.removeEventListener('submit',submit);root.removeEventListener('click',click);root.removeEventListener('input',inputEvent);root.removeEventListener('change',change);root.removeEventListener('keydown',keydown);thread.replaceChildren();input.value='';status.textContent='';modelStatus.textContent='';localStatus.textContent='';studioFrame.removeAttribute('srcdoc');}
+ win.addEventListener('pagehide',persist);
  root.addEventListener('submit',submit);root.addEventListener('click',click);root.addEventListener('input',inputEvent);root.addEventListener('change',change);root.addEventListener('keydown',keydown);
  renderModelOptions();renderHistory();renderConversation();resizeInput();loadModelCatalog();
  return {destroy,createNewChat,clearChats,preview,refreshModels:()=>loadModelCatalog(true),scanLocal:scanLocalProvider};

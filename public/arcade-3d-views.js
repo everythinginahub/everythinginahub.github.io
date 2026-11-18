@@ -10,7 +10,7 @@ export function voxelcraftSurvivalView() {
       <div><p class="game-eyebrow">VOXELCRAFT · SURVIVAL SANDBOX</p><h1>VoxelCraft Survival — Complete Sandbox Edition</h1><p>Play the complete survival sandbox locally from the Games hub.</p></div>
       <div class="embedded-game-actions"><a class="adventure-utility" href="${VOXELCRAFT_SURVIVAL_PATH}" target="_blank" rel="noopener noreferrer">Open in new tab ↗</a></div>
     </header>
-    <p class="external-note">The game is hosted with the hub. If the embedded screen stays blank, your browser may not support WebGL; try <strong>Open in new tab</strong>.</p>
+    <p class="external-note">Progress autosaves on this device. Leave the seed blank to resume; enter a seed to start a new world. The game is hosted with the hub. If the embedded screen stays blank, your browser may not support WebGL; try <strong>Open in new tab</strong>.</p>
     <div class="embedded-frame voxelcraft-survival-frame"><iframe id="voxelcraftFrame" title="VoxelCraft Survival — Complete Sandbox Edition" src="${VOXELCRAFT_SURVIVAL_PATH}" loading="eager" sandbox="allow-scripts allow-pointer-lock" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; gamepad; pointer-lock" allowfullscreen></iframe></div>
     <p class="external-note">The game and its Three.js renderer are served from this site; it no longer depends on Google Sites framing.</p>
   </div>`;
