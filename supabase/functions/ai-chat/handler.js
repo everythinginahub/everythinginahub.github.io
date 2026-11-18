@@ -72,6 +72,7 @@ export function createHandler({authenticate,reserve,generate,listModels,configur
    return json(request,200,result);
   }catch(error){
    // Never expose upstream responses, credentials or user prompts in logs or errors.
+   if(error?.name==='QuotaError')return json(request,503,{error:'AI request protection is unavailable. The site owner needs to check the Supabase limiter configuration.'});
    if(error?.name==='ProviderError')return json(request,error.status,{error:error.message+' This attempt may count towards the short-term rate limit.'},error.retryAfter?{'Retry-After':error.retryAfter}:{});
    if(error?.name==='RunnerError'||String(error?.message||'').startsWith('Web search'))return json(request,503,{error:String(error.message).slice(0,220)+' This attempt may count towards the short-term rate limit.'});
    return json(request,503,{error:'AI chat is unavailable right now. If your request reached the AI, the attempt may count towards the short-term rate limit.'});

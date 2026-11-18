@@ -113,12 +113,23 @@ test('optional web search rejects empty results and bounds the query sent upstre
  assert.ok(new URL(requested).searchParams.get('q').length<=runnerModelRules.MAX_SEARCH_QUERY);
 });
 
- test('LLM7 is not advertised or contacted without a server token',async()=>{
- const urls=[];
- const runner=createRunnerService({fetcher:async url=>{urls.push(String(url));return jsonResponse(catalogPayloads().horde);}});
- const models=await runner.listModels();
- assert.deepEqual(urls,[HORDE]);assert.equal(models.some(model=>model.provider==='llm7'),false);
- });
+test('LLM7 works without credentials when its live catalog and completion endpoint permit anonymous access',async()=>{
+ const calls=[];
+ const runner=createRunnerService({includeHorde:false,fetcher:async(url,options)=>{
+  calls.push(String(url));assert.equal('Authorization' in options.headers,false);
+  if(options.method==='GET')return jsonResponse({data:[{id:'gpt-oss:120b'},{id:'gpt-oss:20b'}]});
+  return jsonResponse({choices:[{message:{content:'Anonymous answer'}}]});
+ }});
+ const models=await runner.listModels();assert.deepEqual(models.map(model=>model.id),['gpt-oss:120b','gpt-oss:20b']);
+ const result=await runner.generate('hello',{provider:'llm7',model:'gpt-oss:20b'});
+ assert.equal(result.answer,'Anonymous answer');assert.equal(result.provider,'llm7');
+ assert.deepEqual(calls,[LLM7,'https://api.llm7.io/v1/chat/completions']);
+});
+
+test('anonymous LLM7 denial does not invent model availability',async()=>{
+ const runner=createRunnerService({includeHorde:false,fetcher:async()=>new Response('denied',{status:401})});
+ assert.deepEqual(await runner.listModels(),[]);
+});
 
 test('LLM7 completions use the configured server token, never the prompt as credentials',async()=>{
  let headers;
@@ -132,4 +143,16 @@ test('LLM7 completions use the configured server token, never the prompt as cred
  const result=await runner.generate('hello',{provider:'llm7',model:'gpt-oss:20b'});
  assert.equal(headers.Authorization,'Bearer private-test-token');assert.equal(result.answer,'ok');
  assert.doesNotMatch(JSON.stringify(result),/private-test-token/);
+});
+
+test('anonymous LLM7 429 can fail over to another listed model without adding credentials',async()=>{
+ const attempts=[];
+ const runner=createRunnerService({includeHorde:false,fetcher:async(_url,options)=>{
+  assert.equal('Authorization' in options.headers,false);
+  if(options.method==='GET')return jsonResponse({data:[{id:'gpt-oss:120b'},{id:'gpt-oss:20b'}]});
+  const model=JSON.parse(options.body).model;attempts.push(model);
+  return model==='gpt-oss:120b'?new Response('limited',{status:429}):jsonResponse({choices:[{message:{content:'fallback answer'}}]});
+ }});
+ const result=await runner.generate('hello',{provider:'llm7',model:'gpt-oss:120b'});
+ assert.deepEqual(attempts,['gpt-oss:120b','gpt-oss:20b']);assert.equal(result.model,'gpt-oss:20b');assert.equal(result.failedOverFrom.model,'gpt-oss:120b');
 });

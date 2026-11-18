@@ -3,6 +3,7 @@ function welcomeMarkup(){return `<div class="ai-api-welcome"><span class="ai-wel
 export function aiChatWorkspace(){return `<div class="ai-api-workspace" id="aiApiWorkspace"><div class="ai-api-heading"><div class="ai-chat-identity"><span class="ai-chat-mark">${sparkle}</span><div><h3>Everything Hub AI</h3><p><span class="ai-online-dot" aria-hidden="true"></span>Connected to the configured AI provider</p></div></div><button type="button" class="ai-clear" id="aiNewSession" title="Clear the chat display"><span aria-hidden="true">↺</span> Clear chat</button></div><div class="ai-api-thread" id="aiApiThread" aria-label="Questions and answers">${welcomeMarkup()}</div><p id="aiApiStatus" class="ai-api-status" role="status" aria-live="polite"></p><form id="aiApiForm"><label for="aiMessage">Your question</label><div class="ai-composer"><textarea id="aiMessage" name="message" autocomplete="off" maxlength="4000" rows="3" required placeholder="Ask anything you’re curious about…"></textarea><div class="ai-compose-bottom"><span id="aiCharCount" aria-live="off">0 / 4,000</span><button class="ai-send" type="submit" id="aiSend">Send question <span aria-hidden="true">↗</span></button></div></div><p class="ai-compose-note">Each question is independent; earlier messages aren’t included.</p></form><p class="ai-api-footnote">AI can make mistakes. Check important answers.</p></div>`;}
 async function functionError(error,fallback){
  let detail;try{detail=await error?.context?.json();}catch{}
+ if(error?.context?.status===401)return new Error('Your AI session has expired or was rejected. Sign out and sign in again, then retry.');
  return new Error(typeof detail?.error==='string'?detail.error:fallback);
 }
 
@@ -65,14 +66,14 @@ export async function listAiModels(client,{refresh=false,signal}={}){
  const {data,error}=await client.functions.invoke('ai-chat',{body:{action:'models',refresh},signal});
  if(error)throw await functionError(error,'The live model list is unavailable right now. Try again in a moment.');
  if(!Array.isArray(data?.models))throw new Error('The live model catalog returned an invalid response.');
- return data.models.filter(model=>model&&['auto','hub','aihorde','llm7'].includes(model.provider)&&typeof model.id==='string'&&model.id.length<=180&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)).map(model=>({...model}));
+ return data.models.filter(model=>model&&['auto','hub','aihorde','llm7','groq'].includes(model.provider)&&typeof model.id==='string'&&model.id.length<=180&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)).map(model=>({...model}));
 }
 export async function askAi(client,message,signal,selection){
  if(selection?.provider==='local')return askLocalAi(message,selection,signal);
  if(!client)throw new Error('AI chat is not configured yet.');
  const body={message};
  if(selection?.provider){
-  if(!['auto','hub','aihorde','llm7'].includes(selection.provider)||typeof selection.model!=='string'||!selection.model)throw new Error('Choose an available AI model.');
+  if(!['auto','hub','aihorde','llm7','groq'].includes(selection.provider)||typeof selection.model!=='string'||!selection.model)throw new Error('Choose an available AI model.');
   body.provider=selection.provider;body.model=selection.model;
   if(selection.webSearch){body.webSearch=true;body.searchQuery=String(selection.searchQuery||'').slice(0,240);}
  }
