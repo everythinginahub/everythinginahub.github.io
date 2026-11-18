@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
+    "build:ai-function": "esbuild supabase/functions/ai-chat/index.ts --bundle --format=esm --platform=neutral --external:npm:* --minify --outfile=.cache/ai-chat-deploy.js",
     "build:client": "esbuild scripts/supabase-entry.js --bundle --format=esm --minify --outfile=public/supabase-client.js --legal-comments=inline",
     "build:ocr": "node scripts/copy-ocr-assets.js",
     "build:pdf": "node scripts/copy-pdf-assets.js",
