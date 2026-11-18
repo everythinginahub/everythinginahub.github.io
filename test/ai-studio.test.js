@@ -141,7 +141,7 @@ test('local models are opt-in, small models are omitted, and web search is disab
  }finally{view.controller.destroy();view.dom.window.close();}
 });
 
-test('Web Studio opens generated HTML only on request inside an opaque-origin iframe sandbox',async()=>{
+test('Web Studio opens generated HTML in a separate live sandboxed editor',async()=>{
  const html='<!doctype html><html><head><title>Timer</title></head><body><main><h1>Study timer</h1><button>Start</button></main><script>document.querySelector("button").textContent="Started"</script></body></html>';
  const view=setup(async()=>({answer:`Here is the prototype:\n\n\`\`\`html\n${html}\n\`\`\``}));
  try{
@@ -149,10 +149,12 @@ test('Web Studio opens generated HTML only on request inside an opaque-origin if
   view.submit('Build a study timer');await wait();
   assert.equal(view.query('#aiWebStudio').hidden,false);
   assert.equal(view.query('#aiStudioCode').value,html);
-  assert.equal(view.query('#aiStudioFrame').hidden,true,'generated code is not auto-run');
+  assert.equal(view.query('#aiStudioFrame').hidden,true,'preview waits for the debounce');
   assert.ok(view.query('[data-ai-preview]'));
   assert.equal(view.root.querySelector('script'),null,'generated HTML is rendered as text in the Hub page');
-  assert.match(view.root.querySelector('.is-assistant p').textContent,/<script>/);
+  assert.match(view.root.querySelector('.is-assistant p').textContent,/Web Studio editor/);
+  await new Promise(resolve=>view.win.setTimeout(resolve,500));
+  assert.equal(view.query('#aiStudioFrame').hidden,false,'generated HTML automatically previews after debounce');
   view.query('#aiStudioPreview').click();
   const frame=view.query('#aiStudioFrame');
   assert.equal(frame.hidden,false);
@@ -209,4 +211,35 @@ test('account-scoped chats, drafts and prototypes survive remount and can be cle
 test('blocked chat storage gives a warning without preventing conversation',async()=>{
  const view=setup(async()=>({answer:'ok'}),{userId:'blocked'});
  try{view.win.Storage.prototype.setItem=()=>{throw Error('full');};view.submit('Still usable');await wait();assert.match(view.query('#aiApiThread').textContent,/ok/);assert.match(view.query('.ai-session-note').textContent,/Could not save/);}finally{view.controller.destroy();view.dom.window.close();}
+});
+
+test('live preview debounces edits, supports opt-out and cancels on close and destroy',async()=>{
+ const view=setup(async()=>({answer:'ok'}));
+ const delay=()=>new Promise(resolve=>view.win.setTimeout(resolve,500));
+ const edit=code=>{view.query('#aiStudioCode').value=code;view.query('#aiStudioCode').dispatchEvent(new view.win.Event('input',{bubbles:true}));};
+ try{
+  await wait();view.query('#aiOpenStudio').click();edit('<h1>First</h1>');edit('<h1>Latest</h1>');await delay();
+  const frame=view.query('#aiStudioFrame');assert.match(frame.srcdoc,/Latest/);assert.doesNotMatch(frame.srcdoc,/First/);assert.equal(frame.getAttribute('sandbox'),'allow-scripts');
+  const toggle=view.query('#aiStudioLive');toggle.checked=false;toggle.dispatchEvent(new view.win.Event('change',{bubbles:true}));edit('<h1>Paused</h1>');await delay();assert.doesNotMatch(frame.srcdoc,/Paused/);
+  view.query('#aiStudioPreview').click();assert.match(frame.srcdoc,/Paused/);
+  toggle.checked=true;toggle.dispatchEvent(new view.win.Event('change',{bubbles:true}));edit('<h1>Cancelled</h1>');view.query('#aiCloseStudio').click();await delay();assert.equal(frame.hasAttribute('srcdoc'),false);
+  view.query('#aiOpenStudio').click();edit('<h1>Destroyed</h1>');view.controller.destroy();await delay();assert.equal(frame.hasAttribute('srcdoc'),false);
+ }finally{view.controller.destroy();view.dom.window.close();}
+});
+
+test('studio offers responsive preview sizes, code recovery and keyboard HTML downloads',async()=>{
+ let call=0;const view=setup(async()=>({answer:`\`\`\`html\n<h1>Version ${++call}</h1>\n\`\`\``}),{userId:'versions'});
+ const downloads=[],revoked=[];view.win.URL.createObjectURL=blob=>(downloads.push(blob),'blob:prototype');view.win.URL.revokeObjectURL=url=>revoked.push(url);
+ view.win.HTMLAnchorElement.prototype.click=function(){assert.equal(this.download,'everything-hub-prototype.html');};
+ try{
+  await wait();view.submit('Build first');await wait();view.submit('Make it better');await wait();
+  assert.match(view.query('#aiStudioCode').value,/Version 2/);assert.equal(view.query('#aiStudioRestore').disabled,false);
+  view.query('#aiStudioRestore').click();assert.match(view.query('#aiStudioCode').value,/Version 1/);view.query('#aiStudioRestore').click();assert.match(view.query('#aiStudioCode').value,/Version 2/);
+  const size=view.query('#aiStudioSize');for(const width of ['375','768','1280','full']){size.value=width;size.dispatchEvent(new view.win.Event('change',{bubbles:true}));assert.equal(view.query('#aiStudioFrame').style.width,width==='full'?'100%':`${width}px`);}
+  const editor=view.query('#aiStudioCode');editor.dispatchEvent(new view.win.KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true,cancelable:true}));assert.match(view.query('#aiStudioFrame').srcdoc,/Version 2/);
+  editor.dispatchEvent(new view.win.KeyboardEvent('keydown',{key:'s',metaKey:true,bubbles:true,cancelable:true}));assert.equal(downloads.length,1);assert.equal(downloads[0].type,'text/html;charset=utf-8');assert.match(view.query('#aiStudioStatus').textContent,/outside this preview sandbox/);
+  assert.match(view.query('#aiStudioCodeCount').textContent,/25,000 characters/);
+  view.controller.destroy();assert.deepEqual(revoked,['blob:prototype']);
+  const saved=JSON.parse([...Array(view.win.localStorage.length)].map((_,i)=>view.win.localStorage.getItem(view.win.localStorage.key(i))).find(value=>value.includes('previousCode')));assert.match(saved.data.chats[0].previousCode,/Version 1/);
+ }finally{view.controller.destroy();view.dom.window.close();}
 });

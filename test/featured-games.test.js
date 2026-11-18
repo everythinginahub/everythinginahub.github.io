@@ -15,3 +15,28 @@ test('fallbacks preserve local game usability in an opaque sandbox',async()=>{
  const storage=await readFile('public/games/radius-raid/js/storage.js','utf8'),audio=await readFile('public/games/radius-raid/js/audio.js','utf8'),racer=await readFile('public/games/pseudo-racer/common.js','utf8'),racePage=await readFile('public/games/pseudo-racer/v4.final.html','utf8'),maze=await readFile('public/games/cant-get-back/index.html','utf8');
  assert.match(storage,/catch/);assert.match(audio,/html5: true/);assert.match(racer,/catch/);assert.match(racePage,/data-drive="38"/);assert.match(maze,/started = 1/);
 });
+
+test('local featured game saves use account-scoped source-checked storage without relaxing sandboxes',async()=>{
+ const {readDeviceSave,deviceSaveKey}=await import('../public/device-saves.js');
+ for(const slug of ['radius-raid','pseudo-racer']){
+  const dom=new JSDOM(`<main>${spotlightView(slug)}</main>`,{url:'https://example.test/public/'}),win=dom.window,root=win.document.querySelector('main');
+  try{
+   const controller=mountArcade({root,id:'spotlight',view:slug,userId:'player',win}),frame=root.querySelector('iframe');
+   const send=source=>win.dispatchEvent(new win.MessageEvent('message',{source,origin:'null',data:{type:'hub-game-write',data:{best:'42'}}}));
+   send(win);assert.equal(win.localStorage.length,0);send(frame.contentWindow);
+   assert.equal(readDeviceSave(win.localStorage,deviceSaveKey(`spotlight-${slug}`,'player')).best,'42');assert.equal(readDeviceSave(win.localStorage,deviceSaveKey(`spotlight-${slug}`,'other')),null);
+   assert.doesNotMatch(frame.getAttribute('sandbox'),/allow-same-origin/);controller.destroy();
+  }finally{win.close();}
+ }
+});
+
+test('bundled game entry pages reference existing local scripts and styles',async()=>{
+ const {stat}=await import('node:fs/promises');const {resolve,dirname}=await import('node:path');
+ for(const path of [...featuredGames.map(game=>game.path),'voxelcraft-survival.html','dungeon-quest-3d.html']){
+  const entry=resolve('public',path),html=await readFile(entry,'utf8');
+  for(const match of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']([^"']+)["']/gi)){
+   const ref=match[1].split('?')[0];if(/^(?:https?:|data:|\/|#)/.test(ref))continue;
+   assert.ok((await stat(resolve(dirname(entry),ref))).isFile(),`${path}: missing ${ref}`);
+  }
+ }
+});

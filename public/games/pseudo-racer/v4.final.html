@@ -2,6 +2,7 @@
 
 <html>
 <head>
+<script src="../../game-save-bridge.js?v=20261106-1"></script>
   <title>Javascript Racer - v4 (final)</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <link href="common.css" rel="stylesheet" type="text/css" />
@@ -94,7 +95,7 @@
   <span id="mute"></span>
 
   <script src="stats.js"></script>
-  <script src="common.js"></script>
+  <script src="common.js?v=2"></script>
   <script>
 
     var fps            = 60;                      // how many 'update' frames per second
@@ -692,5 +693,10 @@
   </script>
   <footer class="site-footer site-footer--overlay"><a href="/privacy/">Privacy Policy</a></footer>
 
+<script>
+window.addEventListener('game-save-ready',function(){
+ if(typeof updateHud==='function'&&Dom.storage.fast_lap_time)updateHud('fast_lap_time',formatTime(Util.toFloat(Dom.storage.fast_lap_time)));
+});
+</script>
 </body>
 </html>

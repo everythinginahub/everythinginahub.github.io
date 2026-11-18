@@ -1,4 +1,4 @@
-import {featuredCards} from './featured-games.js?v=20261114-8';
+import {featuredCards} from './featured-games.js?v=20261106-9';
 import {embeddedGames} from './embedded-games-data.js?v=20261113-1';
 const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const categories = {puzzle:['Puzzle','▦'],arcade:['Arcade','◈'],racing:['Racing','➜'],sports:['Sports','⚑'],platformer:['Platform','▲'],casual:['Casual','●'],board:['Board','▦'],'word-quiz':['Words','✎'],'3d':['3D','⬡']};

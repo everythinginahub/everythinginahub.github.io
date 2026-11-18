@@ -1,8 +1,9 @@
+import {mountLocalGameStorage} from './local-game-storage.js?v=20261106-1';
 import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
 import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-3';
-import {spotlightView, mountSpotlight} from './featured-games.js?v=20261114-8';
+import {spotlightView, mountSpotlight} from './featured-games.js?v=20261106-9';
 import {geometryDashView, mountGeometryDash} from './geometry-dash.js?v=20261114-7';
-import {libraryView, embedView, mountLibrary, mountEmbeddedGame} from './embedded-games.js?v=20261114-13';
+import {libraryView, embedView, mountLibrary, mountEmbeddedGame} from './embedded-games.js?v=20261106-14';
 import {newRunner,newOrbit,newReef,jumpRunner,slideRunner,activateNova,launchReef,stepGame,WIDTH,HEIGHT} from './arcade-engine.js?v=20261106-9';
 import {drawArcade} from './arcade-render.js?v=20261106-9';
 import {dailyArcadeChallenge,seededRandom} from './arcade-challenge.js?v=20261106-1';
@@ -72,21 +73,11 @@ function mountLazySkyparkObby({root,...options}){
 export function mountArcade({root,id,view,userId,playerName,state,save,toast,onReward=()=>{},win=window}){
  if(id==='geometry-dash'||id==='designer')return mountGeometryDash(root);
  if(id==='library')return mountLibrary(root);
- if(id==='spotlight')return mountSpotlight(root);
+ if(id==='spotlight')return mountSpotlight(root,{userId,win});
  if(id==='classroom')return mountClassroom(root,view,win);
  if(['voxelcraft-survival','block-world','dungeon-quest-3d'].includes(id)){
   const frame=root.querySelector('iframe'),kind=id==='dungeon-quest-3d'?'dungeon':'voxelcraft';
-  const key=deviceSaveKey(kind,userId);let storage;try{storage=win.localStorage;}catch{}
-  const send=data=>frame?.contentWindow?.postMessage(data,'*');
-  const valid=data=>data&&typeof data==='object'&&!Array.isArray(data)&&Object.keys(data).length<=20&&Object.values(data).every(value=>typeof value==='string')&&JSON.stringify(data).length<=2000000;
-  const init=()=>{const data=readDeviceSave(storage,key,2100000);send({type:'hub-game-init',data:valid(data)?data:{}});};
-  const receive=event=>{
-   if(!frame||event.source!==frame.contentWindow||event.origin!=='null')return;
-   if(event.data?.type==='hub-game-ready')init();
-   if(event.data?.type==='hub-game-write'&&valid(event.data.data)&&!writeDeviceSave(storage,key,event.data.data,2100000))send({type:'hub-game-save-error'});
-  };
-  win.addEventListener('message',receive);frame?.addEventListener('load',init);
-  return {destroy(){send({type:'hub-game-flush'});frame?.removeEventListener('load',init);win.setTimeout(()=>{win.removeEventListener('message',receive);frame?.remove();},100);}};
+  return mountLocalGameStorage({frame,kind,userId,win});
  }
  if(id==='skypark-obby')return mountLazySkyparkObby({root,userId,playerName,onReward,win});
  if(id==='play')return mountEmbeddedGame(root,view,win);

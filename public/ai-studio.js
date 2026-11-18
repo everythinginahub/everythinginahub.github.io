@@ -25,7 +25,7 @@ export function aiStudioWorkspace(){return `<div class="ai-studio-layout" id="ai
   <div class="ai-studio-brand"><span class="ai-studio-brand-mark">${sparkle}</span><span><small>EVERYTHING HUB</small><strong>AI STUDIO</strong></span></div>
   <button type="button" class="ai-new-chat" id="aiNewSession"><span aria-hidden="true">＋</span> New chat</button>
   <label class="ai-history-search" for="aiHistorySearch">Search saved chats<input id="aiHistorySearch" type="search" maxlength="80" placeholder="Find a conversation…" autocomplete="off"></label>
-  <div class="ai-history-heading"><span>RECENT CHATS</span><button type="button" id="aiClearHistory" title="Clear in-memory chat history" hidden>Clear</button></div>
+  <div class="ai-history-heading"><span>RECENT CHATS</span><button type="button" id="aiClearHistory" title="Clear saved chats on this device" hidden>Clear</button></div>
   <nav class="ai-history-list" id="aiHistory" aria-label="Saved conversations"></nav>
   <p class="ai-session-note">Chats are saved on this device for your account. They are not synced online.</p>
  </aside>
@@ -35,7 +35,7 @@ export function aiStudioWorkspace(){return `<div class="ai-studio-layout" id="ai
   <div class="ai-api-thread" id="aiApiThread" role="log" aria-label="Current conversation" aria-relevant="additions text">${welcomeMarkup()}</div>
   <p id="aiApiStatus" class="ai-api-status" role="status" aria-live="polite" aria-atomic="true"></p>
   <form id="aiApiForm"><label class="ai-web-search-toggle" for="aiWebSearch"><input id="aiWebSearch" type="checkbox"><span><strong>Search the web for this question</strong><small>Optional: your current question goes to DuckDuckGo; its result snippets are sent to the selected cloud model.</small></span></label><label for="aiMessage">Your message</label><div class="ai-composer"><textarea id="aiMessage" name="message" autocomplete="off" maxlength="${AI_PROMPT_LIMIT}" rows="3" required aria-describedby="aiComposeHint" placeholder="Ask a question, share an idea, or describe what to build…"></textarea><div class="ai-compose-bottom"><span id="aiCharCount" aria-live="off">0 / ${AI_PROMPT_LIMIT.toLocaleString('en-GB')}</span><div class="ai-compose-actions"><button type="button" class="ai-studio-action" id="aiOpenStudio" aria-expanded="false" aria-controls="aiWebStudio">Web Studio</button><button type="button" class="ai-studio-action ai-stop" id="aiStop" hidden>Stop</button><button class="ai-send" type="submit" id="aiSend">Send <span aria-hidden="true">↗</span></button></div></div></div><p class="ai-compose-note" id="aiComposeHint">Enter sends · Shift + Enter adds a line · Up to eight recent messages provide context.</p></form>
-  <section class="ai-web-studio" id="aiWebStudio" aria-labelledby="aiStudioTitle" hidden><div class="ai-web-studio-heading"><div><p class="ai-aside-label">LOCAL PROTOTYPE · SANDBOXED</p><h3 id="aiStudioTitle">Web Studio</h3></div><button type="button" id="aiCloseStudio" class="ai-close-studio" aria-label="Close Web Studio">×</button></div><label for="aiStudioCode">HTML prototype <span>Up to ${AI_STUDIO_LIMIT.toLocaleString('en-GB')} characters</span></label><textarea id="aiStudioCode" rows="10" maxlength="${AI_STUDIO_LIMIT}" spellcheck="false" autocomplete="off" placeholder="Choose Web Studio build style and describe a small page, or paste HTML here…"></textarea><div class="ai-studio-preview-actions"><button type="button" class="ai-studio-action ai-preview-button" id="aiStudioPreview">Run safe preview</button><button type="button" class="ai-studio-action" id="aiStudioCopy">Copy code</button></div><p id="aiStudioStatus" class="ai-studio-status" role="status" aria-live="polite">Nothing runs until you choose Run safe preview.</p><iframe id="aiStudioFrame" title="Locally sandboxed HTML prototype preview" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe><p class="ai-studio-safety">The opaque-origin frame cannot read Everything Hub data; its policy blocks network connections and external resources. Browser navigation controls can vary, so do not follow external links. Inline scripts can run; inspect code first.</p></section>
+  <section class="ai-web-studio" id="aiWebStudio" aria-labelledby="aiStudioTitle" hidden><div class="ai-web-studio-heading"><div><p class="ai-aside-label">LOCAL PROTOTYPE · SANDBOXED</p><h3 id="aiStudioTitle">Web Studio</h3></div><button type="button" id="aiCloseStudio" class="ai-close-studio" aria-label="Close Web Studio">×</button></div><div class="ai-studio-split"><div class="ai-studio-editor"><label for="aiStudioCode">HTML prototype <span>Up to ${AI_STUDIO_LIMIT.toLocaleString('en-GB')} characters</span></label><textarea id="aiStudioCode" rows="10" maxlength="${AI_STUDIO_LIMIT}" spellcheck="false" autocomplete="off" placeholder="Choose Web Studio build style and describe a small page, or paste HTML here…"></textarea><p class="ai-editor-hint"><span id="aiStudioCodeCount">0 characters</span> · Ctrl/⌘ + Enter: preview · Ctrl/⌘ + S: download</p><div class="ai-studio-preview-actions"><button type="button" class="ai-studio-action" id="aiStudioDownload">Download HTML</button><button type="button" class="ai-studio-action" id="aiStudioRestore" disabled>Restore previous code</button></div></div><div class="ai-studio-output"><div class="ai-studio-preview-actions"><button type="button" class="ai-studio-action ai-preview-button" id="aiStudioPreview">Refresh preview</button><label class="ai-live-toggle"><input id="aiStudioLive" type="checkbox" checked> Auto preview</label><button type="button" class="ai-studio-action" id="aiStudioCopy">Copy code</button></div><label class="ai-preview-size" for="aiStudioSize">Preview width<select id="aiStudioSize"><option value="full">Fit panel</option><option value="375">Phone · 375 px</option><option value="768">Tablet · 768 px</option><option value="1280">Desktop · 1280 px</option></select></label><p id="aiStudioStatus" class="ai-studio-status" role="status" aria-live="polite">Generate or edit HTML to see a live preview.</p><div class="ai-preview-viewport"><iframe id="aiStudioFrame" title="Locally sandboxed HTML prototype preview" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe></div></div></div><p class="ai-studio-safety">The opaque-origin frame cannot read Everything Hub data; its policy blocks network connections and external resources. Browser navigation controls can vary, so do not follow external links. Inline scripts run automatically while Auto preview is enabled. Turn it off before pasting untrusted code.</p></section>
   <p class="ai-api-footnote">AI can make mistakes. Check important answers and do not include personal or sensitive information.</p>
  </section>
  <aside class="ai-studio-aside" aria-label="About AI Studio"><div class="ai-aside-card ai-allowance"><span class="ai-aside-label">USAGE</span><div class="ai-allowance-number">No daily cap</div><p>Remote AI requests allow up to 12 attempts per account per minute. Provider limits and live capacity still apply; the model list is only a snapshot. LLM7 is attempted without a key; other providers may require one. All enforce their own quotas.</p><div class="ai-aside-divider"></div><p>If a cloud model fails, the server may send the same prompt to other available models, then Gemini if configured, and finally KindleHub only if nothing else answers. Local-server requests go directly to your selected loopback server and bypass the site quota.</p></div><div class="ai-aside-card ai-guide"><span class="ai-aside-label">GOOD TO KNOW</span><h3>Built for thoughtful use.</h3><p>Up to eight recent messages are included with each new question for context. Chats and drafts are saved on this device. Use Clear history to remove them; avoid sensitive information on shared devices.</p><p>Cloud questions go to the selected third-party model provider, and a failover may use another provider. Optional web search sends only your current question to DuckDuckGo. Local-model prompts go directly to the loopback server you scan. Answers can be wrong or unsuitable; check important claims. Not for unsupervised children.</p></div><div class="ai-studio-credit"><a href="https://github.com/socks275/abliterated.ai" target="_blank" rel="noopener noreferrer">Inspired by Abliterated AI Runner ↗</a><small>Independent Everything Hub implementation · no model keys in the browser.</small></div></aside>
@@ -81,9 +81,10 @@ function extractHtml(answer){
 }
 
 export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listAiModels,scanLocal=fetchLocalModels,userId,timeoutMs=90000}={}){
+ let previewTimer=null;const downloadUrls=new Set();
  let disposed=false,busy=false,sequence=0,abort=null,timer=null,pendingChatId=null,nextId=0,catalogAbort=null,localScanAbort=null,catalogSequence=0,localSequence=0,remoteModels=[],localModels=[];
  const q=selector=>root.querySelector(selector),form=q('#aiApiForm'),thread=q('#aiApiThread'),status=q('#aiApiStatus'),input=q('#aiMessage'),send=q('#aiSend'),stop=q('#aiStop'),count=q('#aiCharCount'),history=q('#aiHistory'),historySearch=q('#aiHistorySearch'),modeSelect=q('#aiMode'),modeHint=q('#aiModeHint'),modelSelect=q('#aiModelSelect'),modelStatus=q('#aiModelStatus'),refreshModels=q('#aiRefreshModels'),localBase=q('#aiLocalBase'),scanLocalButton=q('#aiScanLocal'),localStatus=q('#aiLocalStatus'),webSearch=q('#aiWebSearch'),studio=q('#aiWebStudio'),studioCode=q('#aiStudioCode'),studioFrame=q('#aiStudioFrame'),studioStatus=q('#aiStudioStatus'),openStudioButton=q('#aiOpenStudio'),clearHistory=q('#aiClearHistory');
- const createChat=()=>({id:`ai-${Date.now()}-${++nextId}`,title:'New conversation',mode:'everyday',messages:[],draft:'',studioCode:'',studioOpen:false,notice:'',modelKey:'',webSearch:false});
+ const createChat=()=>({id:`ai-${Date.now()}-${++nextId}`,title:'New conversation',mode:'everyday',messages:[],draft:'',studioCode:'',previousCode:'',studioOpen:false,notice:'',modelKey:'',webSearch:false});
  let chats=[createChat()],activeId=chats[0].id;
  const storageKey=userId?deviceSaveKey('ai-chats',userId):null;
  let storage;try{storage=win.localStorage;}catch{}
@@ -92,6 +93,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   const saved=restored.chats.slice(0,AI_SESSION_LIMIT).filter(chat=>chat&&typeof chat.id==='string').map(chat=>({
    ...createChat(),id:chat.id.slice(0,100),title:String(chat.title||'Conversation').slice(0,100),mode:modes[chat.mode]?chat.mode:'everyday',
    modelKey:typeof chat.modelKey==='string'&&!chat.modelKey.startsWith('local:')?chat.modelKey.slice(0,300):'',webSearch:chat.webSearch===true,
+   previousCode:String(chat.previousCode||'').slice(0,AI_STUDIO_LIMIT),
    draft:String(chat.draft||'').slice(0,AI_PROMPT_LIMIT),studioCode:String(chat.studioCode||'').slice(0,AI_STUDIO_LIMIT),
    messages:(Array.isArray(chat.messages)?chat.messages:[]).filter(message=>message&&['user','assistant'].includes(message.role)&&typeof message.text==='string').slice(-AI_TURN_LIMIT).map(message=>({role:message.role,text:message.text.slice(0,20000),modelInfo:String(message.modelInfo||'').slice(0,500),sources:Array.isArray(message.sources)?message.sources.slice(0,5):[]}))
   }));
@@ -99,7 +101,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  }
  function persist(){
   if(!storageKey)return;
-  const data={activeId,chats:chats.map(({id,title,mode,draft,studioCode,messages,modelKey,webSearch})=>({id,title,mode,draft,studioCode,messages,modelKey,webSearch}))};
+  const data={activeId,chats:chats.map(({id,title,mode,draft,studioCode,messages,modelKey,webSearch,previousCode})=>({id,title,mode,draft,studioCode,messages,modelKey,webSearch,previousCode}))};
   const note=q('.ai-session-note');
   if(!writeDeviceSave(storage,storageKey,data)){if(note)note.textContent='Could not save chats on this device (storage blocked or full). Copy important replies before leaving.';}
   else if(note)note.textContent='Chats are saved on this device for your account, not synced online. Clear history removes this device’s saved chats.';
@@ -183,7 +185,13 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  function appendMessage(chat,message,index){
   const item=win.document.createElement('article');item.className=`ai-api-message ${message.role==='user'?'is-user':'is-assistant'}`;
   const label=win.document.createElement('strong');label.textContent=message.role==='user'?'You':'Everything Hub AI';
-  const body=win.document.createElement('p');body.textContent=message.text;item.append(label,body);
+  const body=win.document.createElement('p');
+  const hasPrototype=message.role==='assistant'&&extractHtml(message.text);
+  if(hasPrototype){
+   const prose=message.text.replace(/```(?:html|htm)\s*\r?\n?([\s\S]*?)```/ig,'[HTML code is in the Web Studio editor.]');
+   body.textContent=prose!==message.text?prose:'HTML code is ready in the Web Studio editor.';
+  }else body.textContent=message.text;
+  item.append(label,body);
   if(message.role==='assistant'&&message.modelInfo){const detail=win.document.createElement('small');detail.className='ai-model-attribution';detail.textContent=message.modelInfo;item.append(detail);}
   if(message.role==='assistant'&&Array.isArray(message.sources)&&message.sources.length){const sources=win.document.createElement('div');sources.className='ai-source-list';const heading=win.document.createElement('strong');heading.textContent='Web sources';const list=win.document.createElement('ol');for(const source of message.sources.slice(0,5)){try{const url=new URL(source.url);if(url.protocol!=='https:'||url.username||url.password)continue;const row=win.document.createElement('li'),link=win.document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent=String(source.title||url.hostname).slice(0,180);row.append(link);list.append(row);}catch{}}if(list.children.length){sources.append(heading,list);item.append(sources);}}
   if(message.role==='assistant'){
@@ -200,8 +208,8 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   const model=ensureModelSelection(chat);modelSelect.value=model?modelKey(model):'';modelSelect.disabled=!allModels().length||busy;
   const hasChoice=allModels().length>1;modelSelect.hidden=!hasChoice;
   const pickerLabel=root.querySelector('label[for="aiModelSelect"]');if(pickerLabel)pickerLabel.hidden=!hasChoice;webSearch.checked=Boolean(chat.webSearch&&model?.provider!=='local');webSearch.disabled=!model||model.provider==='local'||busy;send.disabled=busy||!model;refreshModels.disabled=busy||catalogAbort!==null;scanLocalButton.disabled=busy||localScanAbort!==null;
-  studioCode.value=chat.studioCode||'';studioFrame.hidden=true;studioFrame.removeAttribute('srcdoc');studioStatus.textContent=chat.studioCode?'Prototype ready. Choose Run safe preview when you are ready.':'Nothing runs until you choose Run safe preview.';
-  studio.hidden=!chat.studioOpen;updateStudioButton();
+  win.clearTimeout(previewTimer);studioCode.value=chat.studioCode||'';studioFrame.hidden=true;studioFrame.removeAttribute('srcdoc');studioStatus.textContent=chat.studioCode?'Source restored. Open Web Studio to preview; turn off Auto preview before editing untrusted code.':'Generate or paste HTML in the editor for an automatic preview.';
+  studio.hidden=!chat.studioOpen;updateStudioButton();updateEditorTools();if(chat.studioOpen)schedulePreview();
   status.textContent=chat.notice||'';if(busy&&pendingChatId===chat.id)thread.setAttribute('aria-busy','true');else thread.removeAttribute('aria-busy');
   clearHistory.hidden=!chats.some(item=>item.messages.length);thread.scrollTop=thread.scrollHeight;
  }
@@ -214,7 +222,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  }
  function createNewChat(){
   cancelPending();let chat=current();
-  if(!chat.messages.length){chat.mode='everyday';chat.draft='';chat.studioCode='';chat.studioOpen=false;chat.notice='Ready for a new conversation.';activeId=chat.id;renderHistory();renderConversation();input.focus();return;}
+  if(!chat.messages.length){chat.mode='everyday';chat.draft='';chat.studioCode='';chat.previousCode='';chat.studioOpen=false;chat.notice='Ready for a new conversation.';activeId=chat.id;renderHistory();renderConversation();input.focus();return;}
   chat=createChat();chats.unshift(chat);if(chats.length>AI_SESSION_LIMIT)chats.length=AI_SESSION_LIMIT;activeId=chat.id;renderHistory();renderConversation();input.focus();
  }
  function clearChats(){
@@ -223,11 +231,31 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  function switchChat(id){
   if(id===activeId)return;cancelPending();if(!chats.some(chat=>chat.id===id))return;activeId=id;renderHistory();renderConversation();input.focus();
  }
+ function updateEditorTools(){
+  q('#aiStudioCodeCount').textContent=`${studioCode.value.length.toLocaleString('en-GB')} / ${AI_STUDIO_LIMIT.toLocaleString('en-GB')} characters`;
+  q('#aiStudioRestore').disabled=!current().previousCode;
+  q('#aiStudioDownload').disabled=!studioCode.value.trim();
+ }
+ function downloadCode(){
+  if(!studioCode.value.trim()){studioStatus.textContent='Write or generate some HTML first.';return;}
+  let url;
+  try{
+   url=win.URL.createObjectURL(new win.Blob([studioCode.value],{type:'text/html;charset=utf-8'}));downloadUrls.add(url);
+   const link=win.document.createElement('a');link.href=url;link.download='everything-hub-prototype.html';root.append(link);link.click();link.remove();
+   win.setTimeout(()=>{if(downloadUrls.delete(url))win.URL.revokeObjectURL(url);},1000);
+   studioStatus.textContent='HTML download requested. Downloaded files run outside this preview sandbox; inspect before opening.';
+  }catch{if(url){win.URL.revokeObjectURL(url);downloadUrls.delete(url);}studioStatus.textContent='Download is unavailable here. Use Copy code instead.';}
+ }
+ function schedulePreview(){
+  win.clearTimeout(previewTimer);
+  if(disposed||studio.hidden||!q('#aiStudioLive').checked)return;
+  const chatId=activeId;previewTimer=win.setTimeout(()=>{if(!disposed&&activeId===chatId&&!studio.hidden)preview();},400);
+ }
  function setStudioCode(code,{open=false,notice=''}={}){
   if(code.length>AI_STUDIO_LIMIT){studioStatus.textContent=`This prototype is over the ${AI_STUDIO_LIMIT.toLocaleString('en-GB')} character limit.`;return false;}
-  const chat=current();chat.studioCode=code;studioCode.value=code;studioFrame.hidden=true;studioFrame.removeAttribute('srcdoc');if(open)chat.studioOpen=true;studio.hidden=!chat.studioOpen;updateStudioButton();studioStatus.textContent=notice|| (code?'Prototype ready. Choose Run safe preview when you are ready.':'Nothing runs until you choose Run safe preview.');return true;
+  const chat=current();if(chat.studioCode&&chat.studioCode!==code)chat.previousCode=chat.studioCode;chat.studioCode=code;studioCode.value=code;updateEditorTools();studioFrame.hidden=true;studioFrame.removeAttribute('srcdoc');if(open)chat.studioOpen=true;studio.hidden=!chat.studioOpen;updateStudioButton();persist();schedulePreview();studioStatus.textContent=notice|| (code?'Prototype ready. Auto preview updates after editing.':'Paste or generate HTML to see the preview.');return true;
  }
- function openStudio(){const chat=current();chat.studioOpen=!chat.studioOpen;studio.hidden=!chat.studioOpen;updateStudioButton();if(!studio.hidden){studioCode.focus();if(!studioCode.value)studioStatus.textContent='Describe a page in Web Studio build style, or paste your own HTML.';}}
+ function openStudio(){const chat=current();chat.studioOpen=!chat.studioOpen;studio.hidden=!chat.studioOpen;updateStudioButton();if(studio.hidden){win.clearTimeout(previewTimer);studioFrame.removeAttribute('srcdoc');studioFrame.hidden=true;}else{schedulePreview();studioCode.focus();if(!studioCode.value)studioStatus.textContent='Describe a page in Web Studio build style, or paste your own HTML.';}}
  async function copyText(text,message){try{if(!win.navigator?.clipboard?.writeText)throw new Error('unavailable');await win.navigator.clipboard.writeText(text);status.textContent=message;}catch{status.textContent='Copy is not available here. Select the text and copy it instead.';}}
  function preview(){
   const code=studioCode.value.trim();if(!code){studioStatus.textContent='Paste or generate some HTML before running a preview.';return;}
@@ -252,7 +280,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
    const modelInfo=!result.provider||!result.model?'Answered by the configured server provider (legacy deployment; exact model not reported).':result.failedOverFrom?`Selected model unavailable; failover answered with ${actualName} (${actualProvider}).`:`Answered with ${actualName} (${actualProvider}).`;
    chat.messages.push({role:'assistant',text:result.answer,modelInfo,sources:Array.isArray(result.sources)?result.sources.slice(0,5):[]});
    chat.notice=`${result.failedOverFrom?'Model failover used':'Answered by'} ${actualProvider}. Check important answers.`;if(chat.messages.length>AI_TURN_LIMIT)chat.messages.splice(0,chat.messages.length-AI_TURN_LIMIT);
-   const html=extractHtml(result.answer);if(html&&html.length<=AI_STUDIO_LIMIT){setStudioCode(html,{open:chat.mode==='build',notice:'A prototype is ready. Choose Run safe preview to run it in the isolated frame.'});}
+   const html=extractHtml(result.answer);if(html&&html.length<=AI_STUDIO_LIMIT){setStudioCode(html,{open:true,notice:'Code is ready in the editor. Auto preview updates the isolated panel.'});}
    if(input.value.trim()===message){input.value='';chat.draft='';resizeInput();}renderHistory();renderConversation();
   }catch(error){if(disposed||request!==sequence)return;chat.notice=error?.message||'AI chat is unavailable right now.';status.textContent=chat.notice;}
   finally{if(ownTimer!==undefined)win.clearTimeout(ownTimer);if(request===sequence&&!disposed){timer=null;abort=null;pendingChatId=null;busy=false;send.disabled=!selectedModel();stop.hidden=true;thread.removeAttribute('aria-busy');renderHistory();if(activeId===chat.id){renderConversation();status.textContent=chat.notice;}}}
@@ -265,9 +293,11 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
   const session=event.target.closest('[data-ai-session]');if(session){switchChat(session.dataset.aiSession);return;}
   const suggestion=event.target.closest('[data-ai-prompt]');if(suggestion){const chat=current();chat.mode=suggestion.dataset.aiMode||'everyday';chat.draft=suggestion.dataset.aiPrompt;modeSelect.value=chat.mode;modeHint.textContent=modes[chat.mode]?.hint||modes.everyday.hint;input.value=chat.draft;updateCount();resizeInput();input.focus();return;}
   const copyReply=event.target.closest('[data-ai-copy]');if(copyReply){const message=current().messages[Number(copyReply.dataset.aiCopy)];if(message)copyText(message.text,'Reply copied.');return;}
-  const previewReply=event.target.closest('[data-ai-preview]');if(previewReply){const message=current().messages[Number(previewReply.dataset.aiPreview)],html=extractHtml(message?.text);if(html)setStudioCode(html,{open:true,notice:'Code copied from the answer. It is not running yet; preview it when ready.'});return;}
+  const previewReply=event.target.closest('[data-ai-preview]');if(previewReply){const message=current().messages[Number(previewReply.dataset.aiPreview)],html=extractHtml(message?.text);if(html)setStudioCode(html,{open:true,notice:'Code opened in the editor. Auto preview updates the isolated panel.'});return;}
   if(event.target.closest('#aiOpenStudio')){openStudio();return;}
-  if(event.target.closest('#aiCloseStudio')){current().studioOpen=false;studio.hidden=true;updateStudioButton();return;}
+  if(event.target.closest('#aiCloseStudio')){win.clearTimeout(previewTimer);current().studioOpen=false;studio.hidden=true;studioFrame.removeAttribute('srcdoc');studioFrame.hidden=true;updateStudioButton();return;}
+  if(event.target.closest('#aiStudioDownload')){downloadCode();return;}
+  if(event.target.closest('#aiStudioRestore')){const chat=current();if(chat.previousCode){const previous=chat.previousCode;chat.previousCode=studioCode.value;chat.studioCode=previous;studioCode.value=previous;updateEditorTools();persist();schedulePreview();studioStatus.textContent='Previous code restored. You can switch back with the same button.';}return;}
   if(event.target.closest('#aiStudioPreview')){preview();return;}
   if(event.target.closest('#aiStudioCopy')){copyText(studioCode.value,'Prototype code copied.');return;}
   if(event.target.closest('#aiStop')){cancelPending();return;}
@@ -275,16 +305,18 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  function inputEvent(event){
   if(event.target===input){current().draft=input.value;updateCount();resizeInput();}
   if(event.target===historySearch)renderHistory();
-  if(event.target===studioCode)current().studioCode=studioCode.value;
+  if(event.target===studioCode){const chat=current();if(!chat.previousCode&&chat.studioCode&&chat.studioCode!==studioCode.value)chat.previousCode=chat.studioCode;chat.studioCode=studioCode.value;updateEditorTools();schedulePreview();}
   if(event.target===input||event.target===studioCode)persist();
  }
  function change(event){
+  if(event.target===q('#aiStudioSize')){const width=event.target.value;studioFrame.style.width=['375','768','1280'].includes(width)?`${width}px`:'100%';return;}
+  if(event.target===q('#aiStudioLive')){win.clearTimeout(previewTimer);if(event.target.checked)schedulePreview();return;}
   if(event.target===modeSelect){current().mode=modes[modeSelect.value]?modeSelect.value:'everyday';modeHint.textContent=modes[current().mode].hint;renderHistory();return;}
   if(event.target===modelSelect){const model=allModels().find(item=>modelKey(item)===modelSelect.value);if(!model)return;current().modelKey=modelKey(model);if(model.provider==='local'){current().webSearch=false;webSearch.checked=false;modelStatus.textContent='Local model selected. Its prompt is sent directly to your loopback server; web search is unavailable for local models.';}else modelStatus.textContent=liveModelStatus();renderHistory();renderConversation();return;}
   if(event.target===webSearch){const model=selectedModel();current().webSearch=Boolean(webSearch.checked&&model&&model.provider!=='local');webSearch.checked=current().webSearch;persist();}
  }
- function keydown(event){if(event.target!==input)return;if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}}
- function destroy(){persist();win.removeEventListener('pagehide',persist);disposed=true;sequence++;catalogSequence++;localSequence++;if(timer!==null)win.clearTimeout(timer);timer=null;abort?.abort();abort=null;catalogAbort?.abort();catalogAbort=null;localScanAbort?.abort();localScanAbort=null;busy=false;root.removeEventListener('submit',submit);root.removeEventListener('click',click);root.removeEventListener('input',inputEvent);root.removeEventListener('change',change);root.removeEventListener('keydown',keydown);thread.replaceChildren();input.value='';status.textContent='';modelStatus.textContent='';localStatus.textContent='';studioFrame.removeAttribute('srcdoc');}
+ function keydown(event){if(event.target===studioCode&&(event.ctrlKey||event.metaKey)){if(event.key==='Enter'){event.preventDefault();win.clearTimeout(previewTimer);preview();}else if(event.key.toLowerCase()==='s'){event.preventDefault();downloadCode();}return;}if(event.target!==input)return;if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}}
+ function destroy(){for(const url of downloadUrls)win.URL.revokeObjectURL(url);downloadUrls.clear();win.clearTimeout(previewTimer);persist();win.removeEventListener('pagehide',persist);disposed=true;sequence++;catalogSequence++;localSequence++;if(timer!==null)win.clearTimeout(timer);timer=null;abort?.abort();abort=null;catalogAbort?.abort();catalogAbort=null;localScanAbort?.abort();localScanAbort=null;busy=false;root.removeEventListener('submit',submit);root.removeEventListener('click',click);root.removeEventListener('input',inputEvent);root.removeEventListener('change',change);root.removeEventListener('keydown',keydown);thread.replaceChildren();input.value='';status.textContent='';modelStatus.textContent='';localStatus.textContent='';studioFrame.removeAttribute('srcdoc');}
  win.addEventListener('pagehide',persist);
  root.addEventListener('submit',submit);root.addEventListener('click',click);root.addEventListener('input',inputEvent);root.addEventListener('change',change);root.addEventListener('keydown',keydown);
  renderModelOptions();renderHistory();renderConversation();resizeInput();loadModelCatalog();

@@ -38,6 +38,12 @@ export function securityHeadersForRequest(request) {
   const pathname = new URL(request.url || '/', 'http://localhost').pathname;
   const policy = policyForPath(pathname);
   if (policy) headers['Content-Security-Policy'] = policy;
+  const localGamePage = /^(?:\/public)?\/games\/(?:pseudo-racer\/v4\.final|radius-raid\/index|cant-get-back\/index)\.html$/.test(pathname);
+  if(localGamePage){
+    headers['Content-Security-Policy']=headers['Content-Security-Policy'].replace("frame-ancestors 'none'","frame-ancestors 'self'");
+    headers['Content-Security-Policy-Report-Only']=headers['Content-Security-Policy-Report-Only'].replace("frame-ancestors 'none'","frame-ancestors 'self'");
+    headers['X-Frame-Options']='SAMEORIGIN';
+  }
   if (pathname === '/dungeon-quest-3d.html' || pathname === '/public/dungeon-quest-3d.html') {
     headers['Content-Security-Policy'] = CSP_DUNGEON;
     headers['Content-Security-Policy-Report-Only'] = headers['Content-Security-Policy-Report-Only'].replace("frame-ancestors 'none'", "frame-ancestors 'self'");
