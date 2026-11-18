@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {aiChatWorkspace,mountAiChat,askAi} from '../public/ai-chat.js';
+import {aiChatWorkspace,mountAiChat,askAi,askLocalAi,fetchLocalModels,listAiModels} from '../public/ai-chat.js';
 
 const wait=()=>new Promise(resolve=>setTimeout(resolve,20));
 function setup(ask,extra={}){
@@ -28,6 +28,44 @@ test('calls the authenticated edge function without sending conversation history
  assert.equal(result.answer,'ok');
  assert.equal(args[0],'ai-chat');
  assert.deepEqual(args[1].body,{message:'Hello'});
+});
+
+test('Studio cloud selection passes the chosen provider and explicitly opted-in search fields',async()=>{
+ let args;
+ const client={functions:{invoke:async(...values)=>(args=values,{data:{answer:'ok'}})}};
+ const result=await askAi(client,'prompt with recent context',new AbortController().signal,{provider:'llm7',model:'gpt-oss:20b',webSearch:true,searchQuery:'latest question'});
+ assert.equal(result.answer,'ok');assert.equal(args[0],'ai-chat');
+ assert.deepEqual(args[1].body,{message:'prompt with recent context',provider:'llm7',model:'gpt-oss:20b',webSearch:true,searchQuery:'latest question'});
+});
+
+test('local model discovery contacts only an explicit loopback /v1 endpoint and hides small or unknown models',async()=>{
+ let url,options;
+ const result=await fetchLocalModels('http://localhost:11434/v1',{fetcher:async(...args)=>([url,options]=args,new Response(JSON.stringify({data:[{id:'qwen3:8b'},{id:'tiny-model:3b'},{id:'unknown-name'},{id:'dolphin-12b-abliterated'}]}),{status:200,headers:{'content-type':'application/json'}}))});
+ assert.equal(url,'http://localhost:11434/v1/models');
+ assert.equal(options.credentials,'omit');assert.equal(options.mode,'cors');assert.equal(options.redirect,'error');
+ assert.equal('Authorization' in options.headers,false);
+ assert.deepEqual(result.models.map(model=>model.id),['qwen3:8b','dolphin-12b-abliterated']);
+ assert.equal(result.models[1].category,'abliterated');
+ assert.equal(result.hidden,2);
+ await assert.rejects(()=>fetchLocalModels('https://example.org/v1',{fetcher:async()=>{throw Error('must not call');}}),/loopback/i);
+ await assert.rejects(()=>fetchLocalModels('http://192.168.1.4:11434/v1',{fetcher:async()=>{throw Error('must not call');}}),/loopback/i);
+});
+
+test('local completion sends prompts directly to the chosen loopback server without credentials',async()=>{
+ let url,options;
+ const result=await askLocalAi('A private local question',{baseUrl:'http://127.0.0.1:11434/v1',model:'qwen3:8b',maxOutputTokens:768},new AbortController().signal,{fetcher:async(...args)=>([url,options]=args,new Response(JSON.stringify({choices:[{message:{content:'Local answer'}}]}),{status:200,headers:{'content-type':'application/json'}}))});
+ assert.equal(url,'http://127.0.0.1:11434/v1/chat/completions');
+ assert.equal(options.credentials,'omit');assert.equal(options.mode,'cors');assert.equal('Authorization' in options.headers,false);
+ const body=JSON.parse(options.body);assert.equal(body.model,'qwen3:8b');assert.equal(body.messages[1].content,'A private local question');
+ assert.deepEqual(result,{answer:'Local answer',provider:'local',model:'qwen3:8b'});
+ await assert.rejects(()=>askLocalAi('x',{baseUrl:'http://localhost/v1',model:'x'},{}, {fetcher:async()=>{throw Error('should be blocked');}}),/Could not reach the local model/);
+});
+
+test('model catalog loader filters malformed providers and uses the authenticated function',async()=>{
+ let args;const models=[{id:'m1',provider:'aihorde',name:'Stheno 8B',category:'abliterated'},{id:'bad',provider:'custom',name:'Bad',category:'standard'},{id:'x',provider:'llm7',name:'Small',category:'unknown'}];
+ const result=await listAiModels({functions:{invoke:async(...values)=>(args=values,{data:{models}})}},{refresh:true});
+ assert.equal(args[0],'ai-chat');assert.deepEqual(args[1].body,{action:'models',refresh:true});
+ assert.deepEqual(result.map(model=>model.id),['m1']);
 });
 
 test('renders answers as safe text without a daily allowance counter and can clear the chat display',async()=>{

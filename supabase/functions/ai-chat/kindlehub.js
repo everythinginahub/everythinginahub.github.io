@@ -1,4 +1,4 @@
-import {createAssistantIdentityPrompt} from './identity.js';
+import {createAssistantIdentityPrompt,createWebSearchContext} from './identity.js';
 
 export const KINDLEHUB_API_BASE='https://kindlehub-api.arancool3000.workers.dev/v1';
 export const DEFAULT_KINDLEHUB_MODEL='gemini-3.1-flash-lite';
@@ -40,14 +40,16 @@ function answerText(payload){
 }
 
 export function createKindleHubGenerator({key,model=DEFAULT_KINDLEHUB_MODEL,fetcher=fetch,timeout=()=>AbortSignal.timeout(45000)}={}){
- return async message=>{
+ return async (message,{webResults=[],signal}={})=>{
   if(typeof key!=='string'||!key.trim())throw new Error('KindleHub API is not configured.');
   const selectedModel=typeof model==='string'&&model.trim()?model.trim():DEFAULT_KINDLEHUB_MODEL;
+  const requestSignal=signal?AbortSignal.any([signal,timeout()]):timeout();
+  const hasWeb=Array.isArray(webResults)&&webResults.length>0;
   const response=await fetcher(`${KINDLEHUB_API_BASE}/chat/completions`,{
    method:'POST',
    headers:{'Content-Type':'application/json',Authorization:`Bearer ${key}`},
-   body:JSON.stringify({model:selectedModel,messages:[{role:'system',content:createAssistantIdentityPrompt('KindleHub API',selectedModel)},{role:'user',content:message}],max_tokens:1024}),
-   signal:timeout()
+   body:JSON.stringify({model:selectedModel,messages:[{role:'system',content:createAssistantIdentityPrompt('KindleHub API',selectedModel,{webSearch:hasWeb})},{role:'user',content:createWebSearchContext(message,webResults)}],max_tokens:1024}),
+   signal:requestSignal
   });
   await assertOk(response);
   let payload;
