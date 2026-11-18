@@ -501,7 +501,7 @@ test('one searchable AI app serves every legacy AI route',async()=>{
  try{await run();const q=s=>w.document.querySelector(s);
  assert.equal(w.document.querySelectorAll('.home-directory a[href="#ai"]').length,1);
  assert.equal(q('.home-directory a[href="#ai-studio"]'),null);
- const search=q('#directorySearch');search.value='abliterated';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('.home-directory [data-directory-item]:not([hidden])').getAttribute('href'),'#ai');
+ const search=q('#directorySearch');search.value='GPT-OSS';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('.home-directory [data-directory-item]:not([hidden])').getAttribute('href'),'#ai');
  for(const route of ['ai','kindle-ai','ai-studio','abliterated-ai']){
  go(w,`#${route}`);assert.equal(q('#crumb').textContent,'Everything Hub AI');
  assert.ok(q('#aiModelSelect'));assert.ok(q('#aiWebSearch'));assert.ok(q('#aiHistory'));assert.ok(q('#aiLocalBase'));

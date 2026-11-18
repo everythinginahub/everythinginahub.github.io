@@ -158,7 +158,7 @@ function answerText(payload){
  return '';
 }
 
-export function createRunnerService({fetcher=fetch,now=()=>Date.now(),cacheMs=MODEL_CACHE_MS,llm7Key=''}={}){
+export function createRunnerService({fetcher=fetch,now=()=>Date.now(),cacheMs=MODEL_CACHE_MS,llm7Key='',includeHorde=true}={}){
  let cache=null,inFlight=null;
  let lastRefresh=-Infinity;
  async function loadCatalog({refresh=false,signal}={}){
@@ -167,8 +167,8 @@ export function createRunnerService({fetcher=fetch,now=()=>Date.now(),cacheMs=MO
   lastRefresh=now();
   const request=(async()=>{
    const [hordePayload,llm7Payload]=await Promise.all([
-    fetchJson(fetcher,`${AI_HORDE_BASE}/models`,{signal}),
-    llm7Key?fetchJson(fetcher,`${LLM7_BASE}/models`,{signal,headers:{Authorization:`Bearer ${llm7Key}`}}):null
+    includeHorde?fetchJson(fetcher,`${AI_HORDE_BASE}/models`,{signal}):null,
+    fetchJson(fetcher,`${LLM7_BASE}/models`,{signal,headers:llm7Key?{Authorization:`Bearer ${llm7Key}`}:{}})
    ]);
    const models=filterCatalog([...activeHordeModels(hordePayload),...listedLlm7Models(llm7Payload)]);
    cache={models,expiresAt:now()+(models.length?cacheMs:EMPTY_MODEL_CACHE_MS)};
@@ -201,7 +201,7 @@ export function createRunnerService({fetcher=fetch,now=()=>Date.now(),cacheMs=MO
    {role:'user',content:createWebSearchContext(message,webResults)}
   ],temperature:0.7,max_tokens:Math.min(MAX_OUTPUT_TOKENS,model.maxOutputTokens),stream:false};
   const headers={'Content-Type':'application/json',Accept:'application/json'};
-  if(model.provider==='llm7')headers.Authorization=`Bearer ${llm7Key}`;
+  if(model.provider==='llm7'&&llm7Key)headers.Authorization=`Bearer ${llm7Key}`;
   if(model.provider==='aihorde'){
    headers.Authorization='Bearer 0000000000';
    body.horde={conformance:'best_effort'};

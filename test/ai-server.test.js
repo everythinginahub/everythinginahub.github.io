@@ -112,3 +112,8 @@ test('invalid model and search selections are rejected before quota reservation'
  assert.equal((await handle(req({message:'hello',webSearch:true,searchQuery:'  '}))).status,400);
  assert.equal(reserveCalls,0);
 });
+
+test('quota infrastructure failure is actionable and never leaks database errors',async()=>{
+ const handle=createHandler({...authOptions,reserve:async()=>{const error=new Error('private database details');error.name='QuotaError';throw error;},generate:async()=>assert.fail('no generation without limiter')});
+ const response=await handle(req({message:'hello'}));assert.equal(response.status,503);const body=await response.json();assert.match(body.error,/limiter configuration/);assert.doesNotMatch(body.error,/private/);
+});
