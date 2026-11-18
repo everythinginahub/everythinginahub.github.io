@@ -201,6 +201,7 @@ html.touch #touch.autohide{display:block;}
   <div class="overlay" id="ovl"><div class="scrim"></div><button class="btn small" id="mgback">← Back</button><div class="panel" id="ovlpanel"></div></div>
   <footer id="gamePrivacyFooter"><a href="/privacy/">Privacy Policy</a></footer>
 </div></div>
+<script src="./game-save-bridge.js?v=20261106-1"></script>
 <script>
 "use strict";
 try{if(window.top!==window.self)document.documentElement.classList.add('embedded-game');}catch(_){document.documentElement.classList.add('embedded-game');}
@@ -280,11 +281,15 @@ var G={
 
 /* persistence */
 var SAVE_KEY='dq3d_v2';
-function loadSave(){try{var r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
-function writeSave(obj){try{localStorage.setItem(SAVE_KEY,JSON.stringify(obj));}catch(e){}}
-function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
-function loadBest(){try{return parseInt(localStorage.getItem('dq3d_best')||'0',10)||0;}catch(e){return 0;}}
-function saveBest(s){try{if(s>loadBest())localStorage.setItem('dq3d_best',String(s));}catch(e){}}
+window.addEventListener('game-save-ready',function(){if(G.mode==='menu')showMenu();});
+window.addEventListener('game-save-error',function(){logMsg('Progress could not save: device storage is blocked or full.','#d9433f');});
+window.addEventListener('pagehide',function(){saveGame();});
+setInterval(function(){if(G.P)saveGame();},5000);
+function loadSave(){try{var r=window.gameDeviceStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function writeSave(obj){try{if(!window.gameDeviceStorage.ready)return;window.gameDeviceStorage.setItem(SAVE_KEY,JSON.stringify(obj));}catch(e){}}
+function clearSave(){try{window.gameDeviceStorage.removeItem(SAVE_KEY);}catch(e){}}
+function loadBest(){try{return parseInt(window.gameDeviceStorage.getItem('dq3d_best')||'0',10)||0;}catch(e){return 0;}}
+function saveBest(s){try{if(s>loadBest())window.gameDeviceStorage.setItem('dq3d_best',String(s));}catch(e){}}
 
 /* tiny message log */
 function logMsg(t,col){G.msgs.push({t:t,col:col||'#cfd6df',life:5});if(G.msgs.length>30)G.msgs.shift();renderLog();}
@@ -1665,7 +1670,7 @@ function thingGated(t){if(!t||!t.linkTo)return false;return t.linkTo==='__down'?
 function caveDescend(){var t=LEVELS[G.curKey].linkDown;if(!t)return;var g=storyGate(t);if(g){if(sfx.deny)sfx.deny();logMsg(g,'#d9433f');return;}G.stairDir=-1;startTransition('Descending the steps…',function(){enterLevel(t,{entry:'down'});});}
 function caveAscend(){var t=LEVELS[G.curKey].linkUp;if(!t)return;G.stairDir=1;startTransition('Climbing the steps…',function(){enterLevel(t,{entry:'up'});});}
 function travelPortal(p){var g=storyGate(p.to);if(g){if(sfx.deny)sfx.deny();logMsg(g,'#d9433f');return;}var from=G.curKey;G.stairDir=0;startTransition(p.label||'…',function(){enterLevel(p.to,{back:from});});}
-function saveGame(){if(!G.P)return;writeSave({P:JSON.parse(JSON.stringify(G.P)),levelKey:G.curKey,flags:G.flags,ts:Date.now()});}
+function saveGame(){if(!G.P||G.P.hp<=0)return;writeSave({P:JSON.parse(JSON.stringify(G.P)),levelKey:G.curKey,flags:G.flags,ts:Date.now()});}
 function boardState(id){if(!G.flags.board)G.flags.board={};var b=G.flags.board[id];if(!b){b={active:0,prog:0,done:0,claimed:0};G.flags.board[id]=b;}return b;}
 function questProgress(kind,target,amt){if(!G.flags||!G.flags.board)return;for(var i=0;i<BOARD_QUESTS.length;i++){var q=BOARD_QUESTS[i];if(q.kind!==kind)continue;if(kind==='kill'&&q.target!==target)continue;var b=G.flags.board[q.id];if(!b||!b.active||b.done)continue;b.prog=Math.min(q.need,(b.prog||0)+amt);if(b.prog>=q.need){b.done=1;logMsg('Task ready: '+q.name+' — return to the notice board.','#ffd24a');sfx.quest();}}}
 function updateWeather(dt){if(G.weatherT==null)G.weatherT=24;G.weatherT-=dt;if(G.weatherT<=0){G.weatherT=34+rnd(46);var prev=G.weather;G.weather=pick(['clear','clear','clear','rain','fog']);if(G.weather!==prev){if(G.weather==='rain'){logMsg('Rain sweeps in over the land.','#9ab4d6');}else if(G.weather==='fog'){logMsg('A grey fog rolls in.','#aab4c0');}else logMsg('The skies clear.','#cfe0ee');}}if(G.weather==='rain'&&G.level&&G.level.outdoor){G.thunderT=(G.thunderT||6)-dt;if(G.thunderT<=0){G.thunderT=14+rnd(22);lightningFlash();if(sfx.thunder)sfx.thunder();}}}
@@ -1828,8 +1833,8 @@ function victory(){G.flags.won=1;G.mode='win';setMusic('off');var sc=scoreNow();
    world (the Arcade building, the jungle Snake stone).
    ════════════════════════════════════════════════════════════════════ */
 var MG={active:null};
-function mgBest(n){try{return parseInt(localStorage.getItem('dq3d_mg_'+n)||'0',10)||0;}catch(e){return 0;}}
-function mgSaveBest(n,s){try{if(s>mgBest(n))localStorage.setItem('dq3d_mg_'+n,String(s));}catch(e){}}
+function mgBest(n){try{return parseInt(window.gameDeviceStorage.getItem('dq3d_mg_'+n)||'0',10)||0;}catch(e){return 0;}}
+function mgSaveBest(n,s){try{if(s>mgBest(n))window.gameDeviceStorage.setItem('dq3d_mg_'+n,String(s));}catch(e){}}
 function launchMinigame(name){ if(name==='snake')Snake.start(); else if(name==='catch')AppleCatch.start(); else if(name==='shoot')ShootingGallery.start(); else if(name==='golf')Golf.start(); else if(name==='fish')Fishing.start(); else if(name==='memory')MemoryGame.start(); else if(name==='pong')Pong.start(); else if(name==='flight')Flight.start(); else if(name==='coop')Coop.start(); }
 function exitMinigame(){ if(MG.active&&MG.active.stop)MG.active.stop(); MG.active=null; resumeWorld(); }
 function openArcade(){
@@ -1941,7 +1946,7 @@ var ShootingGallery=(function(){
 })();
 
 /* ── Mini-Golf ── */
-function golfSaveBest(total){var b=mgBest('golf');if(!b||total<b){try{localStorage.setItem('dq3d_mg_golf',String(total));}catch(e){}}}
+function golfSaveBest(total){var b=mgBest('golf');if(!b||total<b){try{window.gameDeviceStorage.setItem('dq3d_mg_golf',String(total));}catch(e){}}}
 var Golf=(function(){
   var W=440,H=460,BR=7,HR=12,MAXP=780,raf=null,cvs,x,scEl,kh,ku,last;
   var holeIdx,strokes,total,ball,vel,rolling,lastStop,aimAng,aimPow,drag,keyL,keyR,keyU,keyD,dead;
@@ -2387,7 +2392,7 @@ var OnlineCoop=(function(){
   return {start:start,stop:cleanup};
 })();
 /* ── Memory Match ── */
-function memSaveBest(m){var b=mgBest('memory');if(!b||m<b){try{localStorage.setItem('dq3d_mg_memory',String(m));}catch(e){}}}
+function memSaveBest(m){var b=mgBest('memory');if(!b||m<b){try{window.gameDeviceStorage.setItem('dq3d_mg_memory',String(m));}catch(e){}}}
 var MemoryGame=(function(){
   var SYMS=['🐍','🍎','🎯','⛳','🗡️','🛡️','🔮','💧'],cards,first,second,lock,moves,matched,wrap,scEl;
   function stop(){lock=true;}

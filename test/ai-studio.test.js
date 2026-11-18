@@ -114,7 +114,7 @@ test('General-purpose live models are selectable; opt-in search is passed and ci
  const view=setup(async(_client,_prompt,_signal,options)=>(selection=options,{answer:'A cited answer',provider:'llm7',model:'gpt-oss:20b',failedOverFrom:{provider:'aihorde',model:'first-model'},sources:[{title:'A source',url:'https://example.org/facts'},{title:'Unsafe',url:'javascript:alert(1)'}]}));
  try{
   await wait();const picker=view.query('#aiModelSelect');
-  assert.equal(picker.value,'auto:automatic');
+  assert.equal(picker.value,'llm7:gpt-oss:20b');
   assert.ok([...picker.querySelectorAll('optgroup')].some(group=>/Cloud models/.test(group.label)));
   picker.value='llm7:gpt-oss:20b';picker.dispatchEvent(new view.win.Event('change',{bubbles:true}));
   const search=view.query('#aiWebSearch');search.checked=true;search.dispatchEvent(new view.win.Event('change',{bubbles:true}));
@@ -189,4 +189,24 @@ test('stop aborts a pending request, preserves the draft and resets the composer
 test('model picker returns when individual models become available',async()=>{
  const view=setup(async()=>({answer:'ok'}),{listModels:async()=>[{id:'openai/gpt-oss-20b',provider:'groq',name:'GPT-OSS 20B',category:'standard'}]});
  try{await wait();assert.equal(view.query('#aiModelSelect').hidden,false);assert.match(view.query('#aiModelSelect').textContent,/GPT-OSS/);assert.doesNotMatch(view.query('#aiModelSelect').textContent,/Abliterated/);}finally{view.controller.destroy();view.dom.window.close();}
+});
+
+test('account-scoped chats, drafts and prototypes survive remount and can be cleared',async()=>{
+ const view=setup(async()=>({answer:'Saved answer',provider:'llm7',model:'gpt-oss:20b'}),{userId:'saved-user'});
+ let controller=view.controller;
+ try{
+  await wait();view.submit('Remember this question');await wait();
+  view.query('#aiMessage').value='Unsent draft';view.query('#aiMessage').dispatchEvent(new view.win.Event('input',{bubbles:true}));
+  view.query('#aiStudioCode').value='<h1>Saved prototype</h1>';view.query('#aiStudioCode').dispatchEvent(new view.win.Event('input',{bubbles:true}));
+  view.win.dispatchEvent(new view.win.Event('pagehide'));controller.destroy();
+  const mount=userId=>{view.root.innerHTML=aiStudioWorkspace();return mountAiStudio({root:view.root,win:view.win,userId,listModels:async()=>liveModels,ask:async()=>({answer:'ok'})});};
+  controller=mount('other-user');assert.doesNotMatch(view.root.textContent,/Remember this question/);controller.destroy();
+  controller=mount('saved-user');await wait();assert.match(view.query('#aiApiThread').textContent,/Saved answer/);assert.equal(view.query('#aiMessage').value,'Unsent draft');assert.equal(view.query('#aiStudioCode').value,'<h1>Saved prototype</h1>');assert.equal(view.query('#aiStudioFrame').hasAttribute('srcdoc'),false);
+  controller.clearChats();controller.destroy();controller=mount('saved-user');assert.doesNotMatch(view.query('#aiApiThread').textContent,/Saved answer/);
+ }finally{controller.destroy();view.dom.window.close();}
+});
+
+test('blocked chat storage gives a warning without preventing conversation',async()=>{
+ const view=setup(async()=>({answer:'ok'}),{userId:'blocked'});
+ try{view.win.Storage.prototype.setItem=()=>{throw Error('full');};view.submit('Still usable');await wait();assert.match(view.query('#aiApiThread').textContent,/ok/);assert.match(view.query('.ai-session-note').textContent,/Could not save/);}finally{view.controller.destroy();view.dom.window.close();}
 });

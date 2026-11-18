@@ -1,4 +1,5 @@
-import {OBBY_3D_STARS, createObby3DGame, jumpObby3D, stepObby3D} from './blockbound-engine.js?v=20261106-4';
+import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
+import {OBBY_3D_STARS, createObby3DGame, restoreObbyProgress, jumpObby3D, stepObby3D} from './blockbound-engine.js?v=20261106-5';
 import {createBlockboundViewport} from './arcade-3d-renderer.bundle.js?v=20261106-3';
 
 const safeId = value => String(value || 'guest').replace(/[^a-z0-9_-]/gi, '_').slice(0, 80) || 'guest';
@@ -19,7 +20,10 @@ export function mountSkyparkObby3D({root, userId, playerName = 'Player', onRewar
   const storageKey = `everything-skypark-obby-3d-best-v1-${safeId(userId)}`;
   let bestMs = 0;
   try { bestMs = Math.max(0, Number(win.localStorage.getItem(storageKey)) || 0); } catch {}
-  let game = createObby3DGame({playerId, playerName});
+  let storage;try{storage=win.localStorage;}catch{}
+  const progressKey=deviceSaveKey('skypark-checkpoint',userId);
+  let game = restoreObbyProgress(readDeviceSave(storage,progressKey),{playerId,playerName})||createObby3DGame({playerId, playerName});
+  const persist=()=>writeDeviceSave(storage,progressKey,game.status==='won'?null:{checkpoint:game.checkpoint,elapsed:game.elapsed,falls:game.falls,stars:game.stars});
   const viewport = createBlockboundViewport(canvas, {win, mode:'obby'});
   let cameraYaw = 0, cameraPitch = .4, frame = null, lastFrame = null, rewarded = false, destroyed = false;
   let dragging = false, moved = false, pointerX = 0, pointerY = 0;
@@ -75,7 +79,7 @@ export function mountSkyparkObby3D({root, userId, playerName = 'Player', onRewar
   const pauseGame = () => {
     if (game.status === 'running') { game.status = 'paused'; clearInput(); lastFrame = null; if(frame!==null)win.cancelAnimationFrame(frame);frame=null; }
     else if (game.status === 'paused') run();
-    update(); draw();
+    persist();update(); draw();
   };
   const click = event => {
     const button = event.target.closest('button');
@@ -83,7 +87,7 @@ export function mountSkyparkObby3D({root, userId, playerName = 'Player', onRewar
     const action = button.dataset.obbyAction;
     if (action === 'start') run();
     else if (action === 'pause') pauseGame();
-    else if (action === 'restart') { if(frame!==null)win.cancelAnimationFrame(frame);frame=null;game=createObby3DGame({playerId,playerName});rewarded=false;viewport?.setGame(game);update();draw(); }
+    else if (action === 'restart') { if(frame!==null)win.cancelAnimationFrame(frame);frame=null;game=createObby3DGame({playerId,playerName});rewarded=false;persist();viewport?.setGame(game);update();draw(); }
     else if (action === 'jump') { if(game.status==='running')jumpObby3D(game);focusCanvas(); }
   };
   const pointerDown = event => {
@@ -116,9 +120,10 @@ export function mountSkyparkObby3D({root, userId, playerName = 'Player', onRewar
   const blur=()=>{clearInput();dragging=false;};
   root.addEventListener('click',click);root.addEventListener('pointerdown',pointerDown);root.addEventListener('pointermove',pointerMove);root.addEventListener('pointerup',pointerUp);root.addEventListener('pointercancel',pointerUp);
   win.addEventListener('keydown',keyDown);win.addEventListener('keyup',keyUp);win.addEventListener('blur',blur);win.document.addEventListener('visibilitychange',visibility);
+  const saveTimer=win.setInterval(persist,3000);win.addEventListener('pagehide',persist);
   if(viewport)viewport.setGame(game);update();draw();
   return {
     get game(){return game;},get bestMs(){return bestMs;},
-    destroy(){destroyed=true;clearInput();if(frame!==null)win.cancelAnimationFrame(frame);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointerDown);root.removeEventListener('pointermove',pointerMove);root.removeEventListener('pointerup',pointerUp);root.removeEventListener('pointercancel',pointerUp);win.removeEventListener('keydown',keyDown);win.removeEventListener('keyup',keyUp);win.removeEventListener('blur',blur);win.document.removeEventListener('visibilitychange',visibility);viewport?.destroy();}
+    destroy(){persist();win.clearInterval(saveTimer);win.removeEventListener('pagehide',persist);destroyed=true;clearInput();if(frame!==null)win.cancelAnimationFrame(frame);root.removeEventListener('click',click);root.removeEventListener('pointerdown',pointerDown);root.removeEventListener('pointermove',pointerMove);root.removeEventListener('pointerup',pointerUp);root.removeEventListener('pointercancel',pointerUp);win.removeEventListener('keydown',keyDown);win.removeEventListener('keyup',keyUp);win.removeEventListener('blur',blur);win.document.removeEventListener('visibilitychange',visibility);viewport?.destroy();}
   };
 }

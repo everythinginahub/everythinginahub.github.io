@@ -1,7 +1,7 @@
 import {createAssistantIdentityPrompt,createWebSearchContext} from './identity.js';
 // Groq's OpenAI-compatible API requires an operator-owned key even on its free plan.
 const BASE='https://api.groq.com/openai/v1';
-const supported=new Map([['openai/gpt-oss-120b','GPT-OSS 120B'],['openai/gpt-oss-20b','GPT-OSS 20B'],['llama-3.3-70b-versatile','Llama 3.3 70B'],['llama-3.1-8b-instant','Llama 3.1 8B']]);
+const supported=new Map([['openai/gpt-oss-20b','GPT-OSS 20B'],['llama-3.3-70b-versatile','Llama 3.3 70B'],['llama-3.1-8b-instant','Llama 3.1 8B']]);
 export function createFreeModelService({runner,groqKey='',fetcher=fetch,now=Date.now}){
  let cached=[],expires=0,pending=null;
  async function groqModels(signal){
@@ -21,7 +21,7 @@ export function createFreeModelService({runner,groqKey='',fetcher=fetch,now=Date
  return {
   async listModels(options={}){
    const [groq,other]=await Promise.all([groqModels(options.signal),runner.listModels(options).catch(()=>[])]);
-   return [...other.filter(model=>model.provider==='llm7').map(model=>({...model,category:'standard'})),...groq];
+   return [...other.filter(model=>model.provider==='llm7'&&!/gpt-oss[:/-]120b/i.test(model.id)).map(model=>({...model,category:'standard'})),...groq];
   },
   searchWeb:(...args)=>runner.searchWeb(...args),
   async generate(message,options={}){

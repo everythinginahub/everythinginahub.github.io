@@ -642,7 +642,7 @@
         </div>
 
         <div style="font-size:12px; color:#ffd700; font-weight:bold;">WORLD SEED (OPTIONAL)</div>
-        <input type="text" id="world-seed-input" class="seed-input" placeholder="Random Seed..." maxlength="24" />
+        <input type="text" id="world-seed-input" class="seed-input" placeholder="Blank: resume save · enter seed: new world" maxlength="24" />
 
         <button class="menu-btn" onclick="startGame()">ENTER WORLD</button>
         <div class="controls-hint">
@@ -867,7 +867,8 @@
     </div>
 
     <!-- Local Three.js r128, vendored under the MIT licence. -->
-    <script src="./vendor/three-r128.min.js"></script>
+    <script src="./game-save-bridge.js?v=20261106-1"></script>
+<script src="./vendor/three-r128.min.js"></script>
     <script>
         // ==========================================
         // 1. CONSTANTS, TOOL TIERS & BLOCK DEFINITIONS
@@ -1756,6 +1757,39 @@
         let skyCelestialGroup, sunMesh, moonMesh, heldItemGroup, thirdPersonPlayerMesh;
         let cloudGroup, starField, heldTorchLight;
         const chunks = new Map();
+        const saveOwner = new URLSearchParams(location.search).get('saveOwner') || 'device';
+        const worldSaveKey = 'everything-voxelcraft-v1:' + encodeURIComponent(saveOwner);
+        let worldEdits = new Map();
+        function readWorldSave() {
+            try { const raw = window.gameDeviceStorage.getItem(worldSaveKey); if (!raw || raw.length > 2000000) return null; const value = JSON.parse(raw); return value.version === 1 && Number.isFinite(value.seed) && value.player && Array.isArray(value.edits) ? value : null; } catch { return null; }
+        }
+        function saveWorldProgress() {
+            if (!gameRunning) return;
+            try {
+                const data = JSON.stringify({version:1,seed:noise.seed,mode:gameMode,dimension:currentDimension,player,worldTime,dayCount,furnace:furnaceState,craftingGrid,cursorItem,edits:[...worldEdits].map(([key,edits])=>[key,[...edits]])});
+                if(data.length>2000000)throw Error('full');
+                window.gameDeviceStorage.setItem(worldSaveKey,data);
+            } catch { showToast('World could not save: device storage is blocked or full.'); }
+        }
+        function restoreWorldPlayer(saved) {
+            const p = saved.player;
+            for (const key of ['x','y','z','yaw','pitch','health','hunger','oxygen','xp','xpLevel','selectedSlot']) if(Number.isFinite(p[key])) player[key]=Math.max(-100000,Math.min(100000,p[key]));
+            player.selectedSlot=Math.max(0,Math.min(8,Math.floor(player.selectedSlot)));
+            const item = value => value && ITEMS[value.id] && Number.isFinite(value.count) ? {id:value.id,count:Math.max(1,Math.min(64,Math.floor(value.count))),...(Number.isFinite(value.durability)?{durability:Math.max(0,value.durability)}:{})} : null;
+            player.hotbar=Array.from({length:9},(_,i)=>item(p.hotbar?.[i]));
+            player.inventory=Array.from({length:27},(_,i)=>item(p.inventory?.[i]));
+            player.armor={helmet:item(p.armor?.helmet),chest:item(p.armor?.chest)};
+            if(p.spawnPoint&&['x','y','z'].every(key=>Number.isFinite(p.spawnPoint[key])))player.spawnPoint={x:p.spawnPoint.x,y:p.spawnPoint.y,z:p.spawnPoint.z};
+            if(Array.isArray(saved.craftingGrid))saved.craftingGrid.slice(0,9).forEach((value,i)=>craftingGrid[i]=item(value));
+            cursorItem=item(saved.cursorItem);
+            if(saved.furnace){for(const key of ['input','fuel','output'])furnaceState[key]=item(saved.furnace[key]);for(const key of ['burnTime','maxBurnTime','cookProgress','cookDuration'])if(Number.isFinite(saved.furnace[key]))furnaceState[key]=Math.max(0,saved.furnace[key]);}
+            player.vx=player.vy=player.vz=0;
+        }
+        window.addEventListener('game-save-error',()=>showToast('World could not save: device storage is blocked or full.'));
+        window.addEventListener('pagehide',saveWorldProgress);
+        document.addEventListener('visibilitychange',()=>{if(document.hidden)saveWorldProgress();});
+        setInterval(saveWorldProgress,5000);
+
         const mobs = [];
         const particles = [];
         const projectiles = [];
@@ -2153,7 +2187,7 @@
             return y * CHUNK_SIZE * CHUNK_SIZE + lz * CHUNK_SIZE + lx;
         }
 
-        function generateChunkData(cx, cz) {
+        function generateChunkBase(cx, cz) {
             const key = chunkKey(cx, cz);
             if (chunks.has(key)) return;
 
@@ -2324,6 +2358,12 @@
             }
         }
 
+        function generateChunkData(cx, cz) {
+            generateChunkBase(cx,cz);
+            const chunk=chunks.get(chunkKey(cx,cz));
+            for(const [index,id] of worldEdits.get(chunkKey(cx,cz))||[])if(chunk&&Number.isInteger(index)&&index>=0&&index<chunk.data.length)chunk.data[index]=id;
+        }
+
         function getRawBlock(wx, wy, wz) {
             if (wy < 0 || wy >= CHUNK_HEIGHT) return 0;
             const cx = Math.floor(wx / CHUNK_SIZE);
@@ -2350,6 +2390,8 @@
             const lx = ((wx % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
             const lz = ((wz % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
             chunk.data[getBlockIndex(lx, wy, lz)] = id;
+            if(!worldEdits.has(key))worldEdits.set(key,new Map());
+            worldEdits.get(key).set(getBlockIndex(lx,wy,lz),id);
             chunk.dirty = true;
 
             if (lx === 0) markChunkDirty(cx - 1, cz);
@@ -4170,11 +4212,13 @@
         }
 
         function startGame() {
+            if(!window.gameDeviceStorage.ready){showToast('Saved world is still loading. Please try again in a moment.');return;}
             sfx.init();
             sfx.startAmbientMusic();
 
             const rawSeed = document.getElementById('world-seed-input')?.value || '';
-            const numericSeed = parseSeedString(rawSeed);
+            const saved = rawSeed.trim() ? null : readWorldSave();
+            const numericSeed = saved ? saved.seed : parseSeedString(rawSeed);
             noise.setSeed(numericSeed);
             const seedLabel = document.getElementById('settings-seed-label');
             if (seedLabel) seedLabel.innerText = numericSeed;
@@ -4208,10 +4252,17 @@
                 player.hotbar[8] = { id: 33, count: 1 };
             }
 
+            if(saved){
+                gameMode=['survival','creative','hardcore'].includes(saved.mode)?saved.mode:'survival';
+                currentDimension=['overworld','nether','end'].includes(saved.dimension)?saved.dimension:'overworld';
+                worldTime=Number.isFinite(saved.worldTime)?saved.worldTime:0.25;dayCount=Number.isFinite(saved.dayCount)?saved.dayCount:1;
+                worldEdits=new Map(saved.edits.slice(0,10000).filter(entry=>Array.isArray(entry)&&typeof entry[0]==='string'&&/^(overworld|nether|end):-?\d+,-?\d+$/.test(entry[0])&&Array.isArray(entry[1])).map(([key,edits])=>[key,new Map(edits.filter(entry=>Array.isArray(entry)&&Number.isInteger(entry[0])&&Number.isInteger(entry[1])&&entry[1]>=0&&entry[1]<=54))]));
+            }else worldEdits=new Map();
             buildThirdPersonPlayerMesh();
             clearAllChunks();
             player.x = 8.5;
             player.z = 8.5;
+            if(saved)restoreWorldPlayer(saved);
 
             const pcx = Math.floor(player.x / CHUNK_SIZE);
             const pcz = Math.floor(player.z / CHUNK_SIZE);
@@ -4225,8 +4276,8 @@
                     buildChunkMesh(pcx + dx, pcz + dz);
                 }
             }
-            player.y = findSafeSpawnY(player.x, player.z);
-            player.spawnPoint = { x: player.x, y: player.y, z: player.z };
+            if(!saved){player.y = findSafeSpawnY(player.x, player.z);
+            player.spawnPoint = { x: player.x, y: player.y, z: player.z };}
 
             for (let i = 0; i < 4; i++) {
                 const ang = (i / 4) * Math.PI * 2;
@@ -4242,7 +4293,8 @@
             gameRunning = true;
             lastFrameTime = performance.now();
             requestPointerLockSafe();
-            showToast(`🌍 World Generated! Seed: ${numericSeed}`);
+            showToast(saved?'World restored from this device.':`🌍 World Generated! Seed: ${numericSeed}`);
+            saveWorldProgress();
         }
 
         function animate(now) {

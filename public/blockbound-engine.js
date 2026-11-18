@@ -434,3 +434,14 @@ export function stepObby3D(game,dt,input={}) {
   }
   if(player.z<=OBBY_3D_FINISH_Z && player.grounded){game.status='won';game.message=`Course cleared in ${game.elapsed.toFixed(1)} seconds! You collected ${game.stars.length} stars.`;}
 }
+
+export function restoreObbyProgress(saved,options={}) {
+  if(!saved||!Number.isInteger(saved.checkpoint)||saved.checkpoint<0||saved.checkpoint>=OBBY_3D_STAGES.length||!Number.isFinite(saved.elapsed)||saved.elapsed<0)return null;
+  const game=createObby3DGame(options);
+  game.checkpoint=saved.checkpoint;game.checkpointSpawn={...OBBY_3D_STAGES[game.checkpoint].checkpoint};
+  const player=game.players[game.localId];Object.assign(player,game.checkpointSpawn);
+  game.stars=(Array.isArray(saved.stars)?saved.stars:[]).filter((id,index,list)=>OBBY_3D_STARS.some((_,i)=>id===`obby-star-${i}`)&&list.indexOf(id)===index);
+  game.crystals=game.crystals.filter(star=>!game.stars.includes(star.id));
+  game.elapsed=Math.min(saved.elapsed,1e8);game.falls=Math.max(0,Math.min(1e6,Math.floor(Number(saved.falls)||0)));
+  game.status='paused';game.message='Saved checkpoint restored. Resume when ready.';return game;
+}
