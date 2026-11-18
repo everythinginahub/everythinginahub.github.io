@@ -582,3 +582,10 @@ dialog::backdrop { background:#24323b80; }
 .ai-studio-editor>label{display:flex;justify-content:space-between;gap:8px;color:#47605a;font-size:11px}
 .ai-studio-editor>label span{font-size:10px;color:#60766c}
 .ai-studio-action:disabled{opacity:.5;cursor:not-allowed}
+
+.ai-studio-build-form{margin-bottom:16px;padding:12px;border:1px solid #d6e1d7;border-radius:8px;background:#fffefa}
+.ai-studio-build-form label{display:block;font-size:12px;font-weight:700;color:#304a49;margin-bottom:6px}
+.ai-studio-build-form>div{display:flex;gap:8px;flex-wrap:wrap}.ai-studio-build-form input{flex:1;min-width:160px;padding:10px;border:1px solid #ccd7d3;border-radius:6px;background:white;color:#304a49}
+.ai-studio-build-form small{display:block;margin-top:7px;color:#60766c;font-size:10px}
+
+.ai-starter-projects{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}.ai-starter-projects>span{font-size:11px;color:#47605a}#aiStudioBuildStatus{font-size:12px;line-height:1.5;color:#304a49;margin:8px 0}#aiStudioCancel[hidden]{display:none}
