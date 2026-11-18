@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {AI_PROMPT_LIMIT,aiStudioWorkspace,buildAiPrompt,mountAiStudio,sandboxPreviewDocument} from '../public/ai-studio.js';
+import {extractHtml,AI_PROMPT_LIMIT,aiStudioWorkspace,buildAiPrompt,mountAiStudio,sandboxPreviewDocument} from '../public/ai-studio.js';
 
 const wait=()=>new Promise(resolve=>setTimeout(resolve,20));
 const liveModels=[
@@ -241,5 +241,42 @@ test('studio offers responsive preview sizes, code recovery and keyboard HTML do
   assert.match(view.query('#aiStudioCodeCount').textContent,/25,000 characters/);
   view.controller.destroy();assert.deepEqual(revoked,['blob:prototype']);
   const saved=JSON.parse([...Array(view.win.localStorage.length)].map((_,i)=>view.win.localStorage.getItem(view.win.localStorage.key(i))).find(value=>value.includes('previousCode')));assert.match(saved.data.chats[0].previousCode,/Version 1/);
+ }finally{view.controller.destroy();view.dom.window.close();}
+});
+
+
+test('Web Studio switches to build mode and generates directly into an automatic preview',async()=>{
+ let sentPrompt='';const view=setup(async(_client,prompt)=>{sentPrompt=prompt;return {answer:'```\n<main><h1>Automatic page</h1></main>\n```\n```css\nh1 { color: red; }\n```\n```js\ndocument.body.dataset.ready = "yes";\n```'};});
+ try{
+  await wait();view.query('#aiOpenStudio').click();assert.equal(view.query('#aiMode').value,'build');
+  view.query('#aiStudioRequest').value='Build my page';view.query('#aiStudioBuildForm').dispatchEvent(new view.win.Event('submit',{bubbles:true,cancelable:true}));
+  await wait();assert.match(sentPrompt,/complete.*single-file HTML/i);assert.match(sentPrompt,/Build my page/);
+  const code=view.query('#aiStudioCode').value;assert.match(code,/Automatic page/);assert.match(code,/<style>h1/);assert.match(code,/<script>document.body/);
+  await new Promise(resolve=>view.win.setTimeout(resolve,500));assert.equal(view.query('#aiStudioFrame').hidden,false);assert.match(view.query('#aiStudioFrame').srcdoc,/Automatic page/);assert.equal(view.query('#aiStudioFrame').getAttribute('sandbox'),'allow-scripts');
+ }finally{view.controller.destroy();view.dom.window.close();}
+});
+
+test('code extraction recognises raw fragments and HTML5 fences but ignores prose and non-web code',()=>{
+ assert.equal(extractHtml('<main>Hello</main>'),'<main>Hello</main>');
+ assert.equal(extractHtml('```html5\n<button>Go</button>\n```'),'<button>Go</button>');
+ assert.equal(extractHtml('Try writing a <main> element.'),'');assert.equal(extractHtml('```python\nprint("hello")\n```'),'');
+});
+
+test('build prompts include bounded current editor source without losing the current request',()=>{
+ const source='<main>Unsaved manual edit</main>';
+ const prompt=buildAiPrompt([], 'Change it to blue', 'build', source);
+ assert.match(prompt,/Unsaved manual edit/);assert.match(prompt,/untrusted reference/);assert.match(prompt,/Change it to blue/);assert.ok(prompt.length<=4000);
+ const long=buildAiPrompt([], 'Keep my changes', 'build', '<main>'+ 'x'.repeat(24000)+'</main>');assert.ok(long.length<=4000);assert.match(long,/Middle omitted/);assert.match(long,/Keep my changes/);
+});
+
+test('starter projects work without a provider and follow-up generation uses edited source',async()=>{
+ let prompt;const view=setup(async(_client,text)=>{prompt=text;return {answer:'```html\n<main>Updated</main>\n```'};});
+ try{
+  await wait();view.query('#aiOpenStudio').click();view.query('[data-ai-starter="timer"]').click();assert.match(view.query('#aiStudioCode').value,/Time to focus/);
+  view.query('[data-ai-starter="landing"]').click();assert.match(view.query('#aiStudioCode').value,/Make something worth sharing/);assert.equal(view.query('#aiStudioRestore').disabled,false);
+  view.query('#aiStudioCode').value='<main>My manual change</main>';view.query('#aiStudioCode').dispatchEvent(new view.win.Event('input',{bubbles:true}));
+  view.query('#aiStudioRequest').value='Change the colour';view.query('#aiStudioBuildForm').dispatchEvent(new view.win.Event('submit',{bubbles:true,cancelable:true}));
+  assert.equal(view.query('#aiStudioCancel').hidden,false);assert.equal(view.query('#aiStudioGenerate').disabled,true);await wait();
+  assert.match(prompt,/My manual change/);assert.match(prompt,/Change the colour/);assert.match(view.query('#aiStudioCode').value,/Updated/);assert.equal(view.query('#aiStudioCancel').hidden,true);
  }finally{view.controller.destroy();view.dom.window.close();}
 });
