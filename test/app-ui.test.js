@@ -502,7 +502,8 @@ test('AI chat is preserved separately from the searchable, themed AI Studio app'
  search.value='abliterated';search.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(q('.home-directory [data-directory-item]:not([hidden])').getAttribute('href'),'#ai-studio');
  go(w,'#ai');assert.equal(q('#crumb').textContent,'AI chat');assert.match(q('#app').textContent,/configured third-party AI provider/i);assert.match(q('#app').textContent,/No daily cap/i);assert.match(q('#app').textContent,/12 attempts per minute/i);assert.match(q('#app').textContent,/unsupervised children/i);assert.equal(q('iframe'),null);assert.equal(q('#aiEmbed'),null);
  go(w,'#kindle-ai');assert.ok(q('#aiApiForm'));assert.equal(q('iframe'),null);
- go(w,'#ai-studio');assert.equal(q('#crumb').textContent,'AI Studio');assert.ok(q('#aiApiForm'));assert.ok(q('#aiMode'));assert.ok(q('#aiHistory'));assert.equal(q('#aiStudioFrame').getAttribute('sandbox'),'allow-scripts');assert.equal(q('#aiStudioFrame').hidden,true);assert.match(q('#app').textContent,/Inspired by Abliterated AI Runner/);assert.match(q('#app').textContent,/no model keys in the browser/i);
+ go(w,'#ai-studio');assert.equal(q('#crumb').textContent,'AI Studio');assert.ok(q('#aiApiForm'));assert.ok(q('#aiMode'));assert.ok(q('#aiHistory'));assert.ok(q('#aiModelSelect'));assert.ok(q('#aiWebSearch'));assert.ok(q('#aiLocalBase'));assert.equal(q('#aiStudioFrame').getAttribute('sandbox'),'allow-scripts');assert.equal(q('#aiStudioFrame').hidden,true);assert.match(q('#app').textContent,/Inspired by Abliterated AI Runner/);assert.match(q('#app').textContent,/no model keys in the browser/i);
+ go(w,'#abliterated-ai');assert.equal(q('#crumb').textContent,'AI Studio');assert.ok(q('#aiModelSelect'));
  }finally{dom.window.close();}
 });
 

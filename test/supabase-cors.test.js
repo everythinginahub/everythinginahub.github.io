@@ -10,7 +10,7 @@ function options(origin){
  return new Request(endpoint,{method:'OPTIONS',headers:{...(origin===undefined?{}:{Origin:origin}),'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'authorization, content-type'}});
 }
 
-test('Supabase function CORS allows the site and local development origins only',async()=>{
+test('Supabase function CORS allows the site, local development and Arena preview origins only',async()=>{
  const handlers=[
   createAiHandler({configured:false}),
   createUsernameHandler({configured:false})
@@ -27,9 +27,15 @@ test('Supabase function CORS allows the site and local development origins only'
   assert.equal(local.status,204);
   assert.equal(local.headers.get('access-control-allow-origin'),'http://localhost:3000');
 
+  const preview=await handler(options('https://3000-sandbox-id.e2b.app'));
+  assert.equal(preview.status,204);
+  assert.equal(preview.headers.get('access-control-allow-origin'),'https://3000-sandbox-id.e2b.app');
+
   const denied=await handler(options('https://everythinginahub.github.io.attacker.example'));
   assert.equal(denied.status,403);
   assert.equal(denied.headers.get('access-control-allow-origin'),null);
+  assert.equal((await handler(options('https://3000-sandbox-id.e2b.app.attacker.example'))).status,403);
+  assert.equal((await handler(options('http://3000-sandbox-id.e2b.app'))).status,403);
 
   const opaque=await handler(options('null'));
   assert.equal(opaque.status,403);

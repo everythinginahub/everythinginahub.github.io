@@ -86,3 +86,12 @@ test('static-host response-header configuration and GitHub Pages meta limits are
   assert.match(readme,/GitHub Pages[^\n]*(?:cannot|does not|ignores)[^\n]*(?:custom|_headers|response)/i);
   assert.match(readme,/meta CSP cannot run in Report-Only mode/i);
 });
+
+test('Studio CSP permits explicit local-server connections without allowing arbitrary HTTP hosts',async()=>{
+ const markup=await read('../public/index.html');
+ const connect=CSP_APP.match(/connect-src ([^;]+)/)[1];
+ for(const origin of ['http://localhost:*','http://127.0.0.1:*','https://localhost:*','https://127.0.0.1:*']){
+  assert.ok(connect.includes(origin));assert.ok(markup.includes(origin));
+ }
+ assert.doesNotMatch(connect,/(?:^|\s)http:(?:\s|$)/);
+});

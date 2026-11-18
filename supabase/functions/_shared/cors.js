@@ -4,11 +4,12 @@ const TRUSTED_ORIGINS = Object.freeze([
   'http://127.0.0.1:3000'
 ]);
 const trustedOrigins = new Set(TRUSTED_ORIGINS);
+const previewOrigin = /^https:\/\/\d+-[a-z0-9-]+\.e2b\.app$/i;
 const allowedHeaders = 'authorization, x-client-info, apikey, content-type';
 const allowedMethods = 'POST, OPTIONS';
 
 export function isTrustedOrigin(origin) {
-  return typeof origin === 'string' && trustedOrigins.has(origin);
+  return typeof origin === 'string' && (trustedOrigins.has(origin) || previewOrigin.test(origin));
 }
 
 export function corsResponseHeaders(request, defaults = {}) {
