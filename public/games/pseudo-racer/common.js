@@ -25,7 +25,10 @@ var Dom = {
     ele.className = classes.join(' ');
   },
 
-  storage: (() => { try { return window.localStorage || {}; } catch { return {}; } })()
+  storage: new Proxy({}, {
+    get(_target,key){try{return window.gameDeviceStorage.getItem(String(key));}catch{return null;}},
+    set(_target,key,value){try{window.gameDeviceStorage.setItem(String(key),String(value));}catch{}return true;}
+  })
 
 }
 

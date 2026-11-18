@@ -95,3 +95,13 @@ test('Studio CSP permits explicit local-server connections without allowing arbi
  }
  assert.doesNotMatch(connect,/(?:^|\s)http:(?:\s|$)/);
 });
+
+test('all bundled featured games can be framed by the hub but not unrelated sites',async()=>{
+ const staticHeaders=await read('../_headers');
+ for(const prefix of ['','/public'])for(const game of ['pseudo-racer/v4.final.html','radius-raid/index.html','cant-get-back/index.html']){
+  const path=`${prefix}/games/${game}`,headers=securityHeadersForRequest({url:path,headers:{},socket:{encrypted:false}});
+  assert.equal(headers['X-Frame-Options'],'SAMEORIGIN');assert.match(headers['Content-Security-Policy'],/frame-ancestors 'self'/);assert.doesNotMatch(headers['Content-Security-Policy'],/frame-ancestors 'none'/);
+  const staticRule=staticHeaders.split(/\n\s*\n/).find(rule=>rule.startsWith(path+'\n'));assert.ok(staticRule);assert.match(staticRule,/X-Frame-Options: SAMEORIGIN/);
+ }
+ const blocked=securityHeadersForRequest({url:'/games/not-reviewed/index.html',headers:{},socket:{encrypted:false}});assert.equal(blocked['X-Frame-Options'],'DENY');
+});

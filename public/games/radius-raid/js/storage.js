@@ -13,7 +13,7 @@ Storage.prototype.removeObject = function (key) {
 };
 
 $.setupStorage = function () {
-  let saved; try { saved = localStorage.getObject("radiusraid"); } catch {}
+  let saved; try { saved = JSON.parse(window.gameDeviceStorage.getItem("radiusraid")||"null"); } catch {}
   $.storage = saved || {
     mute: 0,
     score: 0,
@@ -27,10 +27,12 @@ $.setupStorage = function () {
 };
 
 $.updateStorage = function () {
-  try { localStorage.setObject("radiusraid", $.storage); } catch {}
+  try { window.gameDeviceStorage.setItem("radiusraid", JSON.stringify($.storage)); } catch {}
 };
 
 $.clearStorage = function () {
-  try { localStorage.removeObject("radiusraid"); } catch {}
+  try { window.gameDeviceStorage.removeItem("radiusraid"); } catch {}
   $.setupStorage();
 };
+
+window.addEventListener("game-save-ready",function(){if($.setupStorage)$.setupStorage();});
