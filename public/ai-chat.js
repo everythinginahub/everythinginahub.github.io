@@ -65,14 +65,14 @@ export async function listAiModels(client,{refresh=false,signal}={}){
  const {data,error}=await client.functions.invoke('ai-chat',{body:{action:'models',refresh},signal});
  if(error)throw await functionError(error,'The live model list is unavailable right now. Try again in a moment.');
  if(!Array.isArray(data?.models))throw new Error('The live model catalog returned an invalid response.');
- return data.models.filter(model=>model&&['hub','aihorde','llm7'].includes(model.provider)&&typeof model.id==='string'&&model.id.length<=180&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)).map(model=>({...model}));
+ return data.models.filter(model=>model&&['auto','hub','aihorde','llm7'].includes(model.provider)&&typeof model.id==='string'&&model.id.length<=180&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)).map(model=>({...model}));
 }
 export async function askAi(client,message,signal,selection){
  if(selection?.provider==='local')return askLocalAi(message,selection,signal);
  if(!client)throw new Error('AI chat is not configured yet.');
  const body={message};
  if(selection?.provider){
-  if(!['hub','aihorde','llm7'].includes(selection.provider)||typeof selection.model!=='string'||!selection.model)throw new Error('Choose an available AI model.');
+  if(!['auto','hub','aihorde','llm7'].includes(selection.provider)||typeof selection.model!=='string'||!selection.model)throw new Error('Choose an available AI model.');
   body.provider=selection.provider;body.model=selection.model;
   if(selection.webSearch){body.webSearch=true;body.searchQuery=String(selection.searchQuery||'').slice(0,240);}
  }
