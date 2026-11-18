@@ -1,4 +1,4 @@
-import {askAi,fetchLocalModels,listAiModels} from './ai-chat.js?v=20261106-25';
+import {askAi,fetchLocalModels,listAiModels} from './ai-chat.js?v=20261106-26';
 
 const sparkle = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5c.7 5.4 3.1 7.8 8.5 8.5-5.4.7-7.8 3.1-8.5 8.5-.7-5.4-3.1-7.8-8.5-8.5C8.9 10.3 11.3 7.9 12 2.5Z" fill="currentColor"/><path d="M19 16.5c.25 1.8 1.05 2.6 2.8 2.8-1.75.25-2.55 1.05-2.8 2.8-.25-1.75-1.05-2.55-2.8-2.8 1.75-.2 2.55-1 2.8-2.8Z" fill="currentColor"/></svg>`;
 
@@ -37,7 +37,7 @@ export function aiStudioWorkspace(){return `<div class="ai-studio-layout" id="ai
   <section class="ai-web-studio" id="aiWebStudio" aria-labelledby="aiStudioTitle" hidden><div class="ai-web-studio-heading"><div><p class="ai-aside-label">LOCAL PROTOTYPE · SANDBOXED</p><h3 id="aiStudioTitle">Web Studio</h3></div><button type="button" id="aiCloseStudio" class="ai-close-studio" aria-label="Close Web Studio">×</button></div><label for="aiStudioCode">HTML prototype <span>Up to ${AI_STUDIO_LIMIT.toLocaleString('en-GB')} characters</span></label><textarea id="aiStudioCode" rows="10" maxlength="${AI_STUDIO_LIMIT}" spellcheck="false" autocomplete="off" placeholder="Choose Web Studio build style and describe a small page, or paste HTML here…"></textarea><div class="ai-studio-preview-actions"><button type="button" class="ai-studio-action ai-preview-button" id="aiStudioPreview">Run safe preview</button><button type="button" class="ai-studio-action" id="aiStudioCopy">Copy code</button></div><p id="aiStudioStatus" class="ai-studio-status" role="status" aria-live="polite">Nothing runs until you choose Run safe preview.</p><iframe id="aiStudioFrame" title="Locally sandboxed HTML prototype preview" sandbox="allow-scripts" referrerpolicy="no-referrer" hidden></iframe><p class="ai-studio-safety">The opaque-origin frame cannot read Everything Hub data; its policy blocks network connections and external resources. Browser navigation controls can vary, so do not follow external links. Inline scripts can run; inspect code first.</p></section>
   <p class="ai-api-footnote">AI can make mistakes. Check important answers and do not include personal or sensitive information.</p>
  </section>
- <aside class="ai-studio-aside" aria-label="About AI Studio"><div class="ai-aside-card ai-allowance"><span class="ai-aside-label">USAGE</span><div class="ai-allowance-number">No daily cap</div><p>Remote AI requests allow up to 12 attempts per account per minute. Provider limits and live capacity still apply; the model list is only a snapshot. Abliterated labels are inferred from provider metadata and model names, not a verified training or safety claim.</p><div class="ai-aside-divider"></div><p>If a cloud model fails, the server may send the same prompt to up to two other live models in the same category. Local-server requests go directly to your selected loopback server and bypass the site quota.</p></div><div class="ai-aside-card ai-guide"><span class="ai-aside-label">GOOD TO KNOW</span><h3>Built for thoughtful use.</h3><p>Up to eight recent messages are included with each new question for context. The current chat stays in memory only and is cleared when you leave AI Studio.</p><p>Cloud questions go to the selected third-party model provider, and a failover may use another provider. Optional web search sends only your current question to DuckDuckGo. Local-model prompts go directly to the loopback server you scan. Answers can be wrong or unsuitable; check important claims. Not for unsupervised children.</p></div><div class="ai-studio-credit"><a href="https://github.com/socks275/abliterated.ai" target="_blank" rel="noopener noreferrer">Inspired by Abliterated AI Runner ↗</a><small>Independent Everything Hub implementation · no model keys in the browser.</small></div></aside>
+ <aside class="ai-studio-aside" aria-label="About AI Studio"><div class="ai-aside-card ai-allowance"><span class="ai-aside-label">USAGE</span><div class="ai-allowance-number">No daily cap</div><p>Remote AI requests allow up to 12 attempts per account per minute. Provider limits and live capacity still apply; the model list is only a snapshot. Abliterated labels are inferred from provider metadata and model names, not a verified training or safety claim.</p><div class="ai-aside-divider"></div><p>If a cloud model fails, the server may send the same prompt to other available models, then Gemini if configured, and finally KindleHub only if nothing else answers. Local-server requests go directly to your selected loopback server and bypass the site quota.</p></div><div class="ai-aside-card ai-guide"><span class="ai-aside-label">GOOD TO KNOW</span><h3>Built for thoughtful use.</h3><p>Up to eight recent messages are included with each new question for context. The current chat stays in memory only and is cleared when you leave AI Studio.</p><p>Cloud questions go to the selected third-party model provider, and a failover may use another provider. Optional web search sends only your current question to DuckDuckGo. Local-model prompts go directly to the loopback server you scan. Answers can be wrong or unsuitable; check important claims. Not for unsupervised children.</p></div><div class="ai-studio-credit"><a href="https://github.com/socks275/abliterated.ai" target="_blank" rel="noopener noreferrer">Inspired by Abliterated AI Runner ↗</a><small>Independent Everything Hub implementation · no model keys in the browser.</small></div></aside>
 </div>`;}
 
 export function buildAiPrompt(history,message,mode='everyday'){
@@ -79,7 +79,7 @@ function extractHtml(answer){
  return full?.[0]?.trim()||'';
 }
 
-export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listAiModels,scanLocal=fetchLocalModels,timeoutMs=60000}={}){
+export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listAiModels,scanLocal=fetchLocalModels,timeoutMs=90000}={}){
  let disposed=false,busy=false,sequence=0,abort=null,timer=null,pendingChatId=null,nextId=0,catalogAbort=null,localScanAbort=null,catalogSequence=0,localSequence=0,remoteModels=[],localModels=[];
  const q=selector=>root.querySelector(selector),form=q('#aiApiForm'),thread=q('#aiApiThread'),status=q('#aiApiStatus'),input=q('#aiMessage'),send=q('#aiSend'),stop=q('#aiStop'),count=q('#aiCharCount'),history=q('#aiHistory'),historySearch=q('#aiHistorySearch'),modeSelect=q('#aiMode'),modeHint=q('#aiModeHint'),modelSelect=q('#aiModelSelect'),modelStatus=q('#aiModelStatus'),refreshModels=q('#aiRefreshModels'),localBase=q('#aiLocalBase'),scanLocalButton=q('#aiScanLocal'),localStatus=q('#aiLocalStatus'),webSearch=q('#aiWebSearch'),studio=q('#aiWebStudio'),studioCode=q('#aiStudioCode'),studioFrame=q('#aiStudioFrame'),studioStatus=q('#aiStudioStatus'),openStudioButton=q('#aiOpenStudio'),clearHistory=q('#aiClearHistory');
  const createChat=()=>({id:`ai-${Date.now()}-${++nextId}`,title:'New conversation',mode:'everyday',messages:[],draft:'',studioCode:'',studioOpen:false,notice:'',modelKey:'',webSearch:false});
@@ -87,10 +87,11 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  const current=()=>chats.find(chat=>chat.id===activeId)||chats[0];
  function updateCount(){count.textContent=`${input.value.length.toLocaleString('en-GB')} / ${AI_PROMPT_LIMIT.toLocaleString('en-GB')}`;}
  function updateStudioButton(){openStudioButton.setAttribute('aria-expanded',String(!studio.hidden));}
- const allModels=()=>[...remoteModels,...localModels];
+ const automatic={id:'automatic',provider:'auto',name:'Automatic · best available',category:'standard',maxOutputTokens:1024};
+ const allModels=()=>[automatic,...remoteModels.filter(model=>model.provider!=='auto'&&model.provider!=='hub'),...localModels];
  const modelKey=model=>`${model.provider}:${model.id}${model.provider==='local'?`@${model.baseUrl}`:''}`;
- const providerName=model=>({hub:'Everything Hub',aihorde:'AI Horde',llm7:'LLM7',local:'Local server'})[model?.provider]||'AI model';
- function defaultModel(){const models=allModels();return models.find(model=>model.category==='abliterated'&&model.provider==='aihorde')||models.find(model=>model.category==='abliterated')||models.find(model=>model.provider==='hub')||models.find(model=>model.category==='standard')||models[0]||null;}
+ const providerName=model=>({auto:'Automatic routing',gemini:'Google Gemini',kindlehub:'KindleHub (last-resort fallback)',hub:'Everything Hub',aihorde:'AI Horde',llm7:'LLM7',local:'Local server'})[model?.provider]||'AI model';
+ function defaultModel(){return automatic;}
  function selectedModel(chat=current()){return allModels().find(model=>modelKey(model)===chat.modelKey)||null;}
  function ensureModelSelection(chat=current()){
   let model=selectedModel(chat);if(!model){model=defaultModel();chat.modelKey=model?modelKey(model):'';}
@@ -103,8 +104,9 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  }
  function renderModelOptions(){
   const groups=[
+   ['Recommended',[automatic]],
    ['Abliterated · live cloud',remoteModels.filter(model=>model.category==='abliterated')],
-   ['Other capable models · live cloud',remoteModels.filter(model=>model.category!=='abliterated')],
+   ['Other capable models · live cloud',remoteModels.filter(model=>model.category!=='abliterated'&&!['auto','hub'].includes(model.provider))],
    ['Abliterated · local server',localModels.filter(model=>model.category==='abliterated')],
    ['Other capable models · local server',localModels.filter(model=>model.category!=='abliterated')]
   ];
@@ -116,22 +118,22 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
  }
  function liveModelStatus(){
   const models=remoteModels,abliterated=models.filter(model=>model.category==='abliterated').length,other=models.length-abliterated;
-  if(!models.length)return 'No live cloud models are available right now. Refresh the catalog or scan a local server. Small or unclassified models are filtered out.';
-  return `Live catalog snapshot: ${abliterated} Abliterated · ${other} other capable model${other===1?'':'s'}. Capacity can change; cloud requests may fail over to another same-category model.`;
+  if(!models.filter(model=>!['auto','hub'].includes(model.provider)).length)return 'No individual cloud models are listed right now. Automatic will try available providers, with KindleHub only as a last resort. You can also scan a local server.';
+  return `Live catalog snapshot: ${abliterated} Abliterated · ${other} other capable model${other===1?'':'s'}. Capacity can change; cloud requests may fail over to another model; KindleHub is used only as a last resort.`;
  }
  async function loadModelCatalog(refresh=false){
-  if(disposed)return;const request=++catalogSequence;catalogAbort?.abort();const controller=new AbortController();catalogAbort=controller;
+  if(disposed)return;let catalogTimer;const request=++catalogSequence;catalogAbort?.abort();const controller=new AbortController();catalogAbort=controller;
   refreshModels.disabled=true;modelStatus.textContent=refresh?'Refreshing the live model catalog…':'Checking current model catalogs…';
   try{
-   const models=await listModels(client,{refresh,signal:controller.signal});
+   const models=await Promise.race([listModels(client,{refresh,signal:controller.signal}),new Promise((_,reject)=>{catalogTimer=win.setTimeout(()=>{controller.abort();reject(new Error('Model discovery timed out. Automatic is still available; retry discovery or connect a local server.'));},12000);})]);
    if(disposed||request!==catalogSequence)return;
-   remoteModels=Array.isArray(models)?models.filter(model=>model&&['hub','aihorde','llm7'].includes(model.provider)&&typeof model.id==='string'&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)):[];
+   remoteModels=Array.isArray(models)?models.filter(model=>model&&['auto','hub','aihorde','llm7'].includes(model.provider)&&typeof model.id==='string'&&typeof model.name==='string'&&['abliterated','standard'].includes(model.category)):[];
    modelStatus.textContent=liveModelStatus();renderModelOptions();renderHistory();if(!busy)renderConversation();
   }catch(error){
    if(disposed||request!==catalogSequence)return;
-   modelStatus.textContent=remoteModels.length?`Could not refresh the catalog; showing the previous live snapshot. ${liveModelStatus()}`:(error?.message||'The live model catalog is unavailable. Scan a local server or try again.');
+   modelStatus.textContent=remoteModels.length?`Could not refresh the catalog; showing the previous live snapshot. ${liveModelStatus()}`:`Model discovery failed: ${error?.message||'Service unavailable.'} Automatic remains selectable. If requests fail too, the site owner must deploy the updated ai-chat function.`;
    renderModelOptions();if(!busy)renderConversation();
-  }finally{if(request===catalogSequence){catalogAbort=null;renderModelOptions();}}
+  }finally{win.clearTimeout(catalogTimer);if(request===catalogSequence){catalogAbort=null;renderModelOptions();}}
  }
  async function scanLocalProvider(){
   if(disposed||localScanAbort)return;const request=++localSequence,controller=new AbortController();localScanAbort=controller;let timeout;
@@ -222,7 +224,7 @@ export function mountAiStudio({root,win=window,client,ask=askAi,listModels=listA
    if(disposed||request!==sequence)return;
    const actualModel=allModels().find(model=>model.provider===result.provider&&model.id===result.model);
    const actualName=actualModel?.name||String(result.model||selected.name).slice(0,120),actualProvider=providerName(actualModel||{provider:result.provider||selected.provider});
-   const modelInfo=result.failedOverFrom?`Selected model unavailable; failover answered with ${actualName} (${actualProvider}).`:`Answered with ${actualName} (${actualProvider}).`;
+   const modelInfo=!result.provider||!result.model?'Answered by the configured server provider (legacy deployment; exact model not reported).':result.failedOverFrom?`Selected model unavailable; failover answered with ${actualName} (${actualProvider}).`:`Answered with ${actualName} (${actualProvider}).`;
    chat.messages.push({role:'assistant',text:result.answer,modelInfo,sources:Array.isArray(result.sources)?result.sources.slice(0,5):[]});
    chat.notice=`${result.failedOverFrom?'Model failover used':'Answered by'} ${actualProvider}. Check important answers.`;if(chat.messages.length>AI_TURN_LIMIT)chat.messages.splice(0,chat.messages.length-AI_TURN_LIMIT);
    const html=extractHtml(result.answer);if(html&&html.length<=AI_STUDIO_LIMIT){setStudioCode(html,{open:chat.mode==='build',notice:'A prototype is ready. Choose Run safe preview to run it in the isolated frame.'});}

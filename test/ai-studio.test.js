@@ -114,7 +114,7 @@ test('Abliterated and other live models are selectable; opt-in search is passed 
  const view=setup(async(_client,_prompt,_signal,options)=>(selection=options,{answer:'A cited answer',provider:'llm7',model:'gpt-oss:20b',failedOverFrom:{provider:'aihorde',model:'first-model'},sources:[{title:'A source',url:'https://example.org/facts'},{title:'Unsafe',url:'javascript:alert(1)'}]}));
  try{
   await wait();const picker=view.query('#aiModelSelect');
-  assert.equal(picker.value,'aihorde:koboldcpp/L3-8B-Stheno-v3.2');
+  assert.equal(picker.value,'auto:automatic');
   assert.ok([...picker.querySelectorAll('optgroup')].some(group=>/Abliterated/.test(group.label)));
   picker.value='llm7:gpt-oss:20b';picker.dispatchEvent(new view.win.Event('change',{bubbles:true}));
   const search=view.query('#aiWebSearch');search.checked=true;search.dispatchEvent(new view.win.Event('change',{bubbles:true}));
@@ -180,3 +180,8 @@ test('stop aborts a pending request, preserves the draft and resets the composer
   assert.match(view.query('#aiApiStatus').textContent,/response stopped/i);
  }finally{view.controller.destroy();view.dom.window.close();}
 });
+
+ test('automatic and search stay usable when discovery fails',async()=>{
+ const view=setup(async()=>({answer:'ok',provider:'kindlehub',model:'last-resort'}),{listModels:async()=>{throw Error('Catalog unavailable');}});
+ try{await wait();assert.equal(view.query('#aiModelSelect').disabled,false);assert.equal(view.query('#aiModelSelect').value,'auto:automatic');assert.equal(view.query('#aiWebSearch').disabled,false);assert.equal(view.query('#aiSend').disabled,false);assert.match(view.query('#aiModelStatus').textContent,/discovery failed/i);view.submit('Hello');await wait();assert.match(view.query('.ai-model-attribution').textContent,/KindleHub/);}finally{view.controller.destroy();view.dom.window.close();}
+ });
