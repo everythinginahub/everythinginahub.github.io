@@ -1,12 +1,12 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {newNeonCity,stepNeonCity,cityBlocked,cityLineClear,fireCity,reloadCity,enterCityCar,cityObjective,snapshotNeonCity,restoreNeonCity} from '../public/neon-city-engine.js';
+import {newNeonCity,stepNeonCity,cityBlocked,cityLineClear,fireCity,reloadCity,enterCityCar,cityObjective,snapshotNeonCity,restoreNeonCity,switchCityCharacter,interactCity,restartNeonCity,cityDistrict,CITY_SERVICES,cityPatrolWaypoint} from '../public/neon-city-engine.js';
 import {neonCityView,mountNeonCity} from '../public/neon-city.js';
 import {arcadeView} from '../public/arcade.js';
 const run=()=>{const g=newNeonCity();g.status='running';return g;};
 test('city is discoverable and has local keyboard/touch controls and honest requirements',()=>{assert.match(arcadeView(),/#arcade\/neon-city/);const html=arcadeView('neon-city');assert.match(html,/cityCanvas/);assert.match(html,/data-city-hold="fire"/);assert.match(html,/WebGL 2/);assert.match(html,/not affiliated/);});
-test('walking collides with buildings and respects paused state and frame limits',()=>{const g=run();g.enemies=[];const z=g.player.z;stepNeonCity(g,100,{forward:true});assert.ok(z-g.player.z<=.5);g.status='paused';const paused=g.player.z;stepNeonCity(g,.05,{forward:true});assert.equal(g.player.z,paused);assert.equal(cityBlocked(24,24),true);assert.equal(cityBlocked(0,0),false);assert.equal(cityBlocked(99,0),true);g.status='running';g.player.x=8;g.player.z=24;for(let i=0;i<50;i++)stepNeonCity(g,.05,{right:true});assert.ok(g.player.x<10);assert.equal(cityLineClear({x:0,z:24},{x:48,z:24}),false);});
+test('walking collides with buildings and respects paused state and frame limits',()=>{const g=run();g.enemies=[];const z=g.player.z;stepNeonCity(g,100,{forward:true});assert.ok(z-g.player.z<=.5);g.status='paused';const paused=g.player.z;stepNeonCity(g,.05,{forward:true});assert.equal(g.player.z,paused);assert.equal(cityBlocked(24,24),true);assert.equal(cityBlocked(0,0),false);assert.equal(cityBlocked(140,0),true);g.status='running';g.player.x=8;g.player.z=24;for(let i=0;i<50;i++)stepNeonCity(g,.05,{right:true});assert.ok(g.player.x<10);assert.equal(cityLineClear({x:0,z:24},{x:48,z:24}),false);});
 test('blaster hits visible drones, observes cooldown, reloads and cannot shoot through buildings',()=>{const g=run();g.player={x:0,z:10,yaw:0,pitch:0,health:100};g.enemies=[{id:0,x:0,z:-10,hp:2,cooldown:10}];assert.equal(fireCity(g),true);assert.equal(g.enemies[0].hp,1);assert.equal(fireCity(g),false);stepNeonCity(g,.05);g.cooldown=0;fireCity(g);assert.equal(g.enemies.length,0);assert.equal(g.score,110);g.ammo=0;g.cooldown=0;fireCity(g);assert.ok(g.reload>0);for(let i=0;i<25;i++)stepNeonCity(g,.05);assert.equal(g.ammo,12);g.player={x:0,z:24,yaw:-Math.PI/2,pitch:0,health:100};g.enemies=[{id:1,x:48,z:24,hp:2,cooldown:10}];g.cooldown=0;fireCity(g);assert.equal(g.enemies[0].hp,2);});
 test('car entry requires proximity, driving turns and exit returns to a safe position',()=>{const g=run();g.enemies=[];assert.equal(enterCityCar(g),true);for(let i=0;i<20;i++)stepNeonCity(g,.05,{forward:true,turnLeft:true});assert.equal(g.driving,true);assert.ok(g.car.yaw>0);assert.ok(Math.abs(g.car.speed)>0);assert.equal(g.player.x,g.car.x);assert.equal(enterCityCar(g),true);assert.equal(g.driving,false);assert.equal(cityBlocked(g.player.x,g.player.z),false);g.player.x=-90;g.player.z=-90;assert.equal(enterCityCar(g),false);});
 test('pickups and delivery objectives award once and repair armour',()=>{const g=run();g.enemies=[];Object.assign(g.player,cityObjective(g));stepNeonCity(g,.01);assert.equal(g.carrying,true);const next=cityObjective(g);Object.assign(g.player,next,{health:50});stepNeonCity(g,.01);assert.equal(g.deliveries,1);assert.equal(g.score,500);assert.equal(g.player.health,80);assert.equal(g.enemies.length,6);stepNeonCity(g,.01);assert.equal(g.deliveries,1);});
@@ -19,3 +19,49 @@ test('blocked storage does not stop playing and late renderer completion is disp
  let resolve,destroyed=0;const late=setup(()=>new Promise(done=>resolve=done)),pending=late.mount();await Promise.resolve();pending.destroy();resolve({draw(){throw Error('should not draw');},destroy(){destroyed++;}});await pending.ready;assert.equal(destroyed,1);late.win.close();});
 
 test('pointer cancellation releases held touch controls and blur pauses the run',async()=>{const t=setup(),ctl=t.mount();try{await ctl.ready;t.root.querySelector('[data-city="start"]').click();t.tick(0);const down=new t.win.Event('pointerdown',{bubbles:true,cancelable:true});Object.defineProperty(down,'pointerId',{value:7});t.root.querySelector('[data-city-hold="forward"]').dispatchEvent(down);t.tick(50);const up=new t.win.Event('pointercancel');Object.defineProperty(up,'pointerId',{value:7});t.win.dispatchEvent(up);t.tick(100);t.win.dispatchEvent(new t.win.Event('blur'));assert.match(t.root.querySelector('#cityOverlayTitle').textContent,/paused/);const saved=JSON.parse(t.win.localStorage.getItem('everything-save-v1:neon-city:player'));assert.equal(saved.data.game.status,'paused');assert.ok(saved.data.game.player.z<10);const z=saved.data.game.player.z;t.root.querySelector('[data-city="start"]').click();t.tick(150);t.tick(200);t.win.dispatchEvent(new t.win.Event('pagehide'));assert.equal(JSON.parse(t.win.localStorage.getItem('everything-save-v1:neon-city:player')).data.game.player.z,z);}finally{ctl.destroy();t.win.close();}});
+
+test('partners retain separate locations and armour, share heat, and cannot switch while driving',()=>{
+ const g=run();g.enemies=[];g.player.x=2;g.player.health=65;g.heat=3;
+ assert.equal(switchCityCharacter(g),true);assert.equal(g.activeCharacter,'theo');assert.equal(g.player.x,-48);assert.equal(g.player.health,100);assert.equal(g.heat,3);
+ g.player.z=7;assert.equal(switchCityCharacter(g),true);assert.equal(g.player.x,2);assert.equal(g.player.health,65);g.driving=true;assert.equal(switchCityCharacter(g),false);
+});
+test('car battery drains by distance, Theo is more efficient and empty cars cannot accelerate',()=>{
+ const measure=character=>{const g=run();g.enemies=[];g.driving=true;g.activeCharacter=character;g.car.x=0;g.car.z=10;for(let i=0;i<25;i++)stepNeonCity(g,.05,{forward:true});return g;};
+ const mina=measure('mina'),theo=measure('theo');assert.ok(mina.car.fuel<100);assert.ok(theo.car.fuel>mina.car.fuel);
+ const g=run();g.driving=true;g.enemies=[];g.car.fuel=0;g.car.speed=0;const z=g.car.z;for(let i=0;i<20;i++)stepNeonCity(g,.05,{forward:true});assert.equal(g.car.z,z);
+});
+test('services bank credits exactly once, refuel only a nearby car and upgrade home once',()=>{
+ const g=run();g.enemies=[];g.cash=500;Object.assign(g.player,CITY_SERVICES.find(s=>s.id==='bank'));assert.equal(interactCity(g),true);assert.equal(g.bank,500);assert.equal(g.cash,0);assert.equal(interactCity(g),false);assert.equal(g.bank,500);
+ Object.assign(g.player,CITY_SERVICES.find(s=>s.id==='fuel'));g.car.fuel=5;assert.equal(interactCity(g),false);Object.assign(g.car,{x:96,z:0});assert.equal(interactCity(g),true);assert.equal(g.car.fuel,100);
+ Object.assign(g.player,CITY_SERVICES.find(s=>s.id==='home'));g.heat=1;assert.equal(interactCity(g),false);assert.equal(g.bank,500);g.heat=0;g.player.health=10;assert.equal(interactCity(g),true);assert.equal(g.bank,300);assert.equal(g.homeUpgraded,true);assert.equal(g.trust,30);assert.equal(g.player.health,100);interactCity(g);assert.equal(g.bank,300);assert.equal(g.trust,30);
+});
+test('shooting raises shared heat, patrols arrive and escaping line of sight cools heat',()=>{
+ const g=run();g.enemies=[];g.heat=2.5;stepNeonCity(g,.01);assert.equal(g.patrols.length,2);const before=g.heat;fireCity(g);assert.ok(g.heat>before);
+ g.patrols=[];g.enemies=[];g.heat=1;g.quiet=0;g.player.x=125;g.player.z=80;for(let i=0;i<400;i++)stepNeonCity(g,.05);assert.equal(g.heat,0);assert.equal(g.patrols.length,0);
+});
+test('failure loses carried cash but retry preserves banked credits and partnership',()=>{
+ const g=run();g.cash=250;g.bank=700;g.trust=65;g.homeUpgraded=true;g.player.health=1;g.enemies=[{id:0,x:0,z:0,hp:2,cooldown:0}];stepNeonCity(g,.01);assert.equal(g.status,'lost');assert.equal(g.cash,0);assert.equal(g.bank,700);const next=restartNeonCity(g);assert.equal(next.cash,0);assert.equal(next.bank,700);assert.equal(next.trust,65);assert.equal(next.homeUpgraded,true);assert.equal(next.player.health,100);
+});
+test('expanded coastline is walkable but water and map edges remain blocked',()=>{
+ assert.equal(cityBlocked(120,60),false);assert.equal(cityDistrict({x:120,z:60}),'Sunline Beach');assert.equal(cityBlocked(137,60),true);assert.equal(cityBlocked(100,95),true);
+});
+test('version-two saves restore both partners and finances, reject corrupt progress and migrate version one',()=>{
+ const g=run();g.bank=800;g.cash=250;g.trust=55;g.car.fuel=37;g.player.health=67;switchCityCharacter(g);g.player.x=-48;g.player.z=12;g.heat=2;
+ const data=JSON.parse(JSON.stringify(snapshotNeonCity(g))),restored=restoreNeonCity(data);assert.equal(restored.status,'paused');assert.equal(restored.activeCharacter,'theo');assert.equal(restored.player.z,12);assert.equal(restored.characters.mina.health,67);assert.equal(restored.bank,800);assert.equal(restored.car.fuel,37);assert.equal(restored.heat,2);
+ for(const bad of [{...data,bank:Infinity},{...data,heat:9},{...data,characters:{}}])assert.equal(restoreNeonCity(bad),null);
+ const legacy={...data,version:1};const migrated=restoreNeonCity(legacy);assert.equal(migrated.version,2);assert.equal(migrated.car.fuel,100);assert.equal(migrated.bank,0);assert.equal(migrated.activeCharacter,'mina');assert.equal(migrated.player,migrated.characters.mina);
+});
+
+
+test('patrols navigate the road graph around a city block instead of freezing on its corner',()=>{
+ const start={x:-48,z:-48},goal={x:0,z:0},next=cityPatrolWaypoint(start,goal);assert.equal(cityLineClear(start,goal),false);assert.equal(cityLineClear(start,next),true);assert.notDeepEqual(next,goal);
+ const g=run();g.enemies=[];g.player.x=0;g.player.z=0;g.heat=3;g.patrols=[{id:0,...start,cooldown:1}];
+ for(let i=0;i<250;i++)stepNeonCity(g,.05);
+ assert.ok(Math.hypot(g.patrols[0].x,g.patrols[0].z)<30);
+});
+test('a calm safe house protects resting partners but wanted characters cannot use it',()=>{
+ const g=run();Object.assign(g.player,{x:-48,z:0});g.enemies=[{id:0,x:-35,z:0,hp:2,cooldown:0}];stepNeonCity(g,.05);assert.equal(g.player.health,100);g.heat=.01;assert.equal(interactCity(g),false);stepNeonCity(g,.05);assert.ok(g.player.health<100);
+});
+test('partner and service controls persist financial progress through the controller',async()=>{
+ const t=setup();let ctl;try{const g=run();g.bank=500;g.enemies=[];t.win.localStorage.setItem('everything-save-v1:neon-city:player',JSON.stringify({version:1,data:{game:snapshotNeonCity(g),best:0}}));ctl=t.mount();await ctl.ready;t.root.querySelector('[data-city="start"]').click();t.root.querySelector('[data-city="switch"]').click();assert.equal(t.root.querySelector('#cityCharacter').textContent,'Theo');t.root.querySelector('[data-city="interact"]').click();assert.equal(t.root.querySelector('#cityMoney').textContent,'0 / 300');assert.equal(t.root.querySelector('#cityTrust').textContent,'30 / 100');const saved=JSON.parse(t.win.localStorage.getItem('everything-save-v1:neon-city:player'));assert.equal(saved.data.game.activeCharacter,'theo');assert.equal(saved.data.game.homeUpgraded,true);}finally{ctl?.destroy();t.win.close();}
+});

@@ -1,4 +1,4 @@
-import {neonCityView,mountNeonCity} from './neon-city.js?v=20261106-1';
+import {neonCityView,mountNeonCity} from './neon-city.js?v=20261106-2';
 import {mountLocalGameStorage} from './local-game-storage.js?v=20261106-1';
 import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
 import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-3';
@@ -11,7 +11,7 @@ import {dailyArcadeChallenge,seededRandom} from './arcade-challenge.js?v=2026110
 import {voxelcraftSurvivalView,skyparkObby3DView,dungeonQuest3DView} from './arcade-3d-views.js?v=20261106-8';
 
 const originalGames=[
- {slug:'neon-city',name:'Neon City: Drone Patrol',category:'3D CITY ACTION · DRIVE & SHOOT',description:'Explore an original neon city, drive your car, disable drones and deliver energy cores.',image:'assets/neon-city.svg',badge:'NEW'},
+ {slug:'neon-city',name:'Neon City: Drone Patrol',category:'3D CITY ACTION · DRIVE & SHOOT',description:'Switch partners, drive the coast, escape patrol heat and bank your mission earnings.',image:'assets/neon-city.svg',badge:'NEW'},
  {slug:'skyline',name:'Skyline Sprint',category:'ENDLESS RUNNER',description:'Double-jump, slide beneath laser gates and scoop up power-ups.',image:'assets/game-screenshots/skyline.png'},
  {slug:'orbit',name:'Orbit Defender',category:'SPACE ACTION',description:'Grab upgrades, fire a Nova and face boss ships between waves.',image:'assets/game-screenshots/orbit.png'},
  {slug:'reef',name:'Reef Breaker',category:'ACTION PUZZLE',description:'Break armored crystals, chain hits and catch helpful power-ups.',image:'assets/game-screenshots/reef.png'},
