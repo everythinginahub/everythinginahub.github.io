@@ -469,7 +469,7 @@ test('launcher search finds focused apps and the tools hidden inside Everyday to
 
 test('combined Games app opens the collection and preserves study links',async()=>{
  const {client}=mockClient({session:account});const {dom,w,run}=setup(client);await run();const q=s=>w.document.querySelector(s);
- go(w,'#arcade');assert.ok(q('a[href="#arcade/library"]'));assert.equal(w.document.querySelectorAll('.arcade-game-card').length,6);assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#arcade/classroom/snow-rider"]'));assert.equal(w.document.querySelectorAll('.featured-card').length,25);
+ go(w,'#arcade');assert.ok(q('a[href="#arcade/library"]'));assert.equal(w.document.querySelectorAll('.arcade-game-card').length,7);assert.ok(q('a[href="#games"]'));assert.ok(q('a[href="#arcade/classroom/snow-rider"]'));assert.equal(w.document.querySelectorAll('.featured-card').length,25);
  go(w,'#arcade/library');assert.ok(q('#embedSearch'));assert.equal(q('iframe'),null);q('#embedSearch').value='sudoku';q('#embedSearch').dispatchEvent(new w.Event('input',{bubbles:true}));assert.match(q('#embedGrid').textContent,/Sudoku/);
  go(w,'#arcade/play/sudoku');assert.equal(q('iframe').getAttribute('title'),'Sudoku — game by sausi-7');assert.ok(q('a[target="_blank"]'));go(w,'#games/bio-transport');assert.ok(q('[data-game-start="quiz"]'));assert.match(q('.app-discovery-footer').textContent,/study games/i);assert.ok(q('.app-discovery-footer a[href="#videos"]'));q('#helpButton').click();assert.match(q('#modal h2').textContent,/Study games/);assert.match(q('#modal').textContent,/Choose a flashcard set/);q('#modal').close();dom.window.close();
 });
