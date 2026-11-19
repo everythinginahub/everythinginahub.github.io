@@ -264,3 +264,11 @@ Neon City now has an original coastal strip, Sunline Beach, a coastal highway, p
 Version-two saves validate and retain character positions, battery, heat, carried/banked credits, workshop ownership and partnership. Existing version-one runs migrate with a full battery and default new systems. Runs still restore paused; live patrol positions are regenerated from retained heat. Restart resets the current run and mission counter but retains the banked/partnership/workshop progress. Clearing browser data removes all device-local progress.
 
 Validation includes automated progression, finance, heat, routing, charging, character-switching and save-migration tests, plus a Chromium/SwiftShader smoke test that rendered Sunline Beach, banked credits, switched to Theo, bought the workshop only once and restored the saved balance. No production Supabase changes are required.
+
+### Neon City graphics refresh
+
+The original procedural city renderer now uses rounded vehicle bodies, curved drone shells, articulated partner models, curved palm trunks and fronds, facade/window textures, rooftop details, road-surface grain, a gradient sky, atmospheric fog and animated ocean shading. ACES tone mapping and filtered directional shadows replace the earlier flat presentation. These are locally generated browser-game visuals, not licensed GTA assets or photorealistic graphics.
+
+The Graphics selector applies without restarting the run. Low caps rendering at 1× device resolution, disables shadows, and freezes water/foliage motion; Balanced caps at 1.5× with 1024-pixel shadows; High caps at 2× with 2048-pixel shadows. Touch-first devices initially select Low. Preference is saved separately from gameplay on this device/account; blocked storage leaves the current choice usable but unsaved. All presets share the same detailed geometry, so Low is not a guarantee of smooth performance on every device. Existing progress and controls are unchanged.
+
+Validation: 479 Node tests passed, including preset validation, finite curved geometry, preference restoration and listener cleanup. A real Chromium WebGL smoke exercised all three quality levels and renderer disposal without page or shader-console errors. Desktop software-rendered screenshot checked; physical mobile-device performance has not been measured.

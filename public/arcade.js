@@ -1,4 +1,4 @@
-import {neonCityView,mountNeonCity} from './neon-city.js?v=20261106-2';
+import {neonCityView,mountNeonCity} from './neon-city.js?v=20261106-3';
 import {mountLocalGameStorage} from './local-game-storage.js?v=20261106-1';
 import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
 import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-3';
