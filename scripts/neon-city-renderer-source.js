@@ -111,15 +111,32 @@ export function createCityRenderer(canvas,win=window){
   for(const x of [-1,1])for(const z of [-1,1]){const arm=cylinder(.055,.055,1.4,chrome,x*.45,0,z*.45,group);arm.rotation.z=Math.PI/2;arm.rotation.y=-Math.sign(x*z)*Math.PI/4;const rotor=cylinder(.44,.44,.04,dark,x*.9,.08,z*.9,group);const blade=box(.8,.025,.08,chrome,x*.9,.14,z*.9,group,.01);rotors.push(blade);}
   drones.set(i,group);
  }
+ const soldiers=[];
+ const armour=mat(0xd32943,{metalness:.2,roughness:.65});
+ const blueArmour=mat(0x147ceb,{metalness:.2,roughness:.5});
+ for(let i=0;i<10;i++){
+  const suit=i<6?armour:blueArmour;const bot=new THREE.Group();scene.add(bot);
+  mesh(geo(new THREE.CapsuleGeometry(.34,.55,5,12)),suit,0,1.08,0,bot);
+  sphere(.27,dark,0,1.75,0,bot);box(.4,.11,.08,i<6?pink:cyan,0,1.77,-.24,bot,.04);
+  for(const side of [-1,1]){cylinder(.11,.13,.65,suit,side*.4,1.04,-.1,bot);cylinder(.13,.15,.7,dark,side*.19,.4,0,bot);box(.28,.16,.42,rubber,side*.19,.1,-.09,bot,.06);}
+  const teamRing=mesh(geo(new THREE.TorusGeometry(.65,.025,6,20)),i<6?pink:cyan,0,.04,0,bot,false);teamRing.rotation.x=Math.PI/2;
+  box(.16,.18,.8,dark,.28,1.16,-.48,bot,.04);sphere(.05,pink,.28,1.16,-.9,bot);soldiers.push(bot);
+ }
  const ringGeo=geo(new THREE.TorusGeometry(2.1,.1,8,40)),target=mesh(ringGeo,cyan,0,.3,0,scene,false);target.rotation.x=Math.PI/2;
  const core=mesh(geo(new THREE.IcosahedronGeometry(.6,1)),cyan,0,1,0,scene,false);
  // Subtle energy beacon stays translucent rather than an opaque giant pole.
  const beaconMat=new THREE.MeshBasicMaterial({color:0x6ee8d2,transparent:true,opacity:.12,depthWrite:false});materials.add(beaconMat);const beacon=mesh(geo(new THREE.CylinderGeometry(.3,1.2,9,24,1,true)),beaconMat,0,4.5,0,scene,false);
  for(const s of CITY_STOPS){cylinder(.08,.1,3,chrome,s.x+6,1.5,s.z);sphere(.25,cyan,s.x+6,3,s.z);}
  const gun=new THREE.Group();camera.add(gun);scene.add(camera);gun.position.set(.26,-.24,-.5);
- box(.11,.14,.4,dark,0,0,0,gun,.045);const barrel=cylinder(.035,.045,.35,chrome,0,.01,-.22,gun);barrel.rotation.x=Math.PI/2;box(.075,.16,.1,blue,0,-.1,.08,gun,.025);sphere(.04,cyan,0,.01,-.4,gun);
+ box(.11,.14,.4,dark,0,0,0,gun,.045);const barrel=cylinder(.035,.045,.35,chrome,0,.01,-.22,gun);barrel.rotation.x=Math.PI/2;box(.075,.16,.1,blue,0,-.1,.08,gun,.025);sphere(.04,cyan,0,.01,-.4,gun);const muzzle=sphere(.12,gold,0,.01,-.48,gun,[.7,.7,1.7]);
  const beamGeo=geo(new THREE.BufferGeometry()),beamMat=new THREE.LineBasicMaterial({color:0xaaffec});materials.add(beamMat);const beams=new THREE.LineSegments(beamGeo,beamMat);beams.frustumCulled=false;scene.add(beams);
  const positions=new Float32Array(64*6);beamGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));beamGeo.setDrawRange(0,0);
+ const teamDecor=[];
+ for(const [z,color]of [[38,0x168bff],[-38,0xff294b]]){
+  const m=mat(color,{emissive:color,emissiveIntensity:.45});
+  const pad=mesh(geo(new THREE.TorusGeometry(4,.12,8,48)),m,0,.04,z,scene,false);pad.rotation.x=Math.PI/2;teamDecor.push(pad);
+  for(const x of [-7,7]){const post=box(.22,4,.22,m,x,2,z,scene,.07);const flag=box(2.5,1.2,.06,m,x+1.1,3.2,z,scene,.06);teamDecor.push(post,flag);}
+ }
  const skyUniforms={zenith:{value:new THREE.Color('#5a96b5')},horizon:{value:new THREE.Color('#ced7cf')},daylight:{value:1}};
  const skyMaterial=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:skyUniforms,vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`uniform vec3 zenith;uniform vec3 horizon;uniform float daylight;varying vec3 direction;void main(){vec3 d=normalize(direction);float h=smoothstep(-.08,.8,d.y);vec3 color=mix(horizon,zenith,h);float sun=pow(max(0.,dot(d,normalize(vec3(-.5,.7,.3)))),160.);color+=vec3(1.,.72,.4)*sun*daylight;gl_FragColor=vec4(color,1.);
 #include <tonemapping_fragment>
@@ -133,7 +150,7 @@ export function createCityRenderer(canvas,win=window){
  }
  setQuality('balanced');
  const daySky=new THREE.Color(0xa9cbd7),nightSky=new THREE.Color(0x172b48);
- function draw(g){if(disposed)return;const p=g.player,goal=cityObjective(g);car.position.set(g.car.x,0,g.car.z);car.rotation.y=g.car.yaw;
+ function draw(g){if(disposed)return;const p=g.player,goal=cityObjective(g);const arena=g.mode==='arena';for(const o of teamDecor)o.visible=!!g.teamMatch;car.visible=!arena;partner.visible=!arena;target.visible=core.visible=beacon.visible=!arena;for(let i=0;i<soldiers.length;i++){const e=i<6?g.enemies.find(e=>e.id===i):g.allies?.find(e=>e.id===i-6),bot=soldiers[i];bot.visible=arena&&!!e;if(e){bot.position.set(e.x,Math.sin(g.time*7+i)*.025,e.z);bot.rotation.y=e.yaw||0;}}car.position.set(g.car.x,0,g.car.z);car.rotation.y=g.car.yaw;
   for(const wheel of car.userData.wheels)wheel.rotation.x=g.time*g.car.speed*.6;
   const other=g.characters[g.activeCharacter==='mina'?'theo':'mina'];partner.position.set(other.x,0,other.z);partner.rotation.y=other.yaw;
   for(let i=0;i<patrolMeshes.length;i++){const o=patrolMeshes[i],patrol=g.patrols[i];o.visible=!!patrol;if(patrol){o.position.set(patrol.x,0,patrol.z);o.rotation.y=Math.atan2(p.x-patrol.x,p.z-patrol.z);}}
@@ -141,9 +158,9 @@ export function createCityRenderer(canvas,win=window){
   sun.position.set(p.x-35,65,p.z+25);sun.target.position.set(p.x,0,p.z);waterUniforms.time.value=settings.waterMotion?g.time:0;
   for(let i=0;i<palms.length;i++)palms[i].rotation.z=settings.foliageMotion?Math.sin(g.time*.7+i)*.035:0;
   if(g.driving){const yaw=g.car.yaw;camera.position.set(p.x+Math.sin(yaw)*8.5,4.4,p.z+Math.cos(yaw)*8.5);camera.lookAt(p.x,1.35,p.z);gun.visible=false;}
-  else{camera.position.set(p.x,1.8,p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);gun.visible=true;gun.position.z=g.cooldown>.1?-.44:-.5;}
-  sky.position.copy(camera.position);target.position.set(goal.x,.22,goal.z);target.material=g.carrying?gold:cyan;core.material=target.material;core.position.set(goal.x,1.15+Math.sin(g.time*2)*.2,goal.z);core.rotation.y=g.time*.7;beacon.position.set(goal.x,4.5,goal.z);beaconMat.color.copy(target.material.color);
-  for(const [id,o]of drones){const e=g.enemies.find(item=>item.id===id);o.visible=!!e;if(e){o.position.set(e.x,1.8+Math.sin(g.time*4+id)*.15,e.z);o.rotation.y=Math.atan2(p.x-e.x,p.z-e.z);}}
+  else{camera.position.set(p.x,1.8,p.z);camera.rotation.order='YXZ';camera.rotation.set(p.pitch,p.yaw,0);gun.visible=true;gun.visible=!g.respawnTimer;gun.position.z=g.cooldown>.1?-.4:-.5;gun.rotation.x=g.reload?-.35:0;gun.position.y=-.24+(g.reload?-.12:Math.sin(g.time*7)*.007);}
+  muzzle.visible=g.cooldown>.12&&!g.reload&&!g.respawnTimer;sky.position.copy(camera.position);target.position.set(goal.x,.22,goal.z);target.material=g.carrying?gold:cyan;core.material=target.material;core.position.set(goal.x,1.15+Math.sin(g.time*2)*.2,goal.z);core.rotation.y=g.time*.7;beacon.position.set(goal.x,4.5,goal.z);beaconMat.color.copy(target.material.color);
+  for(const [id,o]of drones){const e=g.enemies.find(item=>item.id===id);o.visible=!arena&&!!e;if(e){o.position.set(e.x,1.8+Math.sin(g.time*4+id)*.15,e.z);o.rotation.y=Math.atan2(p.x-e.x,p.z-e.z);}}
   for(const rotor of rotors)rotor.rotation.y=g.time*25;
   let count=0;for(const effect of g.effects.slice(0,64)){positions.set([effect.x,1.7,effect.z,effect.tx,1.7,effect.tz],count*6);count++;}beamGeo.attributes.position.needsUpdate=true;beamGeo.setDrawRange(0,count*2);
   const rect=canvas.getBoundingClientRect(),w=Math.max(1,Math.floor(rect.width||960)),h=Math.max(1,Math.floor(rect.height||540));if(width!==w||height!==h){width=w;height=h;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}

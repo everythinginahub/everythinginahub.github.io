@@ -272,3 +272,30 @@ The original procedural city renderer now uses rounded vehicle bodies, curved dr
 The Graphics selector applies without restarting the run. Low caps rendering at 1× device resolution, disables shadows, and freezes water/foliage motion; Balanced caps at 1.5× with 1024-pixel shadows; High caps at 2× with 2048-pixel shadows. Touch-first devices initially select Low. Preference is saved separately from gameplay on this device/account; blocked storage leaves the current choice usable but unsaved. All presets share the same detailed geometry, so Low is not a guarantee of smooth performance on every device. Existing progress and controls are unchanged.
 
 Validation: 479 Node tests passed, including preset validation, finite curved geometry, preference restoration and listener cleanup. A real Chromium WebGL smoke exercised all three quality levels and renderer disposal without page or shader-console errors. Desktop software-rendered screenshot checked; physical mobile-device performance has not been measured.
+
+### First-person AI bot arena
+
+Neon City now opens in an on-foot 3D FPS arena with six humanoid opponents per wave, a first-person weapon, mouse/drag aiming, held mouse/Fire/Space shooting, reloads, eliminations, and escalating squads. Bots run offline state-machine AI (not an LLM or multiplayer service): line-of-sight attacks, road-graph navigation around buildings, pursuit and strafing. Buildings block fire. Clearing a squad gives a three-second respite and replenishes ammunition and some armour; depleted armour ends the run. WASD moves, Shift sprints, R reloads, P/Escape pauses. Touch players drag to aim and hold Fire.
+
+The Game mode selector retains the earlier courier city as a separate option. Arena and city saves/best scores use separate device/account keys; existing city saves are not overwritten. Arena disables driving, partner switching and services. The graphics-quality selector works in both modes. Arena is the initial mode on each fresh page visit.
+
+Validation: 482 tests passed, including bot line-of-sight/obstacle navigation, waves, eliminations, defeat/restart, save restoration, and isolated mode switching. Chromium WebGL smoke confirmed a bot elimination, remaining-bot HUD/journal update, reload restoration, mode/quality switching and disposal without page or shader-console errors. Mobile hardware performance and long-session difficulty balancing remain unmeasured.
+
+### Red vs Blue team deathmatch
+
+The default FPS is now **Red vs Blue**: the player and three blue AI teammates versus four red bots. First to 20 team eliminations wins, with a five-minute match limit and three-second player/bot respawns. On timeout the higher score wins; tied scores draw. AI teammates independently navigate, engage enemies and contribute points. Blue teammates block your shots but take no friendly-fire damage. Blue/red armour, base markings, minimap dots, team scoreboard, match clock, elimination feed, hit marker, damage vignette and weapon flash make the teams and combat easier to read.
+
+**Left-click fires immediately; hold left-click for automatic fire.** Right-click does not fire. Space and the touch Fire button remain alternatives. Mouse-lock failure does not block shooting: drag the scene to aim in embedded previews. Release, pointer cancellation, pause and blur clear held inputs. The direct no-sign-in preview is `public/neon-city-preview.html`; local preview server opens it at its root. Team matches use their own `neon-city-teams` device-save key, separate from earlier wave/courier saves. Team scores, clock, surviving bots and ally health restore paused; pending bot respawns restart their three-second countdown. This is an original offline bot game, not online multiplayer or an official Red vs Blue adaptation.
+
+Tests cover team scoring, friendly-fire protection, allied combat, respawns, score/time match endings, restart, team-save validation and primary mouse-button firing/release. Real Chromium smoke with mouse capture deliberately rejected confirmed immediate click fire, continued held fire, release stopping fire, scoreboard rendering and paused save restoration with no page/shader errors. Software-rendered browser testing is not a physical-device performance benchmark.
+
+### Uploaded Red vs Blue: Outpost
+
+The user-supplied `red_vs_blue_fortnite_outpost.html` is integrated as `public/red-vs-blue-outpost.html`, with a Games card/route `#arcade/red-vs-blue-outpost`. The live standalone preview now opens this uploaded game. Earlier Neon City gameplay remains a separate game. Outpost includes its supplied squad selection, bots, multiple weapons, jump/dash abilities and shop; it is not an official Fortnite/Epic Games product. Desktop keyboard/mouse controls are required. This game does not persist matches.
+
+Integration changes: replace external Three.js with the existing licensed local r128 vendor file; precompile Tailwind utilities into `public/assets/outpost/ui.css`; replace remote fonts with system fallbacks; isolate the game in an opaque-origin sandbox allowing scripts/pointer-lock but no parent/account access. Capture rejection is handled without blocking left-click shooting, blur clears held input, and player spawns move onto the fortress balcony instead of facing its solid wall. Leaving the game removes the iframe and its running context. No external network requests occurred in the Chromium preview smoke; blue squad selection created 11 bots, left-click reduced ammo 30→29, and the rendered arena screenshot was inspected. Other weapons and long-session balance were not exhaustively play-tested.
+
+Rebuild uploaded-game CSS after changing utility classes:
+```sh
+npm exec --yes --package=tailwindcss@3.4.17 -- tailwindcss -i scripts/outpost-tailwind.css -o public/assets/outpost/ui.css --content public/red-vs-blue-outpost.html --minify
+```

@@ -1,4 +1,5 @@
-import {neonCityView,mountNeonCity} from './neon-city.js?v=20261106-3';
+import {outpostView,mountOutpost} from './outpost.js?v=20261106-1';
+import {neonCityView,mountNeonCity} from './neon-city.js?v=20261106-6';
 import {mountLocalGameStorage} from './local-game-storage.js?v=20261106-1';
 import {deviceSaveKey,readDeviceSave,writeDeviceSave} from './device-saves.js?v=20261106-1';
 import {classroomCards, classroomView, mountClassroom} from './classroom-games.js?v=20261106-3';
@@ -11,7 +12,8 @@ import {dailyArcadeChallenge,seededRandom} from './arcade-challenge.js?v=2026110
 import {voxelcraftSurvivalView,skyparkObby3DView,dungeonQuest3DView} from './arcade-3d-views.js?v=20261106-8';
 
 const originalGames=[
- {slug:'neon-city',name:'Neon City: Drone Patrol',category:'3D CITY ACTION · DRIVE & SHOOT',description:'Switch partners, drive the coast, escape patrol heat and bank your mission earnings.',image:'assets/neon-city.svg',badge:'NEW'},
+ {slug:'red-vs-blue-outpost',name:'Red vs Blue: Outpost',category:'3D TEAM FPS · UPLOADED GAME',description:'Choose red or blue, battle AI squads, switch weapons and dash across a symmetrical outpost arena.',image:'assets/neon-city.svg',badge:'NEW'},
+ {slug:'neon-city',name:'Neon City: Red vs Blue',category:'3D FPS · AI BOTS',description:'Join blue teammates against red AI bots. First to 20 in a 4v4 first-person battle with respawns—or revisit courier mode.',image:'assets/neon-city.svg',badge:'NEW'},
  {slug:'skyline',name:'Skyline Sprint',category:'ENDLESS RUNNER',description:'Double-jump, slide beneath laser gates and scoop up power-ups.',image:'assets/game-screenshots/skyline.png'},
  {slug:'orbit',name:'Orbit Defender',category:'SPACE ACTION',description:'Grab upgrades, fire a Nova and face boss ships between waves.',image:'assets/game-screenshots/orbit.png'},
  {slug:'reef',name:'Reef Breaker',category:'ACTION PUZZLE',description:'Break armored crystals, chain hits and catch helpful power-ups.',image:'assets/game-screenshots/reef.png'},
@@ -31,6 +33,7 @@ const factory={skyline:newRunner,orbit:newOrbit,reef:newReef};
 function dailyArcadeCard(today){const challenge=dailyArcadeChallenge(today),game=games[challenge.gameId];return `<section class="daily-arcade-card" aria-labelledby="dailyArcadeTitle"><div class="daily-arcade-copy"><p class="game-eyebrow">DAILY ARCADE CHALLENGE · ${esc(challenge.date)}</p><h2 id="dailyArcadeTitle">Today’s run: ${esc(game.name)}</h2><p><strong>${esc(challenge.goal)}.</strong> ${esc(challenge.instructions)}</p><small>The challenge changes daily. Today’s best is saved on this device.</small></div><a class="daily-arcade-cta" href="#arcade/daily">Play today’s challenge <span aria-hidden="true">→</span></a></section>`;}
 export function arcadeView(id, view, today = new Date()){
  let daily=null;
+ if(id==='red-vs-blue-outpost')return outpostView();
  if(id==='neon-city')return neonCityView();
  if(id==='geometry-dash'||id==='designer')return geometryDashView();
  if(id==='library')return libraryView();
@@ -74,6 +77,7 @@ function mountLazySkyparkObby({root,...options}){
  return {destroy(){destroyed=true;root.removeEventListener('click',capture,true);pending.length=0;controller?.destroy();}};
 }
 export function mountArcade({root,id,view,userId,playerName,state,save,toast,onReward=()=>{},win=window}){
+ if(id==='red-vs-blue-outpost')return mountOutpost({root});
  if(id==='neon-city')return mountNeonCity({root,userId,win});
  if(id==='geometry-dash'||id==='designer')return mountGeometryDash(root);
  if(id==='library')return mountLibrary(root);

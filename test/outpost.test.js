@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {Script} from 'node:vm';
+import {JSDOM} from 'jsdom';
+import {arcadeView,mountArcade} from '../public/arcade.js';
+import {outpostView} from '../public/outpost.js';
+test('uploaded Outpost is discoverable, sandboxed and removed on navigation',()=>{assert.match(arcadeView(),/#arcade\/red-vs-blue-outpost/);const dom=new JSDOM(`<main>${arcadeView('red-vs-blue-outpost')}</main>`);const root=dom.window.document.querySelector('main'),frame=root.querySelector('iframe');assert.equal(frame.getAttribute('sandbox'),'allow-scripts allow-pointer-lock');assert.match(frame.src,/red-vs-blue-outpost.html/);assert.match(frame.title,/Outpost/);const ctl=mountArcade({root,id:'red-vs-blue-outpost',win:dom.window});ctl.destroy();assert.equal(root.querySelector('iframe'),null);dom.window.close();});
+test('Outpost serves its script, styles and renderer locally with valid game syntax',async()=>{const html=await readFile(new URL('../public/red-vs-blue-outpost.html',import.meta.url),'utf8');const dom=new JSDOM(html);for(const el of dom.window.document.querySelectorAll('script[src],link[rel="stylesheet"]'))assert.doesNotMatch(el.getAttribute('src')||el.getAttribute('href'),/^https?:/);assert.match(html,/vendor\/three-r128.min.js/);assert.match(html,/assets\/outpost\/ui.css/);for(const script of dom.window.document.querySelectorAll('script:not([src])'))assert.doesNotThrow(()=>new Script(script.textContent));assert.match(html,/requestPointerLock\?\.\(\)\?\.catch/);assert.match(html,/this\.fireWeapon\(\)/);dom.window.close();});
+test('standalone preview uses the uploaded game without allowing same-origin access',()=>{const html=outpostView({preview:true});assert.match(html,/red-vs-blue-outpost.html/);assert.match(html,/allow-pointer-lock/);assert.doesNotMatch(html,/allow-same-origin/);});
