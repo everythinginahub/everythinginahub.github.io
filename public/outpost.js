@@ -1,0 +1,7 @@
+// User-supplied game isolated from the hub's account and DOM context.
+export function outpostView({preview=false}={}){
+ const frame=`<iframe title="Red vs Blue: Outpost" src="./red-vs-blue-outpost.html?v=20261106-1" sandbox="allow-scripts allow-pointer-lock" allow="autoplay; fullscreen; pointer-lock" allowfullscreen referrerpolicy="no-referrer" style="display:block;width:100%;height:${preview?'calc(100dvh - 85px)':'min(85vh,960px)'};min-height:540px;border:0;background:#090d16"></iframe>`;
+ if(preview)return frame;
+ return `<section class="embedded-play outpost-play"><a class="arcade-back" href="#arcade">← Games home</a><header class="embedded-play-heading"><div><p class="game-eyebrow">UPLOADED GAME · 3D TEAM SHOOTER</p><h1>Red vs Blue: Outpost</h1><p>Choose a squad, battle AI bots, switch weapons, double-jump and dash through the arena.</p></div><a class="adventure-utility" href="./red-vs-blue-outpost.html" target="_blank" rel="noopener noreferrer">Open full screen ↗</a></header><p class="external-note">Click inside the game to focus. WASD move · left-click shoot · right-click scope · R reload · 1–4 weapons · Space jump · E dash. If mouse capture is blocked, hold left-click and drag to aim. Desktop keyboard/mouse required; matches reset when you leave. User-supplied game, not affiliated with Epic Games.</p>${frame}</section>`;
+}
+export function mountOutpost({root}){const frame=root.querySelector('iframe');return {destroy(){frame?.remove();}};}

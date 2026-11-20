@@ -56,7 +56,7 @@ test('Dungeon Quest is featured in the Games hub and opens inside a safe local g
  assert.match(home,/#arcade\/dungeon-quest-3d/);
  assert.match(home,/Dungeon Quest 3D/);
  assert.match(home,/assets\/dungeon-quest-hero\.jpg/);
- assert.match(home,/<strong>7<\/strong> featured games/);
+ assert.match(home,/<strong>8<\/strong> featured games/);
  assert.match(arcadeView('dungeon-quest-3d'),/id="dungeonQuestFrame"/);
  const dom=new JSDOM(`<main>${dungeonQuest3DView()}</main>`,{url:'https://example.test/public/'});
  try{
